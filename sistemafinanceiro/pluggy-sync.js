@@ -40,7 +40,11 @@ const PluggyAPI = {
     const url = itemId ? `${API}/connect-token?itemId=${itemId}` : `${API}/connect-token`;
     const res  = await fetch(url);
     if (!res.ok) throw new Error(`Token error: ${res.status}`);
-    return (await res.json()).accessToken;
+    const data = await res.json();
+    // Pluggy pode retornar accessToken ou connectToken dependendo da versão
+    const token = data.accessToken || data.connectToken || data.token;
+    if (!token) throw new Error(`Token não encontrado na resposta: ${JSON.stringify(data)}`);
+    return token;
   },
  
   async getAccounts(itemId) {
