@@ -517,12 +517,35 @@ async function doSignUp() {
   const email = document.getElementById('login-email')?.value?.trim();
   const pass  = document.getElementById('login-pass')?.value;
   const errEl = document.getElementById('login-error');
-  if (!email || !pass) return;
+  if (!email || !pass) {
+    if (errEl) { errEl.style.background='var(--red-dim)'; errEl.style.color='var(--red)'; errEl.textContent = 'Preencha email e senha'; errEl.style.display = 'block'; }
+    return;
+  }
+  if (pass.length < 6) {
+    if (errEl) { errEl.style.background='var(--red-dim)'; errEl.style.color='var(--red)'; errEl.textContent = 'Senha precisa ter mínimo 6 caracteres'; errEl.style.display = 'block'; }
+    return;
+  }
   try {
-    await signUpWithEmail(email, pass);
-    if (errEl) { errEl.style.background='var(--green-dim)'; errEl.style.color='var(--green)'; errEl.textContent = 'Conta criada! Verifique seu email.'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.style.background='var(--blue-dim)'; errEl.style.color='var(--blue)'; errEl.textContent = 'Criando conta...'; errEl.style.display = 'block'; }
+    const { data, error } = await db.auth.signUp({ email, password: pass });
+    if (error) throw error;
+    // Se confirmação de email está desativada, já loga direto
+    if (data?.session) {
+      currentUser = data.session.user;
+      await loadAllData();
+      hideLoginScreen();
+    } else {
+      // Se confirmação está ativa, avisa
+      if (errEl) { errEl.style.background='var(--green-dim)'; errEl.style.color='var(--green)'; errEl.textContent = '✓ Conta criada! Verifique seu email e clique no link de confirmação.'; errEl.style.display = 'block'; }
+    }
   } catch (e) {
-    if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+    console.error('Signup error:', e);
+    if (errEl) {
+      errEl.style.background='var(--red-dim)';
+      errEl.style.color='var(--red)';
+      errEl.textContent = e.message || 'Erro ao criar conta';
+      errEl.style.display = 'block';
+    }
   }
 }
 
