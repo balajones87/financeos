@@ -1,0 +1,13 @@
+[build]
+  publish = "sistemafinanceiro"
+  functions = "sistemafinanceiro/netlify/functions"
+
+[[redirects]]
+  from = "/api/pluggy/:splat"
+  to = "/.netlify/functions/pluggy-token/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
