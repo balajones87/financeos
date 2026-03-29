@@ -152,36 +152,43 @@ const PluggySync = {
   // Abre o widget Pluggy Connect para conectar um banco
   async openConnect(localAccountId, existingItemId = null) {
     this.log(`Abrindo widget para ${localAccountId}...`);
- 
     try {
-      const connectToken = await PluggyAPI.getConnectToken(existingItemId);
+      // 1. Busca o connectToken
+      const url = existingItemId
+        ? `${API}/connect-token?itemId=${existingItemId}`
+        : `${API}/connect-token`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Token error: ${res.status}`);
+      const data = await res.json();
+      this.log(`Resposta: ${JSON.stringify(Object.keys(data))}`);
+      const connectToken = data.accessToken || data.connectToken || data.token;
+      if (!connectToken) throw new Error(`Campo token não encontrado. Campos: ${JSON.stringify(Object.keys(data))}`);
  
-      // Carrega o SDK do Pluggy dinamicamente
+      // 2. Carrega SDK
       await loadPluggySDK();
+      if (!window.PluggyConnect) throw new Error('SDK PluggyConnect não carregou');
  
+      // 3. Abre widget
       return new Promise((resolve, reject) => {
-        const pluggyConnect = new PluggyConnect({
+        const pluggyConnect = new window.PluggyConnect({
           connectToken,
           onSuccess: async (itemData) => {
             this.log(`✓ Conectado: ${itemData.item?.connector?.name || localAccountId}`, 'success');
- 
-            // Salva o itemId localmente
             const stored = loadStoredItems();
             const existing = stored.findIndex(s => s.localId === localAccountId);
             const entry = {
-              localId:   localAccountId,
-              itemId:    itemData.item.id,
-              connector: itemData.item?.connector?.name || localAccountId,
+              localId:     localAccountId,
+              itemId:      itemData.item.id,
+              connector:   itemData.item?.connector?.name || localAccountId,
               connectedAt: new Date().toISOString(),
             };
             if (existing >= 0) stored[existing] = entry;
             else stored.push(entry);
             saveStoredItems(stored);
- 
             resolve(itemData.item.id);
           },
           onError: (error) => {
-            this.log(`Erro na conexão: ${error.message}`, 'error');
+            this.log(`Erro na conexão: ${JSON.stringify(error)}`, 'error');
             reject(error);
           },
           onClose: () => {
@@ -189,7 +196,6 @@ const PluggySync = {
             resolve(null);
           },
         });
- 
         pluggyConnect.init();
       });
     } catch (err) {
