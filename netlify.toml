@@ -1,6 +1,6 @@
 [build]
   publish = "sistemafinanceiro"
-  functions = "sistemafinanceiro/netlify/functions"
+  functions = "netlify/functions"
 
 [[redirects]]
   from = "/api/pluggy/:splat"
