@@ -1,14 +1,12 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
+  publish = "sistemafinanceiro"
+  functions = "sistemafinanceiro/netlify/functions"
 
-# Redireciona /api/pluggy/* para a função
 [[redirects]]
   from = "/api/pluggy/:splat"
   to = "/.netlify/functions/pluggy-token/:splat"
   status = 200
 
-# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
