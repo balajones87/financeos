@@ -1449,7 +1449,7 @@ body {
 }
 .alloc-seg { height: 100%; }
 
-/* ── IR & DEDUÇÕES ──────────────────────────────── */
+/* ── IR & DEDUÇÕES 2.0 ──────────────────────────── */
 .ir-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1477,6 +1477,160 @@ body {
 
 .ir-grid-top { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
 .ir-grid-mid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px; }
+
+/* IR 2.0 — Dashboard visual */
+.ir-dash-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+.ir-dash-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px;
+}
+.ir-dash-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 6px; }
+.ir-dash-val   { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.ir-dash-sub   { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+/* Progress bars de limite */
+.ir-progress-wrap { margin-bottom: 14px; }
+.ir-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.ir-progress-label { font-size: 12px; font-weight: 500; color: var(--text); }
+.ir-progress-vals  { font-size: 11px; font-family: var(--mono); color: var(--text2); }
+.ir-progress-bar   { height: 7px; border-radius: 6px; background: var(--surface2); overflow: hidden; }
+.ir-progress-fill  { height: 100%; border-radius: 6px; transition: width .4s ease; }
+
+/* Alerta sem comprovante */
+.ir-alert-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.3);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+  font-size: 12px; color: var(--amber);
+}
+.ir-alert-bar.ok { background: rgba(0,212,170,.08); border-color: rgba(0,212,170,.3); color: var(--green); }
+.ir-alert-bar button {
+  margin-left: auto; font-size: 11px; background: rgba(245,158,11,.15);
+  border: none; border-radius: 4px; padding: 3px 10px; color: var(--amber); cursor: pointer;
+}
+
+/* Tabela de despesas IR */
+.ir-table { width: 100%; border-collapse: collapse; }
+.ir-table th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--text3); padding: 8px 12px; text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.ir-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.ir-table tr:last-child td { border-bottom: none; }
+.ir-table tr:hover td { background: var(--surface2); }
+.ir-table .val-col { font-family: var(--mono); font-weight: 600; text-align: right; }
+.ir-table .act-col { text-align: right; white-space: nowrap; }
+
+/* Badge categoria */
+.ir-cat-badge {
+  display: inline-block; font-size: 10px; padding: 2px 8px;
+  border-radius: 20px; background: var(--surface2); color: var(--text2);
+  white-space: nowrap;
+}
+
+/* Badge comprovante */
+.ir-doc-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; padding: 2px 8px; border-radius: 20px; cursor: pointer;
+  border: none; white-space: nowrap;
+}
+.ir-doc-badge.sem { background: rgba(239,68,68,.1); color: var(--red); }
+.ir-doc-badge.com { background: rgba(0,212,170,.1); color: var(--green); }
+
+/* Tabs do módulo IR */
+.ir-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.ir-tab {
+  padding: 8px 16px; font-size: 12px; cursor: pointer; color: var(--text3);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+  transition: color .15s;
+}
+.ir-tab:hover { color: var(--text); }
+.ir-tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 600; }
+.ir-tab .tab-badge {
+  display: inline-block; background: var(--red); color: #fff;
+  font-size: 9px; padding: 1px 5px; border-radius: 10px; margin-left: 4px; vertical-align: middle;
+}
+
+/* Seção de cada aba */
+.ir-section { animation: fadeIn .15s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* DRE Fiscal (mantido da versão anterior) */
+.ir-dre-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+
+/* Documentos Fiscais */
+.doc-grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+.doc-list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.doc-list-item:last-child { border-bottom: none; }
+.doc-list-item:hover { background: var(--surface2); }
+.doc-icon { font-size: 22px; flex-shrink: 0; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.doc-cat-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+  background: var(--surface2); color: var(--text2); white-space: nowrap; flex-shrink: 0;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 28px; text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s; margin-bottom: 14px;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--green); background: rgba(0,212,170,.04);
+}
+.upload-zone-icon { font-size: 28px; margin-bottom: 8px; }
+.upload-zone-text { font-size: 13px; color: var(--text2); }
+.upload-zone-sub  { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* Modal IR */
+.ir-modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.ir-modal-overlay.open { display: flex; }
+.ir-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px; width: 480px; max-width: 96vw;
+  max-height: 90vh; overflow-y: auto;
+}
+.ir-modal-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+.ir-field { margin-bottom: 14px; }
+.ir-field label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .6px; }
+.ir-field input, .ir-field select, .ir-field textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px; color: var(--text); font-size: 13px;
+  box-sizing: border-box;
+}
+.ir-field input:focus, .ir-field select:focus { outline: none; border-color: var(--green); }
+.ir-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ir-modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* Vincular comprovante picker */
+.doc-picker { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.doc-picker-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+  font-size: 12px; transition: background .1s;
+}
+.doc-picker-item:last-child { border-bottom: none; }
+.doc-picker-item:hover { background: var(--surface2); }
+.doc-picker-item.selected { background: rgba(0,212,170,.08); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .ir-dash-grid { grid-template-columns: repeat(2,1fr); }
+  .ir-grid-mid  { grid-template-columns: 1fr; }
+  .doc-grid     { grid-template-columns: 1fr; }
+}
 
 
 
@@ -1536,6 +1690,10 @@ body {
       <div class="nav-label">Fiscal</div>
       <div class="nav-item" onclick="showView('ir', this)">
         <span class="nav-icon">📋</span> IR & Deduções
+        <span class="nav-badge" id="ir-sem-comprovante-badge" style="display:none"></span>
+      </div>
+      <div class="nav-item" onclick="showView('documentos', this)">
+        <span class="nav-icon">📁</span> Documentos Fiscais
       </div>
     </div>
 
@@ -2141,112 +2299,467 @@ body {
       </div>
     </div>
 
-    <!-- IR & DEDUÇÕES VIEW -->
+    <!-- IR & DEDUÇÕES VIEW 2.0 -->
     <div class="view" id="view-ir">
-      <!-- CARDS TOPO -->
-      <div class="ir-grid-top" id="ir-summary-cards"></div>
 
-      <div class="ir-grid-mid">
-        <!-- DRE FISCAL -->
+      <!-- HEADER -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:18px;font-weight:700" id="ir-titulo">Relatório de Deduções IRPF</div>
+          <div style="font-size:12px;color:var(--text3)">Resumo anual para declaração do Imposto de Renda</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <select id="ir-ano-sel" onchange="irChangeAno()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+          <button class="btn btn-primary" onclick="irExportPDF()">⬇ Baixar PDF</button>
+        </div>
+      </div>
+
+      <!-- ALERTA SEM COMPROVANTE -->
+      <div id="ir-alerta-comprovante" style="display:none"></div>
+
+      <!-- DASHBOARD CARDS -->
+      <div class="ir-dash-grid" id="ir-dash-cards"></div>
+
+      <!-- PROGRESS BARS -->
+      <div class="panel" style="padding:18px 20px;margin-bottom:16px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:14px;">Deduções vs. Limites Legais</div>
+        <div id="ir-progress-bars"></div>
+      </div>
+
+      <!-- TABS -->
+      <div class="ir-tabs">
+        <div class="ir-tab active" onclick="irShowTab('dependentes',this)">👨‍👩‍👧 Dependentes</div>
+        <div class="ir-tab" onclick="irShowTab('saude',this)">🏥 Saúde <span class="tab-badge" id="ir-badge-saude" style="display:none"></span></div>
+        <div class="ir-tab" onclick="irShowTab('educacao',this)">📚 Educação</div>
+        <div class="ir-tab" onclick="irShowTab('inss',this)">🏛 INSS</div>
+        <div class="ir-tab" onclick="irShowTab('pgbl',this)">🔄 PGBL</div>
+        <div class="ir-tab" onclick="irShowTab('resumo',this)">📊 Resumo Fiscal</div>
+      </div>
+
+      <!-- ABA DEPENDENTES -->
+      <div class="ir-section" id="ir-tab-dependentes">
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Resumo IRPF — Ano Calendário 2025</div>
-            <div style="font-size:10px;color:var(--text3)">Estimativa · não substitui contador</div>
+            <div class="panel-title">Dependentes (4)</div>
+            <div style="font-size:11px;color:var(--text3)">Dedução de R$ 2.275,08 por dependente</div>
+            <button class="btn btn-primary" style="margin-left:auto" onclick="irOpenModal('dependente')">+ Adicionar</button>
+          </div>
+          <div id="ir-dep-list"></div>
+        </div>
+      </div>
+
+      <!-- ABA SAÚDE -->
+      <div class="ir-section" id="ir-tab-saude" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Despesas de Saúde</div>
+            <div style="font-size:11px;color:var(--text3)">Dedução ilimitada</div>
+            <div style="display:flex;gap:8px;margin-left:auto;">
+              <button class="btn btn-ghost" onclick="irImportPluggy('saude')" style="font-size:11px">⚡ Importar do extrato</button>
+              <button class="btn btn-primary" onclick="irOpenModal('saude')">+ Adicionar</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="ir-table">
+              <thead>
+                <tr>
+                  <th>Data</th><th>Categoria</th><th>Beneficiário</th>
+                  <th>Prestador</th><th style="text-align:right">Valor</th>
+                  <th style="text-align:center">Comprovante</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="ir-saude-tbody"></tbody>
+            </table>
+          </div>
+          <div id="ir-saude-empty" style="text-align:center;padding:32px;color:var(--text3);display:none">
+            Nenhuma despesa de saúde cadastrada
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA EDUCAÇÃO -->
+      <div class="ir-section" id="ir-tab-educacao" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Despesas de Educação</div>
+            <div style="font-size:11px;color:var(--text3)" id="ir-educ-limite-sub">Limite: R$ 3.561,50/dependente/ano</div>
+            <button class="btn btn-primary" style="margin-left:auto" onclick="irOpenModal('educacao')">+ Adicionar</button>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="ir-table">
+              <thead>
+                <tr>
+                  <th>Data</th><th>Dependente</th><th>Nível</th>
+                  <th>Instituição</th><th style="text-align:right">Valor</th>
+                  <th style="text-align:center">Comprovante</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="ir-educ-tbody"></tbody>
+            </table>
+          </div>
+          <div id="ir-educ-empty" style="text-align:center;padding:32px;color:var(--text3);display:none">
+            Nenhuma despesa de educação cadastrada
+          </div>
+          <div id="ir-educ-aviso" style="display:none;padding:12px 16px;font-size:12px;border-top:1px solid var(--border)"></div>
+        </div>
+      </div>
+
+      <!-- ABA INSS -->
+      <div class="ir-section" id="ir-tab-inss" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Contribuições INSS</div>
+            <div style="font-size:11px;color:var(--text3)">Dedução ilimitada • Total: <span id="ir-inss-total">R$ 0,00</span></div>
+            <button class="btn btn-primary" style="margin-left:auto" onclick="irOpenModal('inss')">+ Adicionar</button>
+          </div>
+          <table class="ir-table">
+            <thead>
+              <tr><th>Mês Ref.</th><th>Tipo</th><th>Data Pgto</th><th style="text-align:right">Valor</th><th style="text-align:center">Comprovante</th><th></th></tr>
+            </thead>
+            <tbody id="ir-inss-tbody"></tbody>
+          </table>
+          <div id="ir-inss-empty" style="text-align:center;padding:32px;color:var(--text3);display:none">Nenhuma contribuição cadastrada</div>
+        </div>
+      </div>
+
+      <!-- ABA PGBL -->
+      <div class="ir-section" id="ir-tab-pgbl" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Contribuições PGBL</div>
+            <div style="font-size:11px;color:var(--text3)">Limite: 12% da renda tributável • Total: <span id="ir-pgbl-total">R$ 0,00</span></div>
+            <button class="btn btn-primary" style="margin-left:auto" onclick="irOpenModal('pgbl')">+ Adicionar</button>
+          </div>
+          <table class="ir-table">
+            <thead>
+              <tr><th>Data</th><th>Instituição</th><th>CNPJ</th><th style="text-align:right">Valor</th><th style="text-align:center">Comprovante</th><th></th></tr>
+            </thead>
+            <tbody id="ir-pgbl-tbody"></tbody>
+          </table>
+          <div id="ir-pgbl-empty" style="text-align:center;padding:32px;color:var(--text3);display:none">Nenhuma contribuição cadastrada</div>
+        </div>
+      </div>
+
+      <!-- ABA RESUMO FISCAL (DRE) -->
+      <div class="ir-section" id="ir-tab-resumo" style="display:none">
+        <div class="ir-grid-mid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">DRE Fiscal — Ano Calendário <span id="ir-dre-ano">2026</span></div>
+              <div style="font-size:10px;color:var(--text3)">Estimativa · não substitui contador</div>
+            </div>
+            <div class="pl-divider">RENDIMENTOS TRIBUTÁVEIS</div>
+            <div class="pl-line"><div class="pl-line-label">💼 Salário militar</div><div class="pl-line-value green" id="ir-salario">R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">🏥 Pró-labore consultório</div><div class="pl-line-value green" id="ir-prolab-consul">R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">⚡ Distribuição lucro energia</div><div class="pl-line-value green" id="ir-prolab-energia">R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">🏠 Aluguéis recebidos</div><div class="pl-line-value green" id="ir-alugueis">R$ 0</div></div>
+            <div class="pl-line" style="background:var(--green-dim)">
+              <div class="pl-line-label" style="font-weight:700;color:var(--text)">= BASE DE CÁLCULO</div>
+              <div class="pl-line-value green" style="font-size:15px" id="ir-base">R$ 0</div>
+            </div>
+            <div class="pl-divider">DEDUÇÕES</div>
+            <div class="pl-line"><div class="pl-line-label">🏥 Despesas médicas</div><div class="pl-line-value amber" id="ir-ded-saude">- R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">📚 Educação (limite R$ 3.561,50/dep)</div><div class="pl-line-value amber" id="ir-ded-educ">- R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">👨‍👩‍👧 Dependentes (R$ 2.275,08/dep.)</div><div class="pl-line-value amber" id="ir-ded-dep">- R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">🏛 INSS / Previdência Oficial</div><div class="pl-line-value amber" id="ir-ded-inss">- R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">🔄 Previdência Privada (PGBL)</div><div class="pl-line-value amber" id="ir-ded-pgbl">- R$ 0</div></div>
+            <div class="pl-line" style="background:var(--amber-dim)">
+              <div class="pl-line-label" style="font-weight:700;color:var(--text)">= TOTAL DEDUÇÕES</div>
+              <div class="pl-line-value amber" style="font-size:15px" id="ir-total-ded">- R$ 0</div>
+            </div>
+            <div class="pl-divider">IMPOSTO</div>
+            <div class="pl-line"><div class="pl-line-label">Base tributável líquida</div><div class="pl-line-value" id="ir-base-liq">R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">IR calculado (tabela 2026)</div><div class="pl-line-value red" id="ir-calculado">R$ 0</div></div>
+            <div class="pl-line"><div class="pl-line-label">IR retido na fonte</div><div class="pl-line-value" id="ir-retido">- R$ 0</div></div>
+            <div class="pl-line" style="background:var(--red-dim)">
+              <div class="pl-line-label" style="font-weight:700;font-size:14px;color:var(--text)">IR A PAGAR / RESTITUIR</div>
+              <div class="pl-line-value" style="font-size:16px" id="ir-resultado">R$ 0</div>
+            </div>
           </div>
 
-          <div class="pl-divider">RENDIMENTOS TRIBUTÁVEIS</div>
-          <div class="pl-line">
-            <div class="pl-line-label">💼 Salário militar</div>
-            <div class="pl-line-value green" id="ir-salario">R$ 0</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Alíquota -->
+            <div class="panel" style="padding:18px;">
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Alíquota Efetiva</div>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <div style="font-family:var(--mono);font-size:32px;font-weight:700" id="ir-aliquota-val">0%</div>
+                <div style="font-size:11px;color:var(--text3)">da renda bruta<br>vai para o IR</div>
+              </div>
+              <div class="ir-aliquota-bar"><div class="ir-aliquota-fill" id="ir-aliquota-fill" style="width:0%"></div></div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="ir-aliquota-faixa">—</div>
+            </div>
+            <!-- Economia estimada -->
+            <div class="panel" style="padding:18px;">
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Economia Estimada de IR</div>
+              <div style="font-family:var(--mono);font-size:26px;font-weight:700;color:var(--green)" id="ir-economia-val">R$ 0</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px;">* Cálculo baseado na alíquota marginal de 27,5%</div>
+              <div style="font-size:11px;color:var(--amber);margin-top:4px;">Ainda faltam: INSS, PGBL, outras rendas</div>
+            </div>
+            <!-- Dicas -->
+            <div class="panel">
+              <div class="panel-header"><div class="panel-title">💡 Oportunidades de Economia</div></div>
+              <div id="ir-dicas"></div>
+            </div>
           </div>
-          <div class="pl-line">
-            <div class="pl-line-label">🏥 Pró-labore consultório</div>
-            <div class="pl-line-value green" id="ir-prolab-consul">R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">⚡ Distribuição lucro energia</div>
-            <div class="pl-line-value green" id="ir-prolab-energia">R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">🏠 Aluguéis recebidos</div>
-            <div class="pl-line-value green" id="ir-alugueis">R$ 0</div>
-          </div>
-          <div class="pl-line" style="background:var(--green-dim)">
-            <div class="pl-line-label" style="font-weight:700;color:var(--text)">= BASE DE CÁLCULO</div>
-            <div class="pl-line-value green" style="font-size:15px" id="ir-base">R$ 0</div>
-          </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="pl-divider">DEDUÇÕES</div>
-          <div class="pl-line">
-            <div class="pl-line-label">🏥 Despesas médicas</div>
-            <div class="pl-line-value amber" id="ir-ded-saude">- R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">📚 Educação (limite R$ 3.561,50)</div>
-            <div class="pl-line-value amber" id="ir-ded-educ">- R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">👨‍👩‍👧 Dependentes (R$ 2.275,08/dep.)</div>
-            <div class="pl-line-value amber" id="ir-ded-dep">- R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">💰 INSS / Previdência</div>
-            <div class="pl-line-value amber" id="ir-ded-inss">- R$ 0</div>
-          </div>
-          <div class="pl-line" style="background:var(--amber-dim)">
-            <div class="pl-line-label" style="font-weight:700;color:var(--text)">= TOTAL DEDUÇÕES</div>
-            <div class="pl-line-value amber" style="font-size:15px" id="ir-total-ded">- R$ 0</div>
-          </div>
+    <!-- DOCUMENTOS FISCAIS VIEW -->
+    <div class="view" id="view-documentos">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-size:18px;font-weight:700">Documentos Fiscais</div>
+          <div style="font-size:12px;color:var(--text3)">Armazene informes de rendimento, recibos e comprovantes</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <select id="doc-ano-fil" onchange="docsLoad()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+            <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="">Todos os anos</option>
+          </select>
+          <button class="btn btn-primary" onclick="docsExportZip()">⬇ Baixar Todos (ZIP)</button>
+        </div>
+      </div>
 
-          <div class="pl-divider">IMPOSTO</div>
-          <div class="pl-line">
-            <div class="pl-line-label">Base tributável líquida</div>
-            <div class="pl-line-value" id="ir-base-liq">R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">IR calculado (tabela 2025)</div>
-            <div class="pl-line-value red" id="ir-calculado">R$ 0</div>
-          </div>
-          <div class="pl-line">
-            <div class="pl-line-label">IR retido na fonte</div>
-            <div class="pl-line-value" id="ir-retido">- R$ 0</div>
-          </div>
-          <div class="pl-line" style="background:var(--red-dim)">
-            <div class="pl-line-label" style="font-weight:700;font-size:14px;color:var(--text)">IR A PAGAR / RESTITUIR</div>
-            <div class="pl-line-value" style="font-size:16px" id="ir-resultado">R$ 0</div>
+      <div class="doc-grid">
+        <!-- UPLOAD -->
+        <div>
+          <div class="panel" style="padding:20px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Upload de Documento</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:16px;">Envie documentos fiscais para armazenamento seguro</div>
+
+            <div class="upload-zone" id="doc-upload-zone" onclick="document.getElementById('doc-file-input').click()"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="docsHandleDrop(event)">
+              <div class="upload-zone-icon">📄</div>
+              <div class="upload-zone-text">Clique ou arraste o arquivo aqui</div>
+              <div class="upload-zone-sub">PDF, PNG, JPG, DOCX — até 20MB</div>
+            </div>
+            <input type="file" id="doc-file-input" style="display:none" accept=".pdf,.png,.jpg,.jpeg,.docx" onchange="docsHandleFile(this.files[0])">
+
+            <div class="ir-field">
+              <label>Categoria</label>
+              <select id="doc-cat-sel">
+                <option value="">Selecione a categoria</option>
+                <option value="informe_rendimentos">Informe de Rendimentos</option>
+                <option value="compra_venda">Compra/Venda de Bem</option>
+                <option value="despesa_dedutivel">Despesa Dedutível — Saúde</option>
+                <option value="despesa_educ">Despesa Dedutível — Educação</option>
+                <option value="contrato">Contrato / Escritura</option>
+                <option value="imposto_pago">DARF / Imposto Pago</option>
+                <option value="pgbl_inss">Extrato PGBL / INSS</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div class="ir-field-row">
+              <div class="ir-field">
+                <label>Ano de Referência</label>
+                <input type="number" id="doc-ano-inp" value="2026" min="2020" max="2030">
+              </div>
+              <div class="ir-field" style="margin-bottom:0">
+                <label>Descrição (opcional)</label>
+                <input type="text" id="doc-desc-inp" placeholder="Ex: Unimed jan/26">
+              </div>
+            </div>
+
+            <div id="doc-file-preview" style="display:none;background:var(--surface2);border-radius:6px;padding:10px 12px;margin:10px 0;font-size:12px;color:var(--text2)"></div>
+
+            <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="docsUpload()">
+              ⬆ Enviar Documento
+            </button>
+            <div id="doc-upload-status" style="margin-top:8px;font-size:12px;text-align:center"></div>
           </div>
         </div>
 
-        <!-- LADO DIREITO -->
-        <div style="display:flex;flex-direction:column;gap:14px;">
-
-          <!-- DEDUÇÕES DETALHADAS -->
+        <!-- LISTA DOCUMENTOS -->
+        <div>
           <div class="panel">
             <div class="panel-header">
-              <div class="panel-title">Deduções por Categoria</div>
-              <div class="panel-action" onclick="">+ Adicionar</div>
+              <div class="panel-title">Documentos Armazenados</div>
+              <div style="font-size:11px;color:var(--text3)" id="doc-count-label">0 documento(s)</div>
             </div>
-            <div id="ir-deducoes-list"></div>
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;">
+              <input type="text" id="doc-search" placeholder="Buscar por nome..." oninput="docsRender()"
+                style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;">
+              <select id="doc-cat-fil" onchange="docsRender()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;">
+                <option value="">Todas as categorias</option>
+                <option value="informe_rendimentos">Informe de Rendimentos</option>
+                <option value="compra_venda">Compra/Venda</option>
+                <option value="despesa_dedutivel">Despesa Dedutível — Saúde</option>
+                <option value="despesa_educ">Despesa Dedutível — Educação</option>
+                <option value="contrato">Contrato / Escritura</option>
+                <option value="imposto_pago">DARF / Imposto Pago</option>
+                <option value="pgbl_inss">PGBL / INSS</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div id="doc-list-body">
+              <div style="text-align:center;padding:40px;color:var(--text3)">Carregando...</div>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <!-- ALÍQUOTA EFETIVA -->
-          <div class="panel" style="padding:18px;">
-            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Alíquota Efetiva</div>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-              <div style="font-family:var(--mono);font-size:32px;font-weight:700" id="ir-aliquota-val">0%</div>
-              <div style="font-size:11px;color:var(--text3)">da renda bruta<br>vai para o IR</div>
-            </div>
-            <div class="ir-aliquota-bar">
-              <div class="ir-aliquota-fill" id="ir-aliquota-fill" style="width:0%;background:var(--amber)"></div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:8px;" id="ir-aliquota-faixa">—</div>
+    <!-- MODAIS IR -->
+    <!-- Modal Saúde -->
+    <div class="ir-modal-overlay" id="ir-modal-saude">
+      <div class="ir-modal">
+        <div class="ir-modal-title">➕ Despesa de Saúde</div>
+        <div class="ir-field-row">
+          <div class="ir-field"><label>Data de Pagamento</label><input type="date" id="saude-data"></div>
+          <div class="ir-field"><label>Valor (R$)</label><input type="number" id="saude-valor" step="0.01" placeholder="0,00"></div>
+        </div>
+        <div class="ir-field">
+          <label>Categoria</label>
+          <select id="saude-cat">
+            <option value="plano_saude">Plano de Saúde</option>
+            <option value="consulta">Consulta Médica</option>
+            <option value="exame">Exame</option>
+            <option value="vacina_clinica">Vacina / Clínica</option>
+            <option value="psicologo">Psicólogo</option>
+            <option value="odonto">Odontológico</option>
+            <option value="fisio">Fisioterapia</option>
+            <option value="farmacia">Farmácia (c/ receita)</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="ir-field"><label>Beneficiário</label><input type="text" id="saude-benef" placeholder="Nome do paciente/titular"></div>
+        <div class="ir-field"><label>Prestador / Estabelecimento</label><input type="text" id="saude-prestador" placeholder="Ex: Unimed, Hospital, Dr. Silva"></div>
+        <div class="ir-field">
+          <label>Vincular Comprovante (opcional)</label>
+          <div class="doc-picker" id="saude-doc-picker">
+            <div style="padding:10px;color:var(--text3);font-size:12px">Carregando documentos...</div>
           </div>
+          <input type="hidden" id="saude-doc-id">
+        </div>
+        <div class="ir-field"><label>Observações</label><input type="text" id="saude-notas" placeholder="Opcional"></div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('saude')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irSaveSaude()">Salvar</button>
+        </div>
+      </div>
+    </div>
 
-          <!-- DICAS DE ECONOMIA -->
-          <div class="panel">
-            <div class="panel-header"><div class="panel-title">💡 Oportunidades de Economia</div></div>
-            <div id="ir-dicas"></div>
+    <!-- Modal Educação -->
+    <div class="ir-modal-overlay" id="ir-modal-educacao">
+      <div class="ir-modal">
+        <div class="ir-modal-title">➕ Despesa de Educação</div>
+        <div class="ir-field-row">
+          <div class="ir-field"><label>Data de Pagamento</label><input type="date" id="educ-data"></div>
+          <div class="ir-field"><label>Valor (R$)</label><input type="number" id="educ-valor" step="0.01" placeholder="0,00"></div>
+        </div>
+        <div class="ir-field">
+          <label>Dependente</label>
+          <select id="educ-dependente"></select>
+        </div>
+        <div class="ir-field">
+          <label>Nível de Ensino</label>
+          <select id="educ-nivel">
+            <option value="educacao_infantil">Educação Infantil</option>
+            <option value="fundamental">Ensino Fundamental</option>
+            <option value="medio">Ensino Médio</option>
+            <option value="superior">Ensino Superior</option>
+            <option value="pos_graduacao">Pós-Graduação</option>
+            <option value="profissionalizante">Profissionalizante</option>
+          </select>
+        </div>
+        <div class="ir-field"><label>Instituição de Ensino</label><input type="text" id="educ-inst" placeholder="Ex: Anglo CAESP, USP"></div>
+        <div class="ir-field">
+          <label>Vincular Comprovante (opcional)</label>
+          <div class="doc-picker" id="educ-doc-picker">
+            <div style="padding:10px;color:var(--text3);font-size:12px">Carregando documentos...</div>
           </div>
+          <input type="hidden" id="educ-doc-id">
+        </div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('educacao')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irSaveEducacao()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal INSS -->
+    <div class="ir-modal-overlay" id="ir-modal-inss">
+      <div class="ir-modal">
+        <div class="ir-modal-title">➕ Contribuição INSS</div>
+        <div class="ir-field-row">
+          <div class="ir-field"><label>Mês de Referência</label><input type="month" id="inss-mes"></div>
+          <div class="ir-field"><label>Data de Pagamento</label><input type="date" id="inss-data"></div>
+        </div>
+        <div class="ir-field-row">
+          <div class="ir-field">
+            <label>Tipo</label>
+            <select id="inss-tipo">
+              <option value="empregado">Empregado</option>
+              <option value="autonomo">Autônomo / Contribuinte Individual</option>
+              <option value="facultativo">Facultativo</option>
+              <option value="patronal">Patronal</option>
+            </select>
+          </div>
+          <div class="ir-field"><label>Valor (R$)</label><input type="number" id="inss-valor" step="0.01" placeholder="0,00"></div>
+        </div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('inss')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irSaveInss()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal PGBL -->
+    <div class="ir-modal-overlay" id="ir-modal-pgbl">
+      <div class="ir-modal">
+        <div class="ir-modal-title">➕ Contribuição PGBL</div>
+        <div class="ir-field-row">
+          <div class="ir-field"><label>Data de Pagamento</label><input type="date" id="pgbl-data"></div>
+          <div class="ir-field"><label>Valor (R$)</label><input type="number" id="pgbl-valor" step="0.01" placeholder="0,00"></div>
+        </div>
+        <div class="ir-field"><label>Instituição</label><input type="text" id="pgbl-inst" placeholder="Ex: Brasilprev, ICATU"></div>
+        <div class="ir-field"><label>CNPJ da Entidade (opcional)</label><input type="text" id="pgbl-cnpj" placeholder="00.000.000/0001-00"></div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('pgbl')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irSavePgbl()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Dependente -->
+    <div class="ir-modal-overlay" id="ir-modal-dependente">
+      <div class="ir-modal">
+        <div class="ir-modal-title">➕ Dependente</div>
+        <div class="ir-field"><label>Nome Completo</label><input type="text" id="dep-nome"></div>
+        <div class="ir-field-row">
+          <div class="ir-field">
+            <label>Parentesco</label>
+            <select id="dep-parentesco">
+              <option value="conjuge">Cônjuge / Companheiro(a)</option>
+              <option value="filho">Filho(a)</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="ir-field"><label>Data de Nascimento</label><input type="date" id="dep-nasc"></div>
+        </div>
+        <div class="ir-field"><label>CPF</label><input type="text" id="dep-cpf" placeholder="000.000.000-00"></div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('dependente')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irSaveDependente()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Vincular Comprovante (a partir de despesa existente) -->
+    <div class="ir-modal-overlay" id="ir-modal-vincular">
+      <div class="ir-modal">
+        <div class="ir-modal-title">📎 Vincular Comprovante</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="ir-vincular-desc"></div>
+        <div class="doc-picker" id="ir-vincular-picker" style="max-height:320px;"></div>
+        <div class="ir-modal-footer">
+          <button class="btn btn-ghost" onclick="irCloseModal('vincular')">Cancelar</button>
+          <button class="btn btn-primary" onclick="irConfirmarVinculo()">Vincular</button>
         </div>
       </div>
     </div>
@@ -3342,6 +3855,7 @@ function showView(viewId, navEl) {
     consorcios:     '📄 Consórcios',
     investimentos:  '📈 Investimentos — Portfólio Consolidado',
     ir:             '📋 IR & Deduções — IRPF 2026',
+    documentos:     '📁 Documentos Fiscais',
     recorrentes:    '🔁 Lançamentos Recorrentes',
     regras:         'Regras de Auto-Categorização',
     contas:         'Contas Conectadas',
@@ -3359,6 +3873,7 @@ function showView(viewId, navEl) {
   if (viewId === 'consorcios')    renderConsorcios();
   if (viewId === 'investimentos') renderInvestimentos();
   if (viewId === 'ir')            renderIR();
+  if (viewId === 'documentos')    docsLoad();
 }
 
 // ============================================================
@@ -3700,30 +4215,368 @@ function renderInvestimentos() {
 function invToggleSegmento(seg) { /* expansão futura */ }
 
 // ============================================================
-// IR & DEDUÇÕES ENGINE
+// IR & DEDUÇÕES ENGINE 2.0 — Supabase dinâmico
 // ============================================================
-const IR_DATA = {
-  // Rendimentos reais 2026
-  salarioAnual:      216000, // R$ 18.000/mês × 12 — salário militar
-  prolabConsul:       73308, // R$ 73.308,82 PJ→PF em 2026 (média R$ 6.109/mês)
-  prolabEnergia:          0, // Energia ainda sem distribuição registrada
-  alugueis:           49200, // Liberty R$ 4.100/mês × 12
-  inssRetido:         14400, // estimado
-  irRetidoFonte:      38000, // estimado na fonte (salário militar)
-  // Dependentes reais
-  dependentes: 4,           // Isabela (cônjuge), Catarina, João Luiz, João Gabriel
+
+// Constantes fiscais 2026
+const IR_CONST = {
+  ded_dependente:   2275.08,
+  ded_educ_limite:  3561.50,
+  pgbl_pct:         0.12,
+  // Rendimentos fixos (ajustar via DRE fiscal)
+  salarioAnual:     216000,
+  prolabConsul:     73308,
+  prolabEnergia:    0,
+  alugueis:         49200,
+  irRetidoFonte:    38000,
 };
 
-const DEDUCOES_LISTA = [
-  { icon: '🏥', nome: 'Despesas Médicas',         cat: 'saude', valor: 8420,  limite: null,   obs: 'Sem limite — NUMED, farmácias, plano' },
-  { icon: '📚', nome: 'Educação filhos (2 dep.)', cat: 'educ',  valor: 7123,  limite: 7123,   obs: 'R$ 3.561,50 × 2 dependentes estudantes' },
-  { icon: '👨‍👩‍👧', nome: '4 Dependentes',           cat: 'dep',   valor: 9100.32,limite: null,  obs: 'Isabela + Catarina + João Luiz + João Gabriel' },
-  { icon: '💰', nome: 'INSS / Prev. Oficial',      cat: 'inss',  valor: 14400, limite: null,   obs: 'Contribuição dedutível integral' },
-  { icon: '🏠', nome: 'Previdência Privada (PGBL)',cat: 'pgbl',  valor: 0,     limite: null,   obs: 'Até 12% da renda bruta — R$ 40.585 possível' },
-];
+// Estado local do módulo IR
+let irAno = 2026;
+let irDeps    = [];
+let irSaude   = [];
+let irEduc    = [];
+let irInss    = [];
+let irPgbl    = [];
+let irDocs    = [];
+let irVincularTarget = null; // { tabela, id }
 
-function calcIRTabela2025(base) {
-  // Tabela IRPF 2025 — faixas anuais
+// Categorias legíveis
+const IR_CAT_SAUDE = {
+  plano_saude:'Plano de Saúde', consulta:'Consulta Médica', exame:'Exame',
+  vacina_clinica:'Vacina / Clínica', psicologo:'Psicólogo', odonto:'Odontológico',
+  fisio:'Fisioterapia', farmacia:'Farmácia', outro:'Outro'
+};
+const IR_CAT_EDUC = {
+  educacao_infantil:'Ed. Infantil', fundamental:'Fundamental',
+  medio:'Médio', superior:'Superior', pos_graduacao:'Pós-Graduação',
+  profissionalizante:'Profissionalizante'
+};
+const IR_CAT_DOC = {
+  informe_rendimentos:'Informe de Rendimentos', compra_venda:'Compra/Venda',
+  despesa_dedutivel:'Despesa Dedutível — Saúde', despesa_educ:'Despesa Dedutível — Educação',
+  contrato:'Contrato / Escritura', imposto_pago:'DARF / Imposto Pago',
+  pgbl_inss:'PGBL / INSS', outro:'Outro'
+};
+
+function irFmt(v) { return 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+
+// ── Carregamento ─────────────────────────────────────────────
+async function irLoad() {
+  if (!currentUser) return;
+  const uid = currentUser.id;
+  irAno = parseInt(document.getElementById('ir-ano-sel')?.value || 2026);
+
+  const [deps, saude, educ, inss, pgbl, docs] = await Promise.all([
+    db.from('ir_dependentes').select('*').eq('user_id', uid).eq('ano', irAno).eq('is_active', true).order('created_at'),
+    db.from('ir_despesas_saude').select('*').eq('user_id', uid).eq('ano', irAno).order('data_pgto', {ascending:false}),
+    db.from('ir_despesas_educacao').select('*').eq('user_id', uid).eq('ano', irAno).order('data_pgto', {ascending:false}),
+    db.from('ir_inss').select('*').eq('user_id', uid).eq('ano', irAno).order('mes_ref', {ascending:false}),
+    db.from('ir_pgbl').select('*').eq('user_id', uid).eq('ano', irAno).order('data_pgto', {ascending:false}),
+    db.from('ir_documentos').select('*').eq('user_id', uid).eq('ano', irAno).order('created_at', {ascending:false}),
+  ]);
+  irDeps  = deps.data  || [];
+  irSaude = saude.data || [];
+  irEduc  = educ.data  || [];
+  irInss  = inss.data  || [];
+  irPgbl  = pgbl.data  || [];
+  irDocs  = docs.data  || [];
+
+  irRenderAll();
+}
+
+async function renderIR() { await irLoad(); }
+
+function irChangeAno() { irLoad(); }
+
+// ── Render completo ──────────────────────────────────────────
+function irRenderAll() {
+  irRenderDashCards();
+  irRenderProgressBars();
+  irRenderAlerta();
+  irRenderDeps();
+  irRenderSaude();
+  irRenderEduc();
+  irRenderInss();
+  irRenderPgbl();
+  irRenderDRE();
+}
+
+// ── Dashboard Cards ──────────────────────────────────────────
+function irRenderDashCards() {
+  const totSaude = irSaude.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totEduc  = irEduc.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totInss  = irInss.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totPgbl  = irPgbl.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totDep   = irDeps.length * IR_CONST.ded_dependente;
+  const totalDed = totSaude + Math.min(totEduc, irDeps.length * IR_CONST.ded_educ_limite) + totDep + totInss + totPgbl;
+  const economia = totalDed * 0.275;
+  const semComp  = [...irSaude, ...irEduc, ...irInss, ...irPgbl].filter(x => !x.doc_id).length;
+
+  document.getElementById('ir-dash-cards').innerHTML = `
+    <div class="ir-dash-card">
+      <div class="ir-dash-label">Dependentes</div>
+      <div class="ir-dash-val" style="color:var(--green)">${irFmt(totDep)}</div>
+      <div class="ir-dash-sub">${irDeps.length} dependente(s) cadastrado(s)</div>
+    </div>
+    <div class="ir-dash-card">
+      <div class="ir-dash-label">Despesas de Saúde</div>
+      <div class="ir-dash-val" style="color:var(--green)">${irFmt(totSaude)}</div>
+      <div class="ir-dash-sub">${irSaude.length} lançamento(s) • dedução ilimitada</div>
+    </div>
+    <div class="ir-dash-card">
+      <div class="ir-dash-label">Despesas de Educação</div>
+      <div class="ir-dash-val" style="color:var(--green)">${irFmt(totEduc)}</div>
+      <div class="ir-dash-sub">Limite: ${irFmt(irDeps.length * IR_CONST.ded_educ_limite)} para ${irDeps.length} dep.</div>
+    </div>
+    <div class="ir-dash-card">
+      <div class="ir-dash-label">Total Deduções</div>
+      <div class="ir-dash-val" style="color:var(--amber)">${irFmt(totalDed)}</div>
+      <div class="ir-dash-sub">Economia estimada: <strong style="color:var(--green)">${irFmt(economia)}</strong></div>
+    </div>`;
+
+  // Badge sidebar
+  const b = document.getElementById('ir-sem-comprovante-badge');
+  if (b) { b.textContent = semComp; b.style.display = semComp > 0 ? '' : 'none'; }
+}
+
+// ── Progress bars ────────────────────────────────────────────
+function irRenderProgressBars() {
+  const totSaude = irSaude.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totEduc  = irEduc.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totInss  = irInss.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const totPgbl  = irPgbl.reduce((s,x) => s + parseFloat(x.valor), 0);
+  const limEduc  = irDeps.length * IR_CONST.ded_educ_limite;
+  const rendaBruta = IR_CONST.salarioAnual + IR_CONST.prolabConsul + IR_CONST.prolabEnergia + IR_CONST.alugueis;
+  const limPgbl  = rendaBruta * IR_CONST.pgbl_pct;
+
+  const bars = [
+    { label:'Despesas de Saúde', val: totSaude, limite: null, color: 'var(--green)', sub: 'Sem limite legal' },
+    { label:'Educação', val: totEduc, limite: limEduc, color: 'var(--blue)', sub: `Limite: ${irFmt(limEduc)}` },
+    { label:'INSS', val: totInss, limite: null, color: 'var(--amber)', sub: 'Sem limite legal' },
+    { label:'PGBL', val: totPgbl, limite: limPgbl, color: 'var(--purple)', sub: `Limite 12% renda: ${irFmt(limPgbl)}` },
+  ];
+
+  document.getElementById('ir-progress-bars').innerHTML = bars.map(b => {
+    const pct = b.limite ? Math.min(100, b.val / b.limite * 100) : (b.val > 0 ? 60 : 0);
+    const cor = b.limite && b.val > b.limite ? 'var(--red)' : b.color;
+    const aviso = b.limite && b.val > b.limite ? ` <span style="color:var(--red);font-size:10px">⚠ Excede limite!</span>` : '';
+    return `<div class="ir-progress-wrap">
+      <div class="ir-progress-header">
+        <div class="ir-progress-label">${b.label}${aviso}</div>
+        <div class="ir-progress-vals">${irFmt(b.val)}${b.limite ? ` / ${irFmt(b.limite)}` : ' (sem limite)'}</div>
+      </div>
+      <div class="ir-progress-bar">
+        <div class="ir-progress-fill" style="width:${pct}%;background:${cor}"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">${b.sub}${b.limite ? ` • ${irFmt(Math.max(0,b.limite-b.val))} restante` : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Alerta sem comprovante ───────────────────────────────────
+function irRenderAlerta() {
+  const semComp = [...irSaude, ...irEduc, ...irInss, ...irPgbl].filter(x => !x.doc_id).length;
+  const el = document.getElementById('ir-alerta-comprovante');
+  if (semComp === 0) {
+    el.style.display = 'none';
+  } else {
+    el.style.display = '';
+    el.innerHTML = `<div class="ir-alert-bar">
+      ⚠ <strong>${semComp} despesa(s) sem comprovante</strong> — vincule os documentos para garantir a dedução.
+      <button onclick="irShowTab('saude', document.querySelector('.ir-tab:nth-child(2)'))">Ver despesas</button>
+    </div>`;
+  }
+}
+
+// ── Dependentes ──────────────────────────────────────────────
+function irRenderDeps() {
+  const el = document.getElementById('ir-dep-list');
+  if (!irDeps.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3)">Nenhum dependente cadastrado</div>';
+    return;
+  }
+  el.innerHTML = irDeps.map(d => `
+    <div class="deducao-row">
+      <div class="deducao-icon">${d.parentesco === 'conjuge' ? '💑' : '👦'}</div>
+      <div class="deducao-info">
+        <div class="deducao-name">${d.nome}</div>
+        <div class="deducao-sub">${d.parentesco === 'conjuge' ? 'Cônjuge' : d.parentesco === 'filho' ? 'Filho(a)' : 'Outro'}${d.cpf ? ' • CPF: '+d.cpf : ''}${d.nascimento ? ' • Nasc: '+new Date(d.nascimento+'T00:00:00').toLocaleDateString('pt-BR') : ''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="deducao-val">${irFmt(IR_CONST.ded_dependente)}</div>
+        <div class="deducao-limit">Dedução por dependente/ano</div>
+      </div>
+      <button onclick="irDelDep('${d.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);padding:4px 8px;font-size:16px">🗑</button>
+    </div>`).join('');
+}
+
+// ── Saúde ────────────────────────────────────────────────────
+function irRenderSaude() {
+  const tbody = document.getElementById('ir-saude-tbody');
+  const empty = document.getElementById('ir-saude-empty');
+  const badge = document.getElementById('ir-badge-saude');
+  const semComp = irSaude.filter(x => !x.doc_id).length;
+  if (badge) { badge.textContent = semComp; badge.style.display = semComp > 0 ? '' : 'none'; }
+  if (!irSaude.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = irSaude.map(r => {
+    const doc = irDocs.find(d => d.id === r.doc_id);
+    return `<tr>
+      <td>${new Date(r.data_pgto+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+      <td><span class="ir-cat-badge">${IR_CAT_SAUDE[r.categoria]||r.categoria}</span></td>
+      <td>${r.beneficiario}</td>
+      <td style="color:var(--text2)">${r.prestador}</td>
+      <td class="val-col" style="color:var(--green)">${irFmt(parseFloat(r.valor))}</td>
+      <td style="text-align:center">
+        <button class="ir-doc-badge ${doc ? 'com' : 'sem'}" onclick="irAbrirVincular('ir_despesas_saude','${r.id}','${r.beneficiario} - ${IR_CAT_SAUDE[r.categoria]||r.categoria}')">
+          ${doc ? '✅ '+doc.nome_arquivo.substring(0,18)+'…' : '📎 Sem comprovante'}
+        </button>
+      </td>
+      <td class="act-col">
+        <button onclick="irDelSaude('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--red)">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Educação ─────────────────────────────────────────────────
+function irRenderEduc() {
+  const tbody = document.getElementById('ir-educ-tbody');
+  const empty = document.getElementById('ir-educ-empty');
+  const aviso = document.getElementById('ir-educ-aviso');
+  if (!irEduc.length) { tbody.innerHTML=''; empty.style.display=''; aviso.style.display='none'; return; }
+  empty.style.display = 'none';
+
+  // Aviso por dependente
+  const porDep = {};
+  irEduc.forEach(r => { porDep[r.dependente] = (porDep[r.dependente]||0) + parseFloat(r.valor); });
+  const avisos = Object.entries(porDep).map(([dep, tot]) => {
+    const lim = IR_CONST.ded_educ_limite;
+    const ok = tot <= lim;
+    return `<span style="margin-right:12px">${ok ? '✅' : '⚠'} <strong>${dep}</strong>: ${irFmt(tot)} ${ok ? `(dentro do limite de ${irFmt(lim)})` : `<span style="color:var(--red)">EXCEDE o limite de ${irFmt(lim)}!</span>`}</span>`;
+  }).join('');
+  aviso.style.display = '';
+  aviso.innerHTML = avisos;
+
+  tbody.innerHTML = irEduc.map(r => {
+    const doc = irDocs.find(d => d.id === r.doc_id);
+    return `<tr>
+      <td>${new Date(r.data_pgto+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+      <td>${r.dependente}</td>
+      <td><span class="ir-cat-badge">${IR_CAT_EDUC[r.nivel]||r.nivel}</span></td>
+      <td>${r.instituicao}</td>
+      <td class="val-col" style="color:var(--green)">${irFmt(parseFloat(r.valor))}</td>
+      <td style="text-align:center">
+        <button class="ir-doc-badge ${doc ? 'com' : 'sem'}" onclick="irAbrirVincular('ir_despesas_educacao','${r.id}','${r.dependente} - ${r.instituicao}')">
+          ${doc ? '✅ '+doc.nome_arquivo.substring(0,18)+'…' : '📎 Sem comprovante'}
+        </button>
+      </td>
+      <td class="act-col">
+        <button onclick="irDelEduc('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--red)">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── INSS ─────────────────────────────────────────────────────
+function irRenderInss() {
+  const tbody = document.getElementById('ir-inss-tbody');
+  const empty = document.getElementById('ir-inss-empty');
+  const tot   = irInss.reduce((s,x)=>s+parseFloat(x.valor),0);
+  document.getElementById('ir-inss-total').textContent = irFmt(tot);
+  if (!irInss.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  const tipos = { empregado:'Empregado', autonomo:'Autônomo', facultativo:'Facultativo', patronal:'Patronal' };
+  tbody.innerHTML = irInss.map(r => `<tr>
+    <td>${r.mes_ref}</td>
+    <td><span class="ir-cat-badge">${tipos[r.tipo]||r.tipo}</span></td>
+    <td>${r.data_pgto ? new Date(r.data_pgto+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+    <td class="val-col" style="color:var(--green)">${irFmt(parseFloat(r.valor))}</td>
+    <td style="text-align:center">
+      <button class="ir-doc-badge sem" style="font-size:10px" onclick="irAbrirVincular('ir_inss','${r.id}','INSS ${r.mes_ref}')">📎</button>
+    </td>
+    <td class="act-col"><button onclick="irDelInss('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--red)">🗑</button></td>
+  </tr>`).join('');
+}
+
+// ── PGBL ─────────────────────────────────────────────────────
+function irRenderPgbl() {
+  const tbody = document.getElementById('ir-pgbl-tbody');
+  const empty = document.getElementById('ir-pgbl-empty');
+  const tot   = irPgbl.reduce((s,x)=>s+parseFloat(x.valor),0);
+  document.getElementById('ir-pgbl-total').textContent = irFmt(tot);
+  if (!irPgbl.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = irPgbl.map(r => `<tr>
+    <td>${new Date(r.data_pgto+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+    <td>${r.instituicao}</td>
+    <td style="color:var(--text3)">${r.cnpj||'—'}</td>
+    <td class="val-col" style="color:var(--green)">${irFmt(parseFloat(r.valor))}</td>
+    <td style="text-align:center">
+      <button class="ir-doc-badge sem" style="font-size:10px" onclick="irAbrirVincular('ir_pgbl','${r.id}','PGBL ${r.instituicao}')">📎</button>
+    </td>
+    <td class="act-col"><button onclick="irDelPgbl('${r.id}')" style="background:none;border:none;cursor:pointer;color:var(--red)">🗑</button></td>
+  </tr>`).join('');
+}
+
+// ── DRE Fiscal ───────────────────────────────────────────────
+function irRenderDRE() {
+  const d = IR_CONST;
+  const totSaude = irSaude.reduce((s,x)=>s+parseFloat(x.valor),0);
+  const totEduc  = irEduc.reduce((s,x)=>s+parseFloat(x.valor),0);
+  const totInss  = irInss.reduce((s,x)=>s+parseFloat(x.valor),0);
+  const totPgbl  = irPgbl.reduce((s,x)=>s+parseFloat(x.valor),0);
+  const dedDep   = irDeps.length * d.ded_dependente;
+  const dedEduc  = Math.min(totEduc, irDeps.length * d.ded_educ_limite);
+  const rendaBruta = d.salarioAnual + d.prolabConsul + d.prolabEnergia + d.alugueis;
+  const totalDed  = totSaude + dedEduc + dedDep + totInss + totPgbl;
+  const baseLiq   = Math.max(0, rendaBruta - totalDed);
+  const irCalc    = calcIRTabela2026(baseLiq);
+  const irAPagar  = irCalc - d.irRetidoFonte;
+  const aliqEf    = rendaBruta > 0 ? irCalc / rendaBruta * 100 : 0;
+  const economia  = totalDed * 0.275;
+  const fmt = irFmt;
+
+  const setEl = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
+  setEl('ir-dre-ano',         irAno);
+  setEl('ir-salario',         fmt(d.salarioAnual));
+  setEl('ir-prolab-consul',   fmt(d.prolabConsul));
+  setEl('ir-prolab-energia',  fmt(d.prolabEnergia));
+  setEl('ir-alugueis',        fmt(d.alugueis));
+  setEl('ir-base',            fmt(rendaBruta));
+  setEl('ir-ded-saude',       '- '+fmt(totSaude));
+  setEl('ir-ded-educ',        '- '+fmt(dedEduc));
+  setEl('ir-ded-dep',         '- '+fmt(dedDep));
+  setEl('ir-ded-inss',        '- '+fmt(totInss));
+  setEl('ir-ded-pgbl',        '- '+fmt(totPgbl));
+  setEl('ir-total-ded',       '- '+fmt(totalDed));
+  setEl('ir-base-liq',        fmt(baseLiq));
+  setEl('ir-calculado',       fmt(irCalc));
+  setEl('ir-retido',          '- '+fmt(d.irRetidoFonte));
+  setEl('ir-economia-val',    fmt(economia));
+  const resEl = document.getElementById('ir-resultado');
+  if (resEl) { resEl.textContent = (irAPagar>=0?'':'- ')+fmt(Math.abs(irAPagar)); resEl.style.color = irAPagar>=0?'var(--red)':'var(--green)'; }
+  const alEl = document.getElementById('ir-aliquota-val'); if(alEl) alEl.textContent = aliqEf.toFixed(2)+'%';
+  const afEl = document.getElementById('ir-aliquota-fill'); if(afEl) { afEl.style.width = Math.min(100,aliqEf*3)+'%'; afEl.style.background = aliqEf<10?'var(--green)':aliqEf<20?'var(--amber)':'var(--red)'; }
+  const faixas = ['Isento','7,5%','15%','22,5%','27,5%'];
+  const fi = baseLiq<=26963?0:baseLiq<=33919?1:baseLiq<=45012?2:baseLiq<=55976?3:4;
+  setEl('ir-aliquota-faixa', 'Faixa marginal: '+faixas[fi]);
+
+  // Dicas
+  const dicas = [];
+  if (totPgbl === 0) dicas.push({ icon:'💡', txt:`PGBL pode deduzir até ${fmt(rendaBruta*0.12)} (12% da renda bruta) — economia estimada de ${fmt(rendaBruta*0.12*0.275)}` });
+  dicas.push({ icon:'📑', txt:'Guarde todos recibos médicos — sem limite de dedução, reduz diretamente a base' });
+  dicas.push({ icon:'🏠', txt:'Despesas com imóvel (IPTU, reformas documentadas) podem compor o custo de aquisição na venda' });
+  const dicasEl = document.getElementById('ir-dicas');
+  if (dicasEl) dicasEl.innerHTML = dicas.map(d => `
+    <div class="saude-item">
+      <div class="saude-icon">${d.icon}</div>
+      <div class="saude-info"><div class="saude-desc" style="color:var(--text2)">${d.txt}</div></div>
+    </div>`).join('');
+}
+
+function calcIRTabela2026(base) {
   if (base <= 26963.20) return 0;
   if (base <= 33919.80) return (base - 26963.20) * 0.075;
   if (base <= 45012.60) return (base - 33919.80) * 0.15  + 521.69;
@@ -3731,98 +4584,288 @@ function calcIRTabela2025(base) {
   return                       (base - 55976.16) * 0.275 + 4651.76;
 }
 
-function renderIR() {
-  const d = IR_DATA;
-  const rendaBruta    = d.salarioAnual + d.prolabConsul + d.prolabEnergia + d.alugueis;
-  const dedSaude      = DEDUCOES_LISTA.find(x=>x.cat==='saude')?.valor || 0;
-  const dedEduc       = Math.min(DEDUCOES_LISTA.find(x=>x.cat==='educ')?.valor||0, 3561.50);
-  const dedDep        = DEDUCOES_LISTA.find(x=>x.cat==='dep')?.valor || (d.dependentes * 2275.08);
-  const dedINSS       = d.inssRetido;
-  const dedPGBL       = DEDUCOES_LISTA.find(x=>x.cat==='pgbl')?.valor || 0;
-  const totalDed      = dedSaude + dedEduc + dedDep + dedINSS + dedPGBL;
-  const baseLiq       = Math.max(0, rendaBruta - totalDed);
-  const irCalculado   = calcIRTabela2025(baseLiq);
-  const irAPagar      = irCalculado - d.irRetidoFonte;
-  const aliquotaEf    = rendaBruta > 0 ? (irCalculado / rendaBruta * 100) : 0;
+// ── Tabs ─────────────────────────────────────────────────────
+function irShowTab(tab, el) {
+  document.querySelectorAll('.ir-section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.ir-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ir-tab-'+tab).style.display = '';
+  if (el) el.classList.add('active');
+  else { document.querySelectorAll('.ir-tab').forEach(t => { if(t.getAttribute('onclick')?.includes("'"+tab+"'")) t.classList.add('active'); }); }
+}
 
-  // Summary cards
-  document.getElementById('ir-summary-cards').innerHTML = `
-    <div class="ir-card" style="border-color:var(--border)">
-      <div class="ir-card-label">Renda Bruta Anual</div>
-      <div class="ir-card-val" style="color:var(--green)">R$ ${rendaBruta.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div class="ir-card-sub">4 fontes de renda</div>
-    </div>
-    <div class="ir-card" style="border-color:var(--border)">
-      <div class="ir-card-label">Total Deduções</div>
-      <div class="ir-card-val" style="color:var(--amber)">R$ ${totalDed.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div class="ir-card-sub">${(totalDed/rendaBruta*100).toFixed(1)}% da renda bruta</div>
-    </div>
-    <div class="ir-card" style="border-color:var(--border)">
-      <div class="ir-card-label">IR ${irAPagar>=0?'a Pagar':'a Restituir'}</div>
-      <div class="ir-card-val" style="color:${irAPagar>=0?'var(--red)':'var(--green)'}">
-        R$ ${Math.abs(irAPagar).toLocaleString('pt-BR',{minimumFractionDigits:2})}
-      </div>
-      <div class="ir-card-sub">${irAPagar>=0?'Saldo devedor':'Você tem restituição'}</div>
-    </div>
-    <div class="ir-card" style="border-color:var(--border)">
-      <div class="ir-card-label">Alíquota Efetiva</div>
-      <div class="ir-card-val" style="color:var(--amber)">${aliquotaEf.toFixed(2)}%</div>
-      <div class="ir-card-sub">Sobre a renda bruta total</div>
-    </div>`;
+// ── Modais ───────────────────────────────────────────────────
+function irOpenModal(tipo) {
+  // Popular doc picker para saúde e educação
+  const pickerId = tipo === 'saude' ? 'saude-doc-picker' : tipo === 'educacao' ? 'educ-doc-picker' : null;
+  const hiddenId = tipo === 'saude' ? 'saude-doc-id' : tipo === 'educacao' ? 'educ-doc-id' : null;
+  const cats     = tipo === 'saude' ? ['despesa_dedutivel'] : ['despesa_educ','contrato'];
+  if (pickerId && hiddenId) irPopulateDocPicker(pickerId, cats, hiddenId);
+  // Popular dependentes no select educação
+  if (tipo === 'educacao') {
+    const sel = document.getElementById('educ-dependente');
+    sel.innerHTML = irDeps.map(d => `<option value="${d.nome}">${d.nome}</option>`).join('') || '<option value="">Cadastre um dependente primeiro</option>';
+  }
+  // Default data para hoje
+  const today = new Date().toISOString().split('T')[0];
+  const dataEl = document.getElementById(tipo === 'inss' ? 'inss-data' : tipo+'-data');
+  if (dataEl) dataEl.value = today;
+  document.getElementById('ir-modal-'+tipo).classList.add('open');
+}
 
-  // DRE Fiscal
-  const fmt = v => `R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('ir-salario').textContent         = fmt(d.salarioAnual);
-  document.getElementById('ir-prolab-consul').textContent   = fmt(d.prolabConsul);
-  document.getElementById('ir-prolab-energia').textContent  = fmt(d.prolabEnergia);
-  document.getElementById('ir-alugueis').textContent        = fmt(d.alugueis);
-  document.getElementById('ir-base').textContent            = fmt(rendaBruta);
-  document.getElementById('ir-ded-saude').textContent       = `- ${fmt(dedSaude)}`;
-  document.getElementById('ir-ded-educ').textContent        = `- ${fmt(dedEduc)}`;
-  document.getElementById('ir-ded-dep').textContent         = `- ${fmt(dedDep)}`;
-  document.getElementById('ir-ded-inss').textContent        = `- ${fmt(dedINSS)}`;
-  document.getElementById('ir-total-ded').textContent       = `- ${fmt(totalDed)}`;
-  document.getElementById('ir-base-liq').textContent        = fmt(baseLiq);
-  document.getElementById('ir-calculado').textContent       = fmt(irCalculado);
-  document.getElementById('ir-retido').textContent          = `- ${fmt(d.irRetidoFonte)}`;
-  const resEl = document.getElementById('ir-resultado');
-  resEl.textContent = `${irAPagar>=0?'':'- '}${fmt(Math.abs(irAPagar))}`;
-  resEl.style.color = irAPagar >= 0 ? 'var(--red)' : 'var(--green)';
+function irCloseModal(tipo) {
+  document.getElementById('ir-modal-'+tipo).classList.remove('open');
+}
 
-  // Deduções lista
-  document.getElementById('ir-deducoes-list').innerHTML = DEDUCOES_LISTA.map(d => `
-    <div class="deducao-row">
-      <div class="deducao-icon">${d.icon}</div>
-      <div class="deducao-info">
-        <div class="deducao-name">${d.nome}</div>
-        <div class="deducao-sub">${d.obs}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="deducao-val">${d.valor>0?'- R$ '+d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}):'—'}</div>
-        ${d.limite ? `<div class="deducao-limit">Limite: R$ ${d.limite.toLocaleString('pt-BR')}</div>` : ''}
-      </div>
-    </div>`).join('');
-
-  // Alíquota
-  document.getElementById('ir-aliquota-val').textContent  = `${aliquotaEf.toFixed(1)}%`;
-  document.getElementById('ir-aliquota-fill').style.width = `${Math.min(100,aliquotaEf*3)}%`;
-  document.getElementById('ir-aliquota-fill').style.background = aliquotaEf < 10 ? 'var(--green)' : aliquotaEf < 20 ? 'var(--amber)' : 'var(--red)';
-  const faixas = ['Isento (até R$ 2.247/mês)', 'Faixa 7,5%', 'Faixa 15%', 'Faixa 22,5%', 'Faixa 27,5%'];
-  const fi = baseLiq<=26963?0:baseLiq<=33919?1:baseLiq<=45012?2:baseLiq<=55976?3:4;
-  document.getElementById('ir-aliquota-faixa').textContent = `Faixa marginal: ${faixas[fi]}`;
-
-  // Dicas
-  const dicas = [];
-  if (dedPGBL === 0) dicas.push({ icon: '💡', txt: 'PGBL pode deduzir até R$ '+Math.floor(rendaBruta*0.12).toLocaleString('pt-BR')+' (12% da renda bruta) — economia estimada de R$ '+Math.floor(rendaBruta*0.12*0.275).toLocaleString('pt-BR') });
-  if (d.dependentes < 2) dicas.push({ icon: '👨‍👩‍👧', txt: 'Cada dependente deduz R$ 2.275/ano — avalie incluir cônjuge se aplicável' });
-  dicas.push({ icon: '📑', txt: 'Guarde todos recibos médicos — sem limite de dedução e reduz diretamente a base' });
-  dicas.push({ icon: '🏠', txt: 'Despesas com imóvel próprio (IPTU, reformas) podem ser deduzidas na venda (custo de aquisição)' });
-  document.getElementById('ir-dicas').innerHTML = dicas.map(d => `
-    <div class="saude-item">
-      <div class="saude-icon">${d.icon}</div>
-      <div class="saude-info"><div class="saude-desc" style="color:var(--text2)">${d.txt}</div></div>
+function irPopulateDocPicker(pickerId, cats, hiddenId) {
+  const picker = document.getElementById(pickerId);
+  if (!picker) return;
+  const filtered = irDocs.filter(d => cats.includes(d.categoria));
+  if (!filtered.length) {
+    picker.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px">Nenhum documento disponível nessa categoria. Faça upload em Documentos Fiscais.</div>';
+    return;
+  }
+  picker.innerHTML = filtered.map(d => `
+    <div class="doc-picker-item" onclick="irSelectDoc(this,'${d.id}','${hiddenId}')">
+      📄 <span style="flex:1">${d.nome_arquivo}</span>
+      <span style="color:var(--text3);font-size:10px">${IR_CAT_DOC[d.categoria]||d.categoria}</span>
     </div>`).join('');
 }
+
+function irSelectDoc(el, docId, hiddenId) {
+  el.closest('.doc-picker').querySelectorAll('.doc-picker-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  const hid = document.getElementById(hiddenId);
+  if (hid) hid.value = docId;
+}
+
+// ── Salvar ───────────────────────────────────────────────────
+async function irSaveSaude() {
+  const data = document.getElementById('saude-data').value;
+  const valor = parseFloat(document.getElementById('saude-valor').value);
+  const cat = document.getElementById('saude-cat').value;
+  const benef = document.getElementById('saude-benef').value.trim();
+  const prestador = document.getElementById('saude-prestador').value.trim();
+  const docId = document.getElementById('saude-doc-id').value || null;
+  const notas = document.getElementById('saude-notas').value.trim();
+  if (!data || !valor || !benef || !prestador) return alert('Preencha os campos obrigatórios.');
+  const { error } = await db.from('ir_despesas_saude').insert({
+    user_id: currentUser.id, ano: irAno, data_pgto: data,
+    categoria: cat, beneficiario: benef, prestador, valor, doc_id: docId||null, notas: notas||null
+  });
+  if (error) return alert('Erro: '+error.message);
+  irCloseModal('saude');
+  await irLoad();
+}
+
+async function irSaveEducacao() {
+  const data = document.getElementById('educ-data').value;
+  const valor = parseFloat(document.getElementById('educ-valor').value);
+  const dep = document.getElementById('educ-dependente').value;
+  const nivel = document.getElementById('educ-nivel').value;
+  const inst = document.getElementById('educ-inst').value.trim();
+  const docId = document.getElementById('educ-doc-id').value || null;
+  if (!data || !valor || !dep || !inst) return alert('Preencha os campos obrigatórios.');
+  const { error } = await db.from('ir_despesas_educacao').insert({
+    user_id: currentUser.id, ano: irAno, data_pgto: data,
+    dependente: dep, nivel, instituicao: inst, valor, doc_id: docId||null
+  });
+  if (error) return alert('Erro: '+error.message);
+  irCloseModal('educacao');
+  await irLoad();
+}
+
+async function irSaveInss() {
+  const mes = document.getElementById('inss-mes').value;
+  const data = document.getElementById('inss-data').value || null;
+  const tipo = document.getElementById('inss-tipo').value;
+  const valor = parseFloat(document.getElementById('inss-valor').value);
+  if (!mes || !valor) return alert('Preencha os campos obrigatórios.');
+  const { error } = await db.from('ir_inss').insert({
+    user_id: currentUser.id, ano: irAno, mes_ref: mes, data_pgto: data, tipo, valor
+  });
+  if (error) return alert('Erro: '+error.message);
+  irCloseModal('inss');
+  await irLoad();
+}
+
+async function irSavePgbl() {
+  const data = document.getElementById('pgbl-data').value;
+  const valor = parseFloat(document.getElementById('pgbl-valor').value);
+  const inst = document.getElementById('pgbl-inst').value.trim();
+  const cnpj = document.getElementById('pgbl-cnpj').value.trim();
+  if (!data || !valor || !inst) return alert('Preencha os campos obrigatórios.');
+  const { error } = await db.from('ir_pgbl').insert({
+    user_id: currentUser.id, ano: irAno, data_pgto: data, instituicao: inst, cnpj: cnpj||null, valor
+  });
+  if (error) return alert('Erro: '+error.message);
+  irCloseModal('pgbl');
+  await irLoad();
+}
+
+async function irSaveDependente() {
+  const nome = document.getElementById('dep-nome').value.trim();
+  const parentesco = document.getElementById('dep-parentesco').value;
+  const nasc = document.getElementById('dep-nasc').value || null;
+  const cpf = document.getElementById('dep-cpf').value.trim() || null;
+  if (!nome) return alert('Informe o nome.');
+  const { error } = await db.from('ir_dependentes').insert({
+    user_id: currentUser.id, ano: irAno, nome, parentesco, nascimento: nasc, cpf
+  });
+  if (error) return alert('Erro: '+error.message);
+  irCloseModal('dependente');
+  await irLoad();
+}
+
+// ── Deletar ──────────────────────────────────────────────────
+async function irDelDep(id)   { if (!confirm('Remover dependente?')) return; await db.from('ir_dependentes').delete().eq('id',id); await irLoad(); }
+async function irDelSaude(id) { if (!confirm('Remover despesa?'))    return; await db.from('ir_despesas_saude').delete().eq('id',id); await irLoad(); }
+async function irDelEduc(id)  { if (!confirm('Remover despesa?'))    return; await db.from('ir_despesas_educacao').delete().eq('id',id); await irLoad(); }
+async function irDelInss(id)  { if (!confirm('Remover?'))            return; await db.from('ir_inss').delete().eq('id',id); await irLoad(); }
+async function irDelPgbl(id)  { if (!confirm('Remover?'))            return; await db.from('ir_pgbl').delete().eq('id',id); await irLoad(); }
+
+// ── Vincular comprovante ─────────────────────────────────────
+function irAbrirVincular(tabela, id, descricao) {
+  irVincularTarget = { tabela, id };
+  document.getElementById('ir-vincular-desc').textContent = 'Despesa: ' + descricao;
+  const picker = document.getElementById('ir-vincular-picker');
+  picker.innerHTML = irDocs.map(d => `
+    <div class="doc-picker-item" onclick="this.closest('.doc-picker').querySelectorAll('.doc-picker-item').forEach(i=>i.classList.remove('selected'));this.classList.add('selected');irVincularTarget.docId='${d.id}'">
+      📄 <span style="flex:1">${d.nome_arquivo}</span>
+      <span style="color:var(--text3);font-size:10px;margin-left:8px">${IR_CAT_DOC[d.categoria]||d.categoria} · ${d.ano}</span>
+    </div>`).join('') || '<div style="padding:14px;color:var(--text3);font-size:12px">Nenhum documento. Faça upload em Documentos Fiscais.</div>';
+  document.getElementById('ir-modal-vincular').classList.add('open');
+}
+
+async function irConfirmarVinculo() {
+  if (!irVincularTarget?.docId) return alert('Selecione um documento.');
+  const { tabela, id, docId } = irVincularTarget;
+  await db.from(tabela).update({ doc_id: docId }).eq('id', id);
+  irCloseModal('vincular');
+  await irLoad();
+}
+
+// ── Import Pluggy ────────────────────────────────────────────
+async function irImportPluggy(tipo) {
+  alert('Funcionalidade em desenvolvimento — irá buscar transações categorizadas como Saúde no extrato Pluggy.');
+}
+
+// ── Export PDF simples ───────────────────────────────────────
+function irExportPDF() {
+  window.print();
+}
+
+// ============================================================
+// DOCUMENTOS FISCAIS ENGINE
+// ============================================================
+let docsAll = [];
+
+async function docsLoad() {
+  if (!currentUser) return;
+  const ano = document.getElementById('doc-ano-fil')?.value;
+  let q = db.from('ir_documentos').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false});
+  if (ano) q = q.eq('ano', parseInt(ano));
+  const { data } = await q;
+  docsAll = data || [];
+  // Atualizar também o irDocs para vinculação
+  irDocs = docsAll;
+  docsRender();
+}
+
+function docsRender() {
+  const search = (document.getElementById('doc-search')?.value||'').toLowerCase();
+  const catFil = document.getElementById('doc-cat-fil')?.value||'';
+  const filtered = docsAll.filter(d =>
+    (!search || d.nome_arquivo.toLowerCase().includes(search) || (d.descricao||'').toLowerCase().includes(search)) &&
+    (!catFil || d.categoria === catFil)
+  );
+  document.getElementById('doc-count-label').textContent = filtered.length + ' documento(s) encontrado(s)';
+  const iconMap = { informe_rendimentos:'📊', compra_venda:'🏠', despesa_dedutivel:'🏥', despesa_educ:'📚', contrato:'📝', imposto_pago:'🧾', pgbl_inss:'💰', outro:'📄' };
+  const body = document.getElementById('doc-list-body');
+  if (!filtered.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Nenhum documento encontrado</div>';
+    return;
+  }
+  body.innerHTML = filtered.map(d => `
+    <div class="doc-list-item">
+      <div class="doc-icon">${iconMap[d.categoria]||'📄'}</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.nome_arquivo}</div>
+        <div class="doc-meta">${IR_CAT_DOC[d.categoria]||d.categoria} · ${d.ano}${d.descricao ? ' · '+d.descricao : ''}</div>
+      </div>
+      <span class="doc-cat-badge">${d.ano}</span>
+      <button onclick="docsDownload('${d.id}','${d.storage_path}','${d.nome_arquivo}')" style="background:none;border:none;cursor:pointer;color:var(--blue);font-size:18px;padding:4px 6px" title="Baixar">⬇</button>
+      <button onclick="docsDel('${d.id}','${d.storage_path}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:18px;padding:4px 6px" title="Excluir">🗑</button>
+    </div>`).join('');
+}
+
+let docFileSelected = null;
+
+function docsHandleFile(file) {
+  if (!file) return;
+  docFileSelected = file;
+  const prev = document.getElementById('doc-file-preview');
+  prev.style.display = '';
+  prev.innerHTML = `📄 <strong>${file.name}</strong> · ${(file.size/1024).toFixed(1)} KB`;
+}
+
+function docsHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('doc-upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) docsHandleFile(file);
+}
+
+async function docsUpload() {
+  if (!docFileSelected) return alert('Selecione um arquivo.');
+  const cat = document.getElementById('doc-cat-sel').value;
+  if (!cat) return alert('Selecione a categoria.');
+  const ano = parseInt(document.getElementById('doc-ano-inp').value);
+  const desc = document.getElementById('doc-desc-inp').value.trim();
+  const uid = currentUser.id;
+  const ext = docFileSelected.name.split('.').pop();
+  const path = `${uid}/${ano}/${Date.now()}_${docFileSelected.name}`;
+  const statusEl = document.getElementById('doc-upload-status');
+  statusEl.textContent = '⏳ Enviando...';
+  statusEl.style.color = 'var(--text3)';
+
+  const { error: upErr } = await db.storage.from('ir-documentos').upload(path, docFileSelected, { upsert: false });
+  if (upErr) { statusEl.textContent = '❌ Erro no upload: '+upErr.message; statusEl.style.color='var(--red)'; return; }
+
+  const { error: dbErr } = await db.from('ir_documentos').insert({
+    user_id: uid, ano, nome_arquivo: docFileSelected.name, categoria: cat,
+    descricao: desc||null, storage_path: path,
+    tamanho_bytes: docFileSelected.size, mime_type: docFileSelected.type
+  });
+  if (dbErr) { statusEl.textContent = '❌ Erro ao salvar: '+dbErr.message; statusEl.style.color='var(--red)'; return; }
+
+  statusEl.textContent = '✅ Documento enviado com sucesso!';
+  statusEl.style.color = 'var(--green)';
+  docFileSelected = null;
+  document.getElementById('doc-file-preview').style.display = 'none';
+  document.getElementById('doc-file-input').value = '';
+  await docsLoad();
+  setTimeout(() => { statusEl.textContent = ''; }, 3000);
+}
+
+async function docsDownload(id, path, nome) {
+  const { data, error } = await db.storage.from('ir-documentos').download(path);
+  if (error) return alert('Erro ao baixar: '+error.message);
+  const url = URL.createObjectURL(data);
+  const a = document.createElement('a'); a.href = url; a.download = nome; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function docsDel(id, path) {
+  if (!confirm('Excluir documento? Isso removerá o arquivo e todos os vínculos.')) return;
+  await db.storage.from('ir-documentos').remove([path]);
+  await db.from('ir_documentos').delete().eq('id', id);
+  await docsLoad();
+}
+
+function docsExportZip() {
+  alert('Exportação ZIP em desenvolvimento — em breve baixará todos os documentos do ano em um arquivo compactado.');
+}
+
 
 // ============================================================
 // PROJEÇÃO 12 MESES ENGINE
