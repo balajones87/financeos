@@ -1700,6 +1700,9 @@ body {
       <div class="nav-item" onclick="showView('projecao', this)">
         <span class="nav-icon">📅</span> Projeção 12M
       </div>
+      <div class="nav-item" onclick="showView('cartoes', this)">
+        <span class="nav-icon">▭</span> Cartões
+      </div>
     </div>
 
     <div class="nav-section">
@@ -1722,9 +1725,6 @@ body {
       </div>
       <div class="nav-item" onclick="showView('recorrentes', this)">
         <span class="nav-icon">🔁</span> Recorrentes
-      </div>
-      <div class="nav-item" onclick="showView('cartoes', this)">
-        <span class="nav-icon">▭</span> Cartões
       </div>
     </div>
 
@@ -3556,7 +3556,7 @@ function renderDashboardTx() {
     const isCredit = tx.amount > 0;
     const iconBg = isInternal ? 'var(--blue-dim)' : isCredit ? 'var(--green-dim)' : 'var(--surface2)';
     return `
-    <div class="tx-item" onclick="${isInternal ? '' : `openCatPicker(event, ${tx.id})`}" style="${isInternal ? 'opacity:0.6' : ''}">
+    <div class="tx-item" onclick="${isInternal ? '' : `openCatPicker(event, '${tx.id}')`}" style="${isInternal ? 'opacity:0.6' : ''}">
       <div class="tx-icon" style="background:${iconBg}">${txRowIcon(tx)}</div>
       <div class="tx-info">
         <div class="tx-name">${tx.desc}</div>
@@ -3611,7 +3611,7 @@ function renderTransactions() {
     }
 
     return `
-    <div class="tx-table-row ${isInternal ? 'is-transfer' : ''}" onclick="${isInternal ? '' : `openCatPicker(event, ${tx.id})`}">
+    <div class="tx-table-row ${isInternal ? 'is-transfer' : ''}" onclick="${isInternal ? '' : `openCatPicker(event, '${tx.id}')`}">
       <div class="tx-desc-col">
         <div class="tx-icon" style="background:${isInternal ? 'var(--blue-dim)' : 'var(--surface2)'};width:30px;height:30px;font-size:13px;border-radius:6px;display:flex;align-items:center;justify-content:center;">
           ${isInternal ? '⇄' : cat ? cat.icon : '❓'}
@@ -4272,7 +4272,7 @@ let activeTxId = null;
 function openCatPicker(e, txId) {
   e.stopPropagation();
   activeTxId = txId;
-  const tx = TRANSACTIONS.find(t => t.id === txId);
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
   const picker = document.getElementById('cat-picker');
 
   // Opções de transferência primeiro (separadas)
@@ -5962,7 +5962,7 @@ function renderPJTxList(txsPJ) {
     const cat = tx.category ? getCatById(tx.category) : null;
     const isCredit = tx.amount > 0;
     return `
-    <div class="tx-item" onclick="openCatPicker(event, ${tx.id})">
+    <div class="tx-item" onclick="openCatPicker(event, '${tx.id}')">
       <div class="tx-icon" style="background:${isCredit ? 'var(--green-dim)' : 'var(--red-dim)'}">
         ${cat ? cat.icon : '❓'}
       </div>
