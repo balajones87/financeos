@@ -342,74 +342,25 @@ const PluggySync = {
 };
 
 // ─── Carrega SDK Pluggy dinamicamente ─────────────────────────
+// Usa o SDK oficial da Pluggy — ele injeta window.PluggyConnect
+const PLUGGY_SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/v2.1.0/pluggy-connect.js';
+
 async function loadPluggySDK() {
-  // Não precisamos mais do SDK externo — usamos iframe direto
-  if (!window.PluggyConnect) {
-    window.PluggyConnect = PluggyConnectIframe;
-  }
-}
+  if (window.PluggyConnect) return; // já carregado
 
-// Implementação própria do widget via iframe
-function PluggyConnectIframe({ connectToken, onSuccess, onError, onClose }) {
-  let overlay = null;
-
-  this.init = function() {
-    // Cria overlay
-    overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position:fixed;inset:0;background:rgba(0,0,0,0.7);
-      z-index:99999;display:flex;align-items:center;justify-content:center;
-    `;
-
-    // Botão fechar
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '✕';
-    closeBtn.style.cssText = `
-      position:absolute;top:16px;right:16px;background:white;border:none;
-      border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;
-      display:flex;align-items:center;justify-content:center;z-index:100000;
-    `;
-    closeBtn.onclick = () => {
-      document.body.removeChild(overlay);
-      if (onClose) onClose();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = PLUGGY_SDK_URL;
+    script.onload = () => {
+      console.log('[Pluggy] SDK oficial carregado:', typeof window.PluggyConnect);
+      resolve();
     };
-
-    // iframe com o widget Pluggy
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://connect.pluggy.ai/?connectToken=${encodeURIComponent(connectToken)}`;
-    iframe.style.cssText = `
-      width:480px;height:680px;border:none;border-radius:12px;
-      background:white;max-width:95vw;max-height:90vh;
-    `;
-    iframe.allow = 'clipboard-write';
-
-    // Escuta mensagens do iframe (callback do widget)
-    const messageHandler = (event) => {
-      if (!event.origin.includes('pluggy.ai')) return;
-      console.log('[Pluggy iframe] mensagem:', event.data);
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data?.event === 'SUCCESS' || data?.type === 'SUCCESS') {
-          window.removeEventListener('message', messageHandler);
-          document.body.removeChild(overlay);
-          if (onSuccess) onSuccess(data);
-        } else if (data?.event === 'ERROR' || data?.type === 'ERROR') {
-          window.removeEventListener('message', messageHandler);
-          document.body.removeChild(overlay);
-          if (onError) onError(data);
-        } else if (data?.event === 'CLOSE' || data?.type === 'CLOSE') {
-          window.removeEventListener('message', messageHandler);
-          document.body.removeChild(overlay);
-          if (onClose) onClose();
-        }
-      } catch(e) {}
+    script.onerror = (e) => {
+      console.error('[Pluggy] Falha ao carregar SDK:', e);
+      reject(new Error('Falha ao carregar SDK da Pluggy'));
     };
-    window.addEventListener('message', messageHandler);
-
-    overlay.appendChild(closeBtn);
-    overlay.appendChild(iframe);
-    document.body.appendChild(overlay);
-  };
+    document.head.appendChild(script);
+  });
 }
 
 // ─── Exposição global ─────────────────────────────────────────
