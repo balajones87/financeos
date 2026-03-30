@@ -82,10 +82,11 @@ async function loadAllData() {
     console.log('[Supabase] Dados carregados com sucesso');
 
     // 3. Atualiza a UI
-    if (window.renderDashboard)    window.renderDashboard();
-    if (window.renderDashboardTx) window.renderDashboardTx();
-    if (window.renderCatBars)     window.renderCatBars();
+    if (window.renderDashboard)     window.renderDashboard();
+    if (window.renderDashboardTx)  window.renderDashboardTx();
+    if (window.renderCatBars)      window.renderCatBars();
     if (window.updatePendingBadge) window.updatePendingBadge();
+    if (window.renderTransactions) window.renderTransactions();
 
   } catch (err) {
     console.error('[Supabase] Erro ao carregar dados:', err);
@@ -182,7 +183,7 @@ async function loadTransactions(limit = 500) {
       date:        t.tx_date,
       desc:        t.description,
       amount:      parseFloat(t.amount),
-      account:     t.accounts?.local_id || t.account_id,
+      account:     t.accounts?.local_id || '',
       category:    t.categories?.name || null,
       txType:      t.tx_type,
       origin:      t.cat_origin,
@@ -190,6 +191,10 @@ async function loadTransactions(limit = 500) {
       external_id: t.external_id,
       notes:       t.notes,
     }));
+    console.log(`[Supabase] ${window.TRANSACTIONS.length} transações carregadas`);
+  } else {
+    window.TRANSACTIONS = [];
+    console.log('[Supabase] Nenhuma transação no banco ainda');
   }
 }
 
