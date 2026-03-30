@@ -99,18 +99,25 @@ async function loadAccounts() {
   if (error) throw error;
   window._DB_ACCOUNTS = data || [];
   if (data?.length > 0) {
-    const mapped = data.map(a => ({
-      id:      a.local_id,
-      _db_id:  a.id,
-      name:    a.name,
-      type:    a.type,
-      color:   a.color,
-      icon:    a.icon,
-      balance: parseFloat(a.balance) || 0,
-      pluggy_item_id:    a.pluggy_item_id,
-      pluggy_account_id: a.pluggy_account_id,
-      last_sync: a.last_sync,
-    }));
+    const mapped = data.map(a => {
+      // Preserva flags locais (ex: noPluggy) que existam no array atual
+      const existing = window.ACCOUNTS?.find(acc => acc.id === a.local_id) || {};
+      return {
+        id:      a.local_id,
+        _db_id:  a.id,
+        name:    a.name,
+        type:    a.type,
+        color:   a.color,
+        icon:    a.icon,
+        balance: parseFloat(a.balance) || 0,
+        pluggy_item_id:    a.pluggy_item_id,
+        pluggy_account_id: a.pluggy_account_id,
+        last_sync: a.last_sync,
+        // Preserva flags locais importantes
+        noPluggy: existing.noPluggy || a.local_id === 'carteira' || false,
+        bank:     a.bank || existing.bank || null,
+      };
+    });
     if (window.ACCOUNTS) {
       window.ACCOUNTS.length = 0;
       window.ACCOUNTS.push(...mapped);
