@@ -215,10 +215,28 @@ async function saveTransaction(tx) {
     return;
   }
 
-  const catId = await getCategoryDbId(tx.category);
+  const externalId = tx.external_id || null;
 
+  // Se não tem external_id, usa insert simples
+  if (!externalId) {
+    const { error } = await db.from('transactions').insert({
+      user_id:     currentUser.id,
+      account_id:  accDbId,
+      category_id: catId,
+      description: tx.desc,
+      amount:      tx.amount,
+      tx_date:     tx.date,
+      tx_type:     tx.txType || (tx.amount > 0 ? 'credit' : 'debit'),
+      is_card_tx:  tx.cardTx || false,
+      cat_origin:  tx.origin || 'pending',
+      updated_at:  new Date().toISOString(),
+    });
+    if (error) console.warn('[Supabase] Erro insert tx:', error.message);
+    return;
+  }
+
+  // Com external_id: upsert com deduplicação
   const { error } = await db.from('transactions').upsert({
-    id:          tx.id || undefined,
     user_id:     currentUser.id,
     account_id:  accDbId,
     category_id: catId,
@@ -228,14 +246,12 @@ async function saveTransaction(tx) {
     tx_type:     tx.txType || (tx.amount > 0 ? 'credit' : 'debit'),
     is_card_tx:  tx.cardTx || false,
     cat_origin:  tx.origin || 'pending',
-    external_id: tx.external_id || null,
+    external_id: externalId,
     raw_data:    tx.raw_data || null,
     updated_at:  new Date().toISOString(),
-  }, { onConflict: 'external_id', ignoreDuplicates: false });
+  }, { onConflict: 'external_id' });
 
-  if (error && !error.message.includes('duplicate')) {
-    console.warn('[Supabase] Erro ao salvar tx:', error.message);
-  }
+  if (error) console.warn('[Supabase] Erro upsert tx:', error.message);
 }
 
 async function saveBatchTransactions(txs) {
