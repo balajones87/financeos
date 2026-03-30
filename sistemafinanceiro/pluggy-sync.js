@@ -343,7 +343,7 @@ const PluggySync = {
 
 // ─── Carrega SDK Pluggy dinamicamente ─────────────────────────
 // Usa o SDK oficial da Pluggy — ele injeta window.PluggyConnect
-const PLUGGY_SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/v2.1.0/pluggy-connect.js';
+const PLUGGY_SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js';
 
 async function loadPluggySDK() {
   if (window.PluggyConnect) return; // já carregado
