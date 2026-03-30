@@ -238,20 +238,25 @@ const PluggySync = {
         // Busca contas do item
         const accounts = await PluggyAPI.getAccounts(conn.itemId);
 
-        for (const acc of accounts) {
-          // Atualiza saldo em memória e persiste no Supabase
-          const localAcc = window.ACCOUNTS?.find(a => a.id === conn.localId);
-          if (localAcc && acc.balance != null) {
-            localAcc.balance = acc.balance;
-            this.log(`Saldo ${conn.localId}: R$ ${acc.balance.toFixed(2)}`, 'success');
-            // Persiste no banco para não perder ao recarregar a página
-            if (window.saveAccount) {
-              window.saveAccount(localAcc).catch(e =>
-                console.warn('[Pluggy] Erro ao salvar saldo:', e)
-              );
-            }
+        // Agrupa saldo: soma contas BANK/CHECKING/SAVINGS, ignora CREDIT (saldo negativo do cartão)
+        const localAcc = window.ACCOUNTS?.find(a => a.id === conn.localId);
+        if (localAcc && accounts.length > 0) {
+          const balanceAccounts = accounts.filter(a =>
+            !a.type || ['BANK','CHECKING','SAVINGS','PAYMENT','INVESTMENT'].includes(a.type?.toUpperCase())
+          );
+          const totalBalance = balanceAccounts.length > 0
+            ? balanceAccounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
+            : accounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
+          localAcc.balance = totalBalance;
+          this.log(`Saldo ${conn.localId}: R$ ${totalBalance.toFixed(2)} (${accounts.length} sub-conta(s))`, 'success');
+          if (window.saveAccount) {
+            window.saveAccount(localAcc).catch(e =>
+              console.warn('[Pluggy] Erro ao salvar saldo:', e)
+            );
           }
+        }
 
+        for (const acc of accounts) {
           // Busca transações
           const pluggyTxs = await PluggyAPI.getTransactions(acc.id, from, to);
           this.log(`${pluggyTxs.length} transações de ${conn.connector || conn.localId}`);
