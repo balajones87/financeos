@@ -76,7 +76,15 @@ exports.handler = async (event) => {
       });
 
       const data = await res.json();
-      return { statusCode: 200, headers, body: JSON.stringify(data) };
+      console.log('[pluggy-token] connect_token resposta:', JSON.stringify(data));
+      // Normaliza: sempre retorna { accessToken } independente do formato da Pluggy
+      const accessToken = data.accessToken || data.connectToken || data.token
+                       || data?.data?.accessToken;
+      if (!accessToken) {
+        console.error('[pluggy-token] Token não encontrado na resposta:', JSON.stringify(data));
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Token não encontrado', raw: data }) };
+      }
+      return { statusCode: 200, headers, body: JSON.stringify({ accessToken }) };
     }
 
     // ── Rota: GET /accounts?itemId=... ───────────────────────
