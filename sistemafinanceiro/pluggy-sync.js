@@ -341,26 +341,16 @@ const PluggySync = {
   },
 };
 
-// ─── Carrega SDK Pluggy dinamicamente ─────────────────────────
-// Usa o SDK oficial da Pluggy — ele injeta window.PluggyConnect
-const PLUGGY_SDK_URL = 'https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js';
-
+// ─── SDK Pluggy ───────────────────────────────────────────────
+// O SDK é carregado estaticamente no <head> do index.html:
+// <script src="https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js"></script>
+// Essa função apenas valida que ele está disponível.
 async function loadPluggySDK() {
-  if (window.PluggyConnect) return; // já carregado
-
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = PLUGGY_SDK_URL;
-    script.onload = () => {
-      console.log('[Pluggy] SDK oficial carregado:', typeof window.PluggyConnect);
-      resolve();
-    };
-    script.onerror = (e) => {
-      console.error('[Pluggy] Falha ao carregar SDK:', e);
-      reject(new Error('Falha ao carregar SDK da Pluggy'));
-    };
-    document.head.appendChild(script);
-  });
+  if (window.PluggyConnect) {
+    console.log('[Pluggy] SDK disponível:', typeof window.PluggyConnect);
+    return;
+  }
+  throw new Error('SDK Pluggy não encontrado. Verifique se o script está no <head> do index.html.');
 }
 
 // ─── Exposição global ─────────────────────────────────────────
