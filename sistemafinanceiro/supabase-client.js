@@ -9,18 +9,18 @@
  * Configure as variáveis abaixo com os valores do seu projeto Supabase:
  *   Painel Supabase → Settings → API
  */
- 
+
 // ─── Configuração (preencher após criar o projeto) ────────────
 const SUPABASE_URL  = 'https://weywcaooqwmppoglmazf.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_8vZzoOg0jMrDtQKugF7ZmQ_SPQL1lCW';
- 
+
 // ─── Inicialização ────────────────────────────────────────────
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
- 
+
 // ─── Auth state ───────────────────────────────────────────────
 let currentUser = null;
- 
+
 async function initAuth() {
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
@@ -30,7 +30,7 @@ async function initAuth() {
   } else {
     showLoginScreen();
   }
- 
+
   db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN') {
       currentUser = session.user;
@@ -42,33 +42,33 @@ async function initAuth() {
     }
   });
 }
- 
+
 // ─── Login / Logout ───────────────────────────────────────────
 async function loginWithEmail(email, password) {
   const { data, error } = await db.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
 }
- 
+
 async function signUpWithEmail(email, password) {
   const { data, error } = await db.auth.signUp({ email, password });
   if (error) throw error;
   return data;
 }
- 
+
 async function logout() {
   await db.auth.signOut();
 }
- 
+
 // ─── Carregar todos os dados do banco → variáveis globais ─────
 async function loadAllData() {
   if (!currentUser) return;
   console.log('[Supabase] Carregando dados...');
- 
+
   try {
     // 1. Salva as contas locais no Supabase (upsert — não duplica)
     await saveAllAccounts();
- 
+
     // 2. Carrega tudo do banco
     await Promise.all([
       loadCategories(),
@@ -80,24 +80,24 @@ async function loadAllData() {
       loadRecorrentes(),
     ]);
     console.log('[Supabase] Dados carregados com sucesso');
- 
+
     // 3. Atualiza a UI
     if (window.renderDashboard)    window.renderDashboard();
     if (window.renderDashboardTx) window.renderDashboardTx();
     if (window.renderCatBars)     window.renderCatBars();
     if (window.updatePendingBadge) window.updatePendingBadge();
- 
+
   } catch (err) {
     console.error('[Supabase] Erro ao carregar dados:', err);
   }
 }
- 
+
 // ─── CONTAS ───────────────────────────────────────────────────
 async function loadAccounts() {
   const { data, error } = await db.from('accounts').select('*').eq('user_id', currentUser.id);
   if (error) throw error;
+  window._DB_ACCOUNTS = data || []; // cache para getAccountDbId
   if (data?.length > 0) {
-    // Mapeia para o formato do app (mantém local_id como id)
     window.ACCOUNTS = data.map(a => ({
       id:      a.local_id,
       _db_id:  a.id,
@@ -112,7 +112,7 @@ async function loadAccounts() {
     }));
   }
 }
- 
+
 async function saveAccount(acc) {
   const { data, error } = await db.from('accounts').upsert({
     user_id:           currentUser.id,
@@ -129,7 +129,7 @@ async function saveAccount(acc) {
   if (error) throw error;
   return data;
 }
- 
+
 async function saveAllAccounts() {
   if (!currentUser || !window.ACCOUNTS) return;
   for (const acc of window.ACCOUNTS) {
@@ -138,7 +138,7 @@ async function saveAllAccounts() {
   // Recarrega para ter os IDs do banco
   await loadAccounts();
 }
- 
+
 // ─── CATEGORIAS ───────────────────────────────────────────────
 async function loadCategories() {
   const { data, error } = await db.from('categories').select('*').eq('user_id', currentUser.id);
@@ -149,18 +149,25 @@ async function loadCategories() {
     window._DB_CATEGORIES = data;
   }
 }
- 
+
 async function getCategoryDbId(name) {
   if (!window._DB_CATEGORIES) return null;
   return window._DB_CATEGORIES.find(c => c.name === name)?.id || null;
 }
- 
+
 async function getAccountDbId(localId) {
+  if (!currentUser) return null;
+  // Primeiro tenta no cache local
+  if (window._DB_ACCOUNTS) {
+    const cached = window._DB_ACCOUNTS.find(a => a.local_id === localId);
+    if (cached) return cached.id;
+  }
+  // Busca no banco
   const { data } = await db.from('accounts')
     .select('id').eq('user_id', currentUser.id).eq('local_id', localId).single();
   return data?.id || null;
 }
- 
+
 // ─── TRANSAÇÕES ───────────────────────────────────────────────
 async function loadTransactions(limit = 500) {
   const { data, error } = await db.from('transactions')
@@ -185,13 +192,13 @@ async function loadTransactions(limit = 500) {
     }));
   }
 }
- 
+
 async function saveTransaction(tx) {
   if (!currentUser) return;
   const catId  = await getCategoryDbId(tx.category);
   const accDbId = await getAccountDbId(tx.account);
   if (!accDbId) return;
- 
+
   const { error } = await db.from('transactions').upsert({
     id:          tx.id || undefined,
     user_id:     currentUser.id,
@@ -207,10 +214,10 @@ async function saveTransaction(tx) {
     raw_data:    tx.raw_data || null,
     updated_at:  new Date().toISOString(),
   }, { onConflict: 'external_id', ignoreDuplicates: false });
- 
+
   if (error && !error.message.includes('duplicate')) throw error;
 }
- 
+
 async function saveBatchTransactions(txs) {
   if (!currentUser || !txs?.length) return 0;
   let saved = 0;
@@ -222,7 +229,7 @@ async function saveBatchTransactions(txs) {
   }
   return saved;
 }
- 
+
 async function updateTransactionCategory(txId, categoryName, origin = 'manual') {
   if (!currentUser) return;
   const catId = await getCategoryDbId(categoryName);
@@ -233,7 +240,7 @@ async function updateTransactionCategory(txId, categoryName, origin = 'manual') 
   }).eq('id', txId).eq('user_id', currentUser.id);
   if (error) throw error;
 }
- 
+
 // ─── REGRAS ───────────────────────────────────────────────────
 async function loadRules() {
   const { data, error } = await db.from('categorization_rules')
@@ -250,7 +257,7 @@ async function loadRules() {
     }));
   }
 }
- 
+
 async function saveRule(rule) {
   if (!currentUser) return;
   const catId = await getCategoryDbId(rule.category);
@@ -268,19 +275,19 @@ async function saveRule(rule) {
   if (error) throw error;
   return data;
 }
- 
+
 async function deleteRule(ruleId) {
   if (!currentUser) return;
   await db.from('categorization_rules').update({ is_active: false }).eq('id', ruleId);
 }
- 
+
 async function saveAllRules() {
   if (!currentUser || !window.RULES) return;
   for (const rule of window.RULES) {
     await saveRule(rule).catch(e => console.warn('Erro ao salvar regra:', e));
   }
 }
- 
+
 // ─── IMÓVEIS ─────────────────────────────────────────────────
 async function loadImoveis() {
   const { data, error } = await db.from('imoveis').select('*').eq('user_id', currentUser.id);
@@ -300,7 +307,7 @@ async function loadImoveis() {
     }));
   }
 }
- 
+
 async function saveImovel(im) {
   if (!currentUser) return;
   const { error } = await db.from('imoveis').upsert({
@@ -318,7 +325,7 @@ async function saveImovel(im) {
   });
   if (error) throw error;
 }
- 
+
 // ─── CONSÓRCIOS ───────────────────────────────────────────────
 async function loadConsorcios() {
   const { data, error } = await db.from('consorcios').select('*').eq('user_id', currentUser.id);
@@ -335,7 +342,7 @@ async function loadConsorcios() {
     }));
   }
 }
- 
+
 async function saveConsorcio(cons) {
   if (!currentUser) return;
   const { error } = await db.from('consorcios').upsert({
@@ -351,7 +358,7 @@ async function saveConsorcio(cons) {
   });
   if (error) throw error;
 }
- 
+
 // ─── INVESTIMENTOS ────────────────────────────────────────────
 async function loadInvestimentos() {
   const [rf, acoes, cripto] = await Promise.all([
@@ -359,7 +366,7 @@ async function loadInvestimentos() {
     db.from('investimentos_acoes').select('*').eq('user_id', currentUser.id),
     db.from('investimentos_cripto').select('*').eq('user_id', currentUser.id),
   ]);
- 
+
   if (rf.data?.length > 0) {
     window.RENDA_FIXA = rf.data.map(r => ({
       nome: r.nome, investido: parseFloat(r.investido), atual: parseFloat(r.atual),
@@ -380,7 +387,7 @@ async function loadInvestimentos() {
     }));
   }
 }
- 
+
 // ─── RECORRENTES ─────────────────────────────────────────────
 async function loadRecorrentes() {
   const { data, error } = await db.from('recorrentes')
@@ -402,7 +409,7 @@ async function loadRecorrentes() {
     }));
   }
 }
- 
+
 async function saveRecorrente(rec) {
   if (!currentUser) return;
   const catId = await getCategoryDbId(rec.category);
@@ -423,7 +430,7 @@ async function saveRecorrente(rec) {
   });
   if (error) throw error;
 }
- 
+
 // ─── LOG SYNC ─────────────────────────────────────────────────
 async function logSync(status, txImported, txDuplicates, txCategorized, errorMsg = null) {
   if (!currentUser) return;
@@ -437,7 +444,7 @@ async function logSync(status, txImported, txDuplicates, txCategorized, errorMsg
     finished_at:    new Date().toISOString(),
   });
 }
- 
+
 // ─── SAVE TUDO (chamado ao categorizar, criar regra, etc) ─────
 async function persistChange(type, data) {
   if (!currentUser) return; // sem user, não persiste (modo demo)
@@ -466,7 +473,7 @@ async function persistChange(type, data) {
     console.error('[Supabase] Erro ao persistir:', type, err);
   }
 }
- 
+
 // ─── UI de Login ─────────────────────────────────────────────
 function showLoginScreen() {
   let el = document.getElementById('login-screen');
@@ -500,12 +507,12 @@ function showLoginScreen() {
   }
   el.style.display = 'flex';
 }
- 
+
 function hideLoginScreen() {
   const el = document.getElementById('login-screen');
   if (el) el.style.display = 'none';
 }
- 
+
 async function doLogin() {
   const email = document.getElementById('login-email')?.value?.trim();
   const pass  = document.getElementById('login-pass')?.value;
@@ -517,7 +524,7 @@ async function doLogin() {
     if (errEl) { errEl.textContent = 'Email ou senha incorretos'; errEl.style.display = 'block'; }
   }
 }
- 
+
 async function doSignUp() {
   const email = document.getElementById('login-email')?.value?.trim();
   const pass  = document.getElementById('login-pass')?.value;
@@ -553,12 +560,12 @@ async function doSignUp() {
     }
   }
 }
- 
+
 function useDemo() {
   hideLoginScreen();
   if (window.showToast) window.showToast('⚠', 'Modo demo — dados não são salvos');
 }
- 
+
 // ─── Exposição global ─────────────────────────────────────────
 window.DB             = db;
 window.persistChange  = persistChange;
@@ -567,6 +574,6 @@ window.logSync        = logSync;
 window.loadAllData    = loadAllData;
 window.logout         = logout;
 window.currentUser    = () => currentUser;
- 
+
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initAuth);
