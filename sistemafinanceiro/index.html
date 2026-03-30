@@ -3699,6 +3699,23 @@ function renderRules() {
 var CREDIT_CARDS = []; // populado pelo pluggy-sync ao fazer syncAll
 var cardsFilterMes = new Date().toISOString().slice(0,7); // 'YYYY-MM'
 
+// Overrides manuais de fatura — persistidos no localStorage
+const CARDS_OVERRIDE_KEY = 'financeos_card_overrides';
+function cardsGetOverrides() {
+  try { return JSON.parse(localStorage.getItem(CARDS_OVERRIDE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function cardsSetOverride(pluggyAccountId, value) {
+  const ov = cardsGetOverrides();
+  if (value === null) delete ov[pluggyAccountId];
+  else ov[pluggyAccountId] = value;
+  localStorage.setItem(CARDS_OVERRIDE_KEY, JSON.stringify(ov));
+}
+function cardsGetFatura(card) {
+  const ov = cardsGetOverrides();
+  return ov[card.pluggyAccountId] != null ? ov[card.pluggyAccountId] : card.balance;
+}
+
 // Mapa de classe CSS por conta
 const CARD_CSS_MAP = {
   'nubank-pf':   'nubank-pf',
@@ -3707,9 +3724,19 @@ const CARD_CSS_MAP = {
   'unicred':     'unicred',
   'mercadopago': 'mercadopago',
 };
+const CARD_BANK_MAP = {
+  'nubank-pf':   'Nubank PF',
+  'nubank-pj':   'Nubank PJ',
+  'itau':        'Itaú Personnalité',
+  'unicred':     'Unicred',
+  'mercadopago': 'Mercado Pago',
+};
 
 function cardsCssClass(localId) {
   return CARD_CSS_MAP[localId] || 'generic';
+}
+function cardsBankName(localId) {
+  return CARD_BANK_MAP[localId] || localId;
 }
 
 function renderCartoes() {
@@ -3732,8 +3759,8 @@ function renderCartoesVisuais() {
     return;
   }
 
-  // Stats totais
-  const totalFatura     = CREDIT_CARDS.reduce((s,c) => s + (c.balance||0), 0);
+  // Stats totais — respeita overrides manuais
+  const totalFatura     = CREDIT_CARDS.reduce((s,c) => s + cardsGetFatura(c), 0);
   const totalLimite     = CREDIT_CARDS.reduce((s,c) => s + (c.creditLimit||0), 0);
   const totalDisponivel = CREDIT_CARDS.reduce((s,c) => s + (c.availableLimit||0), 0);
   const usoPct          = totalLimite > 0 ? (totalFatura/totalLimite*100).toFixed(1) : 0;
@@ -3752,12 +3779,16 @@ function renderCartoesVisuais() {
 
   // Renderiza cards
   grid.innerHTML = CREDIT_CARDS.map(card => {
-    const fatura    = card.balance || 0;
+    const fatura    = cardsGetFatura(card);
+    const hasOverride = cardsGetOverrides()[card.pluggyAccountId] != null;
     const limite    = card.creditLimit || 0;
-    const disponivel = card.availableLimit || (limite - fatura);
+    const disponivel = card.availableLimit ? card.availableLimit - (fatura - (card.balance||0)) : Math.max(0, limite - fatura);
     const pct       = limite > 0 ? Math.min(100, fatura/limite*100) : 0;
     const barColor  = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
     const cssClass  = cardsCssClass(card.localId);
+
+    // Aviso de fatura suspeita (> 70% do limite pode indicar dado do Pluggy incorreto)
+    const faturaAlta = limite > 0 && fatura/limite > 0.7;
 
     // Vencimento
     let vencHtml = '';
@@ -3771,13 +3802,20 @@ function renderCartoesVisuais() {
       vencHtml = `<span class="venc-badge ${vencClass}">📅 ${vencTxt}</span>`;
     }
 
-    // Gastos do mês atual neste cartão
-    const gastosCardMes = TRANSACTIONS.filter(t =>
+    // Gastos do mês atual neste cartão — apenas transações marcadas como cartão de crédito
+    // Se múltiplos cartões do mesmo banco, não conseguimos distinguir sem pluggyAccountId na tx
+    // então mostramos o total do banco dividido pelo nº de cartões desse banco
+    const cardsDoMesmoBanco = CREDIT_CARDS.filter(cx => cx.localId === card.localId);
+    const gastosContaMes = TRANSACTIONS.filter(t =>
       t.account === card.localId &&
+      t.cardTx === true &&
       t.amount < 0 &&
       t.date?.slice(0,7) === cardsFilterMes &&
       !t.txType?.includes('transfer')
     ).reduce((s,t) => s + Math.abs(t.amount), 0);
+    const gastosCardMes = cardsDoMesmoBanco.length > 1
+      ? gastosContaMes / cardsDoMesmoBanco.length
+      : gastosContaMes;
 
     return `
     <div class="panel" style="padding:16px 18px;">
@@ -3793,8 +3831,15 @@ function renderCartoesVisuais() {
         <div class="fatura-fill" style="width:${pct}%;background:linear-gradient(90deg,${barColor},${barColor})"></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <span style="font-size:12px;color:var(--text3)">
-          Fatura atual: <strong style="color:var(--amber);font-family:var(--mono)">${fmt(fatura)}</strong>
+        <span style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px">
+          Fatura atual:
+          <strong style="color:${faturaAlta&&!hasOverride?'var(--red)':'var(--amber)'};font-family:var(--mono)">${fmt(fatura)}</strong>
+          ${hasOverride ? '<span style="font-size:10px;color:var(--blue);background:rgba(77,159,255,.12);padding:1px 6px;border-radius:10px">✏ manual</span>' : ''}
+          ${faturaAlta && !hasOverride ? '<span style="font-size:10px;color:var(--red)">⚠ verificar</span>' : ''}
+          <button onclick="cardsEditFatura('${card.pluggyAccountId}','${card.name}',${fatura},${hasOverride})"
+            style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;cursor:pointer;color:var(--text3);font-size:10px">
+            ${hasOverride ? '🔄 corrigir' : '✏ ajustar'}
+          </button>
         </span>
         ${vencHtml}
       </div>
@@ -3812,7 +3857,7 @@ function renderCartoesVisuais() {
       </div>
       <div class="card-info-row">
         <span class="card-info-label">Banco</span>
-        <span class="card-info-val" style="color:var(--text2)">${card.bankName||card.localId}</span>
+        <span class="card-info-val" style="color:var(--text2)">${cardsBankName(card.localId)}</span>
       </div>
     </div>`;
   }).join('');
@@ -3828,15 +3873,16 @@ function renderCartoesGastos() {
   const mesLabel = document.getElementById('cards-mes-label');
   if (mesLabel) mesLabel.textContent = `${mesNomes[mes-1]}/${ano}`;
 
-  // Filtrar transações de cartão no mês
+  // Filtrar transações de cartão no mês — usar flag cardTx quando disponível
+  const cardIds = CREDIT_CARDS.map(c => c.localId);
   let txs = TRANSACTIONS.filter(t =>
     t.amount < 0 &&
     !t.txType?.includes('transfer') &&
-    t.date?.slice(0,7) === cardsFilterMes
+    t.date?.slice(0,7) === cardsFilterMes &&
+    (t.cardTx === true || (cardIds.length && cardIds.includes(t.account)))
   );
 
-  // Se tem cartões cadastrados, filtrar só txs dessas contas
-  const cardIds = CREDIT_CARDS.map(c => c.localId);
+  // Filtrar só contas dos cartões cadastrados
   if (cardIds.length) txs = txs.filter(t => cardIds.includes(t.account));
 
   // Filtro por conta específica
@@ -3892,6 +3938,30 @@ function renderCartoesGastos() {
       <div class="tx-amount debit">- R$ ${Math.abs(tx.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
     </div>`;
   }).join('');
+}
+
+function cardsEditFatura(pluggyAccountId, cardName, faturaAtual, hasOverride) {
+  const input = prompt(
+    `Fatura manual — ${cardName}
+
+Valor atual: R$ ${faturaAtual.toLocaleString('pt-BR',{minimumFractionDigits:2})}
+
+Digite o valor correto (ou deixe vazio para ${hasOverride ? 'remover o ajuste manual' : 'cancelar'}):`,
+    faturaAtual.toFixed(2).replace('.',',')
+  );
+  if (input === null) return; // cancelou
+  if (input.trim() === '' && hasOverride) {
+    // Remove override
+    cardsSetOverride(pluggyAccountId, null);
+    showToast('✓', 'Ajuste manual removido — usando valor do Pluggy');
+  } else {
+    const valor = parseFloat(input.replace(',','.'));
+    if (isNaN(valor) || valor < 0) return alert('Valor inválido.');
+    cardsSetOverride(pluggyAccountId, valor);
+    showToast('✓', `Fatura ajustada para R$ ${valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}`);
+  }
+  renderCartoesVisuais();
+  renderCartoesGastos();
 }
 
 function cardsMudarMes(delta) {
