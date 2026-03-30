@@ -162,14 +162,9 @@ const PluggySync = {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Token error: ${res.status}`);
       const data = await res.json();
-      // Log completo para debug — ver no console do navegador
-      this.log(`Resposta token: ${JSON.stringify(data)}`);
-      console.log('[Pluggy] connect-token response FULL:', data);
-      // Pluggy retorna { accessToken } ou aninhado em { data: { accessToken } }
-      const connectToken = data.accessToken || data.connectToken || data.token
-                        || data?.data?.accessToken || data?.data?.connectToken;
-      if (!connectToken) throw new Error(`Token não encontrado. Resposta: ${JSON.stringify(data)}`);
-      this.log(`Token obtido: ${connectToken.substring(0,20)}...`, 'success');
+      this.log(`Resposta: ${JSON.stringify(Object.keys(data))}`);
+      const connectToken = data.accessToken || data.connectToken || data.token;
+      if (!connectToken) throw new Error(`Campo token não encontrado. Campos: ${JSON.stringify(Object.keys(data))}`);
 
       // 2. Carrega SDK
       await loadPluggySDK();
@@ -244,11 +239,17 @@ const PluggySync = {
         const accounts = await PluggyAPI.getAccounts(conn.itemId);
 
         for (const acc of accounts) {
-          // Atualiza saldo
+          // Atualiza saldo em memória e persiste no Supabase
           const localAcc = window.ACCOUNTS?.find(a => a.id === conn.localId);
           if (localAcc && acc.balance != null) {
             localAcc.balance = acc.balance;
             this.log(`Saldo ${conn.localId}: R$ ${acc.balance.toFixed(2)}`, 'success');
+            // Persiste no banco para não perder ao recarregar a página
+            if (window.saveAccount) {
+              window.saveAccount(localAcc).catch(e =>
+                console.warn('[Pluggy] Erro ao salvar saldo:', e)
+              );
+            }
           }
 
           // Busca transações
@@ -294,6 +295,12 @@ const PluggySync = {
         this.log(`Erro em ${conn.localId}: ${err.message}`, 'error');
       }
     }
+
+    // Re-renderiza telas com saldos e transações atualizados
+    try {
+      if (typeof renderContas    === 'function') renderContas();
+      if (typeof renderDashboard === 'function') renderDashboard();
+    } catch(e) { /* silencioso */ }
 
     this.log(
       `✓ Sync completo — ${totalImported} novas, ${totalCategorized} categorizadas, ${totalDuplicates} duplicatas ignoradas`,
@@ -341,16 +348,75 @@ const PluggySync = {
   },
 };
 
-// ─── SDK Pluggy ───────────────────────────────────────────────
-// O SDK é carregado estaticamente no <head> do index.html:
-// <script src="https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js"></script>
-// Essa função apenas valida que ele está disponível.
+// ─── Carrega SDK Pluggy dinamicamente ─────────────────────────
 async function loadPluggySDK() {
-  if (window.PluggyConnect) {
-    console.log('[Pluggy] SDK disponível:', typeof window.PluggyConnect);
-    return;
+  // Não precisamos mais do SDK externo — usamos iframe direto
+  if (!window.PluggyConnect) {
+    window.PluggyConnect = PluggyConnectIframe;
   }
-  throw new Error('SDK Pluggy não encontrado. Verifique se o script está no <head> do index.html.');
+}
+
+// Implementação própria do widget via iframe
+function PluggyConnectIframe({ connectToken, onSuccess, onError, onClose }) {
+  let overlay = null;
+
+  this.init = function() {
+    // Cria overlay
+    overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position:fixed;inset:0;background:rgba(0,0,0,0.7);
+      z-index:99999;display:flex;align-items:center;justify-content:center;
+    `;
+
+    // Botão fechar
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '✕';
+    closeBtn.style.cssText = `
+      position:absolute;top:16px;right:16px;background:white;border:none;
+      border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;
+      display:flex;align-items:center;justify-content:center;z-index:100000;
+    `;
+    closeBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      if (onClose) onClose();
+    };
+
+    // iframe com o widget Pluggy
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://connect.pluggy.ai/connect?connectToken=${connectToken}`;
+    iframe.style.cssText = `
+      width:480px;height:680px;border:none;border-radius:12px;
+      background:white;max-width:95vw;max-height:90vh;
+    `;
+    iframe.allow = 'clipboard-write';
+
+    // Escuta mensagens do iframe (callback do widget)
+    const messageHandler = (event) => {
+      if (!event.origin.includes('pluggy.ai')) return;
+      console.log('[Pluggy iframe] mensagem:', event.data);
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data?.event === 'SUCCESS' || data?.type === 'SUCCESS') {
+          window.removeEventListener('message', messageHandler);
+          document.body.removeChild(overlay);
+          if (onSuccess) onSuccess(data);
+        } else if (data?.event === 'ERROR' || data?.type === 'ERROR') {
+          window.removeEventListener('message', messageHandler);
+          document.body.removeChild(overlay);
+          if (onError) onError(data);
+        } else if (data?.event === 'CLOSE' || data?.type === 'CLOSE') {
+          window.removeEventListener('message', messageHandler);
+          document.body.removeChild(overlay);
+          if (onClose) onClose();
+        }
+      } catch(e) {}
+    };
+    window.addEventListener('message', messageHandler);
+
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(iframe);
+    document.body.appendChild(overlay);
+  };
 }
 
 // ─── Exposição global ─────────────────────────────────────────
