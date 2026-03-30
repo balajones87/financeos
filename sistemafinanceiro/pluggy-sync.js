@@ -237,23 +237,44 @@ const PluggySync = {
 
         // Busca contas do item
         const accounts = await PluggyAPI.getAccounts(conn.itemId);
+        console.log('[Pluggy] Contas de', conn.localId, accounts.map(a => ({name:a.name, type:a.type, balance:a.balance})));
 
-        // Agrupa saldo: soma contas BANK/CHECKING/SAVINGS, ignora CREDIT (saldo negativo do cartão)
+        // Separa contas bancárias e cartões de crédito
+        const creditAccounts  = accounts.filter(a => a.type?.toUpperCase() === 'CREDIT');
+        const bankingAccounts = accounts.filter(a => a.type?.toUpperCase() !== 'CREDIT');
+
+        // Atualiza saldo da conta bancária (só contas não-crédito)
         const localAcc = window.ACCOUNTS?.find(a => a.id === conn.localId);
-        if (localAcc && accounts.length > 0) {
-          const balanceAccounts = accounts.filter(a =>
-            !a.type || ['BANK','CHECKING','SAVINGS','PAYMENT','INVESTMENT'].includes(a.type?.toUpperCase())
-          );
-          const totalBalance = balanceAccounts.length > 0
-            ? balanceAccounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0)
-            : accounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
+        if (localAcc && bankingAccounts.length > 0) {
+          const totalBalance = bankingAccounts.reduce((sum, a) => sum + (parseFloat(a.balance) || 0), 0);
           localAcc.balance = totalBalance;
-          this.log(`Saldo ${conn.localId}: R$ ${totalBalance.toFixed(2)} (${accounts.length} sub-conta(s))`, 'success');
+          this.log(`Saldo ${conn.localId}: R$ ${totalBalance.toFixed(2)} (${bankingAccounts.length} conta(s))`, 'success');
           if (window.saveAccount) {
-            // updateBalance=true: saldo vem do Pluggy, pode sobrescrever
             window.saveAccount(localAcc, true).catch(e =>
               console.warn('[Pluggy] Erro ao salvar saldo:', e)
             );
+          }
+        }
+
+        // Popula CREDIT_CARDS com dados reais
+        if (creditAccounts.length > 0) {
+          if (!window.CREDIT_CARDS) window.CREDIT_CARDS = [];
+          for (const creditAcc of creditAccounts) {
+            const existing = window.CREDIT_CARDS.findIndex(c => c.pluggyAccountId === creditAcc.id);
+            const cardData = {
+              pluggyAccountId: creditAcc.id,
+              localId:         conn.localId,
+              name:            creditAcc.name || conn.connector || conn.localId,
+              bankName:        conn.connector || conn.localId,
+              balance:         Math.abs(parseFloat(creditAcc.balance) || 0),
+              creditLimit:     parseFloat(creditAcc.creditData?.creditLimit ?? creditAcc.creditLimit) || 0,
+              availableLimit:  parseFloat(creditAcc.creditData?.availableCreditLimit ?? creditAcc.availableCreditLimit) || 0,
+              dueDate:         creditAcc.creditData?.balanceDueDate || null,
+              lastFour:        (creditAcc.number || '').toString().slice(-4) || null,
+            };
+            if (existing >= 0) window.CREDIT_CARDS[existing] = cardData;
+            else window.CREDIT_CARDS.push(cardData);
+            this.log(`Cartão ${cardData.name}: fatura R$ ${cardData.balance.toFixed(2)}, limite R$ ${cardData.creditLimit.toFixed(2)}`, 'success');
           }
         }
 
