@@ -127,19 +127,27 @@ async function loadAccounts() {
   }
 }
 
-async function saveAccount(acc) {
-  const { data, error } = await db.from('accounts').upsert({
+// saveAccount: updateBalance=false → não sobrescreve saldo (usado no boot)
+//               updateBalance=true  → sobrescreve saldo (usado após sync Pluggy)
+async function saveAccount(acc, updateBalance = false) {
+  const payload = {
     user_id:           currentUser.id,
     local_id:          acc.id,
     name:              acc.name,
     type:              acc.type || 'checking',
     color:             acc.color,
     icon:              acc.icon,
-    balance:           acc.balance,
     pluggy_item_id:    acc.pluggy_item_id || null,
     pluggy_account_id: acc.pluggy_account_id || null,
     last_sync:         acc.last_sync || null,
-  }, { onConflict: 'user_id,local_id' }).select().single();
+  };
+  // Só atualiza saldo quando explicitamente solicitado (vindo do Pluggy)
+  if (updateBalance) payload.balance = acc.balance;
+
+  const { data, error } = await db.from('accounts').upsert(
+    payload,
+    { onConflict: 'user_id,local_id', ignoreDuplicates: false }
+  ).select().single();
   if (error) throw error;
   return data;
 }
@@ -147,7 +155,8 @@ async function saveAccount(acc) {
 async function saveAllAccounts() {
   if (!currentUser || !window.ACCOUNTS) return;
   for (const acc of window.ACCOUNTS) {
-    await saveAccount(acc).catch(e => console.warn('Erro ao salvar conta:', e));
+    // NÃO passa updateBalance → preserva saldo real que veio do Pluggy
+    await saveAccount(acc, false).catch(e => console.warn('Erro ao salvar conta:', e));
   }
   // Recarrega para ter os IDs do banco
   await loadAccounts();
