@@ -323,26 +323,18 @@ const PluggySync = {
 };
  
 // ─── Carrega SDK Pluggy dinamicamente ─────────────────────────
-function loadPluggySDK() {
-  return new Promise((resolve, reject) => {
-    if (window.PluggyConnect) { resolve(); return; }
-    // Tenta a URL atual da Pluggy
-    const script  = document.createElement('script');
-    script.src    = 'https://cdn.pluggy.ai/pluggy-connect/v2.1.1/pluggy-connect.js';
-    script.onload  = () => {
-      console.log('[Pluggy] SDK carregado:', typeof window.PluggyConnect);
-      resolve();
-    };
-    script.onerror = () => {
-      // Tenta URL alternativa
-      const script2 = document.createElement('script');
-      script2.src = 'https://cdn.pluggy.ai/pluggy-connect/pluggy-connect.js';
-      script2.onload = resolve;
-      script2.onerror = () => reject(new Error('Não foi possível carregar o SDK Pluggy'));
-      document.head.appendChild(script2);
-    };
-    document.head.appendChild(script);
-  });
+async function loadPluggySDK() {
+  if (window.PluggyConnect) return;
+  
+  try {
+    // esm.sh converte CJS → ESM compatível com browser
+    const mod = await import('https://esm.sh/pluggy-connect-sdk@2.13.0');
+    window.PluggyConnect = mod.PluggyConnect || mod.default?.PluggyConnect || mod.default;
+    console.log('[Pluggy] SDK via esm.sh:', typeof window.PluggyConnect);
+  } catch(e) {
+    console.error('[Pluggy] esm.sh falhou:', e);
+    throw new Error('Não foi possível carregar o SDK Pluggy: ' + e.message);
+  }
 }
  
 // ─── Exposição global ─────────────────────────────────────────
@@ -359,4 +351,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => PluggySync.syncAll(30), 2000);
   }
 });
- 
