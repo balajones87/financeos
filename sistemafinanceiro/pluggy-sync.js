@@ -250,7 +250,8 @@ const PluggySync = {
           localAcc.balance = totalBalance;
           this.log(`Saldo ${conn.localId}: R$ ${totalBalance.toFixed(2)} (${accounts.length} sub-conta(s))`, 'success');
           if (window.saveAccount) {
-            window.saveAccount(localAcc).catch(e =>
+            // updateBalance=true: saldo vem do Pluggy, pode sobrescrever
+            window.saveAccount(localAcc, true).catch(e =>
               console.warn('[Pluggy] Erro ao salvar saldo:', e)
             );
           }
