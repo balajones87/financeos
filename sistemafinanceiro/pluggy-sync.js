@@ -326,10 +326,21 @@ const PluggySync = {
 function loadPluggySDK() {
   return new Promise((resolve, reject) => {
     if (window.PluggyConnect) { resolve(); return; }
+    // Tenta a URL atual da Pluggy
     const script  = document.createElement('script');
-    script.src    = 'https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js';
-    script.onload  = resolve;
-    script.onerror = reject;
+    script.src    = 'https://cdn.pluggy.ai/pluggy-connect/v2.1.1/pluggy-connect.js';
+    script.onload  = () => {
+      console.log('[Pluggy] SDK carregado:', typeof window.PluggyConnect);
+      resolve();
+    };
+    script.onerror = () => {
+      // Tenta URL alternativa
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdn.pluggy.ai/pluggy-connect/pluggy-connect.js';
+      script2.onload = resolve;
+      script2.onerror = () => reject(new Error('Não foi possível carregar o SDK Pluggy'));
+      document.head.appendChild(script2);
+    };
     document.head.appendChild(script);
   });
 }
@@ -348,3 +359,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => PluggySync.syncAll(30), 2000);
   }
 });
+ 
