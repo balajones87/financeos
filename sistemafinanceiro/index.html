@@ -2682,51 +2682,9 @@ function detectTransferType(tx) {
   return null; // não é transferência
 }
 
-let TRANSACTIONS = [
-  { id: 1,  date: '2025-03-28', desc: 'IFOOD*RESTAURANTE SP',        amount: -89.90,   account: 'nubank-pf', txType: 'debit',             category: 'Alimentação', origin: 'rule',   cardTx: false },
-  { id: 2,  date: '2025-03-28', desc: 'NUMED CONSULTA 12345',        amount: -350.00,  account: 'nubank-pf', txType: 'debit',             category: 'Saúde',       origin: 'rule',   cardTx: false },
-  { id: 3,  date: '2025-03-27', desc: 'UBER TRIP',                   amount: -32.50,   account: 'nubank-pf', txType: 'debit',             category: 'Transporte',  origin: 'rule',   cardTx: false },
-  { id: 4,  date: '2025-03-27', desc: 'HONORARIO ULTRASSOM',         amount: 1200.00,  account: 'nubank-pj', txType: 'credit',            category: 'Renda',       origin: 'rule',   cardTx: false },
-  { id: 5,  date: '2025-03-26', desc: 'NETFLIX.COM',                 amount: -49.90,   account: 'nubank-pf', txType: 'debit',             category: 'Lazer',       origin: 'rule',   cardTx: true  },
-  { id: 6,  date: '2025-03-26', desc: 'SUPERMERCADO BIG BOX',        amount: -412.30,  account: 'itau',      txType: 'debit',             category: 'Alimentação', origin: 'rule',   cardTx: false },
-  // TRANSFERÊNCIA INTERNA: Nubank PF → Itaú (não conta como gasto)
-  { id: 21, date: '2025-03-26', desc: 'TRANSFERENCIA ENVIADA|F ITAU PERSONNALITE',  amount: -5000.00, account: 'nubank-pf', txType: 'transfer_internal', linkedToAccount: 'itau',      category: null, origin: 'rule', cardTx: false },
-  { id: 22, date: '2025-03-26', desc: 'TRANSFERENCIA RECEBIDA NUBANK',              amount: 5000.00,  account: 'itau',      txType: 'transfer_internal', linkedToAccount: 'nubank-pf', category: null, origin: 'rule', cardTx: false },
-  { id: 7,  date: '2025-03-25', desc: 'PIX JOAO SILVA',             amount: -500.00,  account: 'nubank-pf', txType: 'transfer_external', category: null,          origin: 'pending',cardTx: false },
-  { id: 8,  date: '2025-03-25', desc: 'TED RECEBIDO BCO 341',       amount: 5800.00,  account: 'itau',      txType: 'credit',            category: 'Renda',       origin: 'manual', cardTx: false },
-  { id: 9,  date: '2025-03-24', desc: 'DROGARIA SAO PAULO',         amount: -87.60,   account: 'nubank-pf', txType: 'debit',             category: 'Saúde',       origin: 'rule',   cardTx: true  },
-  { id: 10, date: '2025-03-24', desc: 'SPOTIFY PREMIUM',            amount: -21.90,   account: 'nubank-pf', txType: 'debit',             category: 'Lazer',       origin: 'rule',   cardTx: true  },
-  { id: 11, date: '2025-03-23', desc: 'BOLETO CONDOMINIO',          amount: -1850.00, account: 'itau',      txType: 'debit',             category: null,          origin: 'pending',cardTx: false },
-  { id: 12, date: '2025-03-23', desc: 'POSTO PETROBRAS',            amount: -280.00,  account: 'itau',      txType: 'debit',             category: 'Transporte',  origin: 'rule',   cardTx: false },
-  { id: 13, date: '2025-03-22', desc: 'CURSO ONLINE UDEMY',         amount: -89.00,   account: 'nubank-pf', txType: 'debit',             category: null,          origin: 'ai',     cardTx: true  },
-  { id: 14, date: '2025-03-22', desc: 'RAPPI ENTREGA',              amount: -74.50,   account: 'nubank-pf', txType: 'debit',             category: 'Alimentação', origin: 'rule',   cardTx: false },
-  { id: 15, date: '2025-03-21', desc: 'NET CLARO FATURA',           amount: -210.00,  account: 'itau',      txType: 'debit',             category: 'Moradia',     origin: 'rule',   cardTx: false },
-  { id: 16, date: '2025-03-21', desc: 'PIX RECEBIDO PF',            amount: 300.00,   account: 'carteira',  txType: 'credit',            category: 'Renda',       origin: 'manual', cardTx: false },
-  { id: 17, date: '2025-03-20', desc: 'AMAZON COMPRAS',             amount: -156.90,  account: 'nubank-pj', txType: 'debit',             category: null,          origin: 'ai',     cardTx: true  },
-  { id: 18, date: '2025-03-20', desc: 'HONORARIO CLINICA XYZ',      amount: 2400.00,  account: 'nubank-pj', txType: 'credit',            category: 'Renda',       origin: 'rule',   cardTx: false },
-  { id: 19, date: '2025-03-19', desc: 'BAR RESTAURANTE CENTRO',     amount: -198.00,  account: 'itau',      txType: 'debit',             category: null,          origin: 'pending',cardTx: true  },
-  { id: 20, date: '2025-03-19', desc: 'SALARIO MILITAR',            amount: 18000.00, account: 'itau',      txType: 'credit',            category: 'Renda',       origin: 'rule',   cardTx: false },
-  { id: 23, date: '2025-03-15', desc: 'PAGAMENTO FATURA NUBANK',    amount: -4200.00, account: 'itau',      txType: 'transfer_internal', linkedToAccount: 'nubank-pf', category: null, origin: 'rule', cardTx: false },
-  { id: 24, date: '2025-03-10', desc: 'TRANSFERENCIA ENVIADA|F NUBANK EMPRESAS', amount: -3000.00, account: 'nubank-pf', txType: 'transfer_internal', linkedToAccount: 'nubank-pj', category: null, origin: 'rule', cardTx: false },
-  { id: 25, date: '2025-03-10', desc: 'REND PAGO APLIC AUT APR',   amount: 0.17,     account: 'itau',      txType: 'transfer_internal', category: null, origin: 'rule', cardTx: false },
-
-  // ── EMPRESA 2: Usina Solar + Eletropostos ──────────────────
-  // Receitas operacionais
-  { id: 30, date: '2025-03-28', desc: 'RECEB GERACAO ENERGIA ANEEL',  amount: 3200.00,  account: 'energia-pj', txType: 'credit', category: 'Receita Energia',   origin: 'rule', cardTx: false },
-  { id: 31, date: '2025-03-25', desc: 'RECEB ELETROPOSTO FOZ 01',     amount: 1850.00,  account: 'energia-pj', txType: 'credit', category: 'Receita Eletroposto',origin: 'rule', cardTx: false },
-  { id: 32, date: '2025-03-22', desc: 'RECEB ELETROPOSTO FOZ 02',     amount: 920.00,   account: 'energia-pj', txType: 'credit', category: 'Receita Eletroposto',origin: 'rule', cardTx: false },
-  { id: 33, date: '2025-03-15', desc: 'RECEB GERACAO ENERGIA ANEEL',  amount: 2980.00,  account: 'energia-pj', txType: 'credit', category: 'Receita Energia',   origin: 'rule', cardTx: false },
-  // Despesas operacionais
-  { id: 34, date: '2025-03-27', desc: 'MANUTENCAO INVERSORES SOLAR',  amount: -480.00,  account: 'energia-pj', txType: 'debit',  category: 'Manutenção',         origin: 'rule', cardTx: false },
-  { id: 35, date: '2025-03-24', desc: 'CELESC ENERGIA ELETROPOSTO',   amount: -620.00,  account: 'energia-pj', txType: 'debit',  category: 'Energia Elétrica',   origin: 'rule', cardTx: false },
-  { id: 36, date: '2025-03-20', desc: 'SEGURO EQUIPAMENTOS SOLAR',    amount: -310.00,  account: 'energia-pj', txType: 'debit',  category: 'Seguros',            origin: 'rule', cardTx: false },
-  { id: 37, date: '2025-03-18', desc: 'PLATAFORMA GESTAO EVCHARGE',   amount: -149.90,  account: 'energia-pj', txType: 'debit',  category: 'Serviços',           origin: 'rule', cardTx: false },
-  { id: 38, date: '2025-03-15', desc: 'CONTABILIDADE EMPRESA',        amount: -350.00,  account: 'energia-pj', txType: 'debit',  category: 'Contabilidade',      origin: 'rule', cardTx: false },
-  { id: 39, date: '2025-03-10', desc: 'CELESC ENERGIA ELETROPOSTO',   amount: -580.00,  account: 'energia-pj', txType: 'debit',  category: 'Energia Elétrica',   origin: 'rule', cardTx: false },
-  { id: 40, date: '2025-03-05', desc: 'MANUT PREVENTIVA ELETROPOSTO', amount: -220.00,  account: 'energia-pj', txType: 'debit',  category: 'Manutenção',         origin: 'rule', cardTx: false },
-  { id: 41, date: '2025-03-01', desc: 'TRANSFERENCIA ENVIADA|F APORTE ENERGIA', amount: -5000.00, account: 'nubank-pj', txType: 'transfer_internal', linkedToAccount: 'energia-pj', category: null, origin: 'rule', cardTx: false },
-  { id: 42, date: '2025-03-01', desc: 'APORTE SOCIO CONSULTORIO',     amount: 5000.00,  account: 'energia-pj', txType: 'transfer_internal', linkedToAccount: 'nubank-pj', category: null, origin: 'rule', cardTx: false },
-];
+// Transações carregadas do Supabase ou importadas via Pluggy
+// Array vazio — dados reais vêm do banco ou do sync
+let TRANSACTIONS = [];
 
 let WALLET_TX = [
   { id: 1, date: '2025-03-21', desc: 'PIX recebido (transferido p/ carteira)', amount: 300.00,  category: 'Renda' },
