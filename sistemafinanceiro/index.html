@@ -2607,7 +2607,7 @@ const CATEGORIES = [
   { id: 'outros',      name: 'Outros',        icon: '📦', css: 'cat-outros' },
 ];
 
-const ACCOUNTS = [
+var ACCOUNTS = [
   { id: 'nubank-pf',   name: 'Nubank PF',        type: 'Conta corrente PF',       color: '#820ad1', icon: '🟣', balance: 8420.50 },
   { id: 'nubank-pj',   name: 'Nubank PJ',         type: 'Consultório — Médico PJ', color: '#5a0090', icon: '🔵', balance: 15230.00 },
   { id: 'itau',        name: 'Itaú Personnalité', type: 'Conta corrente PF',       color: '#ff6b00', icon: '🟠', balance: 42150.00 },
@@ -2617,7 +2617,7 @@ const ACCOUNTS = [
 ];
 
 // Auto-categorization rules: keyword → category
-let RULES = [
+var RULES = [
   { id: 1, keyword: 'IFOOD',         category: 'Alimentação', account: null, count: 34 },
   { id: 2, keyword: 'RAPPI',         category: 'Alimentação', account: null, count: 12 },
   { id: 3, keyword: 'UBER',          category: 'Transporte',  account: null, count: 28 },
@@ -2683,8 +2683,8 @@ function detectTransferType(tx) {
 }
 
 // Transações carregadas do Supabase ou importadas via Pluggy
-// Array vazio — dados reais vêm do banco ou do sync
-let TRANSACTIONS = [];
+// var (não let) para ser acessível via window.TRANSACTIONS pelos scripts externos
+var TRANSACTIONS = [];
 
 let WALLET_TX = [
   { id: 1, date: '2025-03-21', desc: 'PIX recebido (transferido p/ carteira)', amount: 300.00,  category: 'Renda' },
@@ -3422,7 +3422,7 @@ function renderConsorcios() {
 // IMÓVEIS & TERRENOS ENGINE
 // ============================================================
 // ── IMÓVEIS REAIS ────────────────────────────────────────────
-let IMOVEIS = [
+var IMOVEIS = [
   // Locado — gera renda
   { id: 1, nome: 'Liberty',                   tipo: 'Apartamento', endereco: 'Curitiba, PR',  compraAno: 2018, valorCompra: 950000,    valorAtual: 950000,    aluguel: 4100,  inquilino: 'Locado',    conta: 'itau' },
   // Investimento — sem renda
@@ -3434,7 +3434,7 @@ let IMOVEIS = [
 const TIPO_COLORS = { Apartamento: '#4d9fff', Terreno: '#64c864', Comercial: '#ffb020', Casa: '#9d7fff' };
 
 // ── CONSÓRCIOS REAIS ─────────────────────────────────────────
-let CONSORCIOS = [
+var CONSORCIOS = [
   { id: 1, nome: 'Consórcio 1', tipo: 'Imóvel', valorCarta: 150000, parcela: 473.85, totalParcelas: 199, parcelasPagas: 8 },
   { id: 2, nome: 'Consórcio 2', tipo: 'Imóvel', valorCarta: 150000, parcela: 473.85, totalParcelas: 199, parcelasPagas: 8 },
   { id: 3, nome: 'Consórcio 3', tipo: 'Imóvel', valorCarta: 150000, parcela: 473.85, totalParcelas: 199, parcelasPagas: 8 },
@@ -4047,7 +4047,7 @@ function projExpandMes(offset) {
 }
 // ============================================================
 
-let RECORRENTES = [
+var RECORRENTES = [
   // PF — Despesas pessoais fixas
   { id: 1,  name: 'Condomínio',           amount: 1850.00, day: 10, type: 'debit',  account: 'itau',       category: 'Moradia',    keyword: 'BOLETO CONDOMINIO',   active: true,  pj: false },
   { id: 2,  name: 'Escola — Mensalidade', amount: 6542.00, day: 5,  type: 'debit',  account: 'itau',       category: 'Educação',   keyword: 'COLEGIO',             active: true,  pj: false },
