@@ -295,11 +295,16 @@ const PluggySync = {
       'success'
     );
 
-    // Atualiza a UI
-    if (window.renderDashboard)    window.renderDashboard();
-    if (window.renderDashboardTx) window.renderDashboardTx();
-    if (window.renderCatBars)     window.renderCatBars();
-    if (window.updatePendingBadge) window.updatePendingBadge();
+    // Recarrega transações do Supabase e atualiza toda a UI
+    if (window.loadAllData) {
+      await window.loadAllData();
+    } else {
+      if (window.renderDashboard)     window.renderDashboard();
+      if (window.renderDashboardTx)  window.renderDashboardTx();
+      if (window.renderTransactions) window.renderTransactions();
+      if (window.renderCatBars)      window.renderCatBars();
+      if (window.updatePendingBadge) window.updatePendingBadge();
+    }
 
     return { imported: totalImported, categorized: totalCategorized, duplicates: totalDuplicates };
   },
