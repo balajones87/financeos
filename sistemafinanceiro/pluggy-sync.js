@@ -162,9 +162,14 @@ const PluggySync = {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Token error: ${res.status}`);
       const data = await res.json();
-      this.log(`Resposta: ${JSON.stringify(Object.keys(data))}`);
-      const connectToken = data.accessToken || data.connectToken || data.token;
-      if (!connectToken) throw new Error(`Campo token não encontrado. Campos: ${JSON.stringify(Object.keys(data))}`);
+      // Log completo para debug — ver no console do navegador
+      this.log(`Resposta token: ${JSON.stringify(data)}`);
+      console.log('[Pluggy] connect-token response FULL:', data);
+      // Pluggy retorna { accessToken } ou aninhado em { data: { accessToken } }
+      const connectToken = data.accessToken || data.connectToken || data.token
+                        || data?.data?.accessToken || data?.data?.connectToken;
+      if (!connectToken) throw new Error(`Token não encontrado. Resposta: ${JSON.stringify(data)}`);
+      this.log(`Token obtido: ${connectToken.substring(0,20)}...`, 'success');
 
       // 2. Carrega SDK
       await loadPluggySDK();
@@ -371,7 +376,7 @@ function PluggyConnectIframe({ connectToken, onSuccess, onError, onClose }) {
 
     // iframe com o widget Pluggy
     const iframe = document.createElement('iframe');
-    iframe.src = `https://connect.pluggy.ai/connect?connectToken=${connectToken}`;
+    iframe.src = `https://connect.pluggy.ai/?connectToken=${encodeURIComponent(connectToken)}`;
     iframe.style.cssText = `
       width:480px;height:680px;border:none;border-radius:12px;
       background:white;max-width:95vw;max-height:90vh;
