@@ -570,4 +570,3 @@ window.currentUser    = () => currentUser;
  
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initAuth);
- 
