@@ -2839,9 +2839,7 @@ body {
         <div class="conta-field">
           <label>Ícone</label>
           <div class="conta-icon-grid" id="conta-icon-grid">
-            ${['🟣','🔵','🟠','🟢','⚡','💵','🏦','💳','🏧','💰','📱','🌐','🏪','🏢','⭐'].map(ic =>
-              `<button type="button" class="conta-icon-btn" data-icon="${ic}" onclick="contaSelectIcon(this)">${ic}</button>`
-            ).join('')}
+            <!-- Populado via JS em contaOpenModal() -->
           </div>
           <input type="hidden" id="conta-icone" value="🏦">
         </div>
@@ -3224,7 +3222,7 @@ var ACCOUNTS = [
   { id: 'unicred',      name: 'Unicred',           type: 'Conta corrente cooperativa', color: '#00a650', icon: '🟢', balance: 703.56 },
   { id: 'mercadopago',  name: 'Mercado Pago',      type: 'Conta digital PF',           color: '#00b1ea', icon: '🔷', balance: 0 },
   { id: 'energia-pj',   name: 'Energia PJ',        type: 'Usina Solar + Eletropostos', color: '#f59e0b', icon: '⚡', balance: 6800.00 },
-  { id: 'carteira',     name: 'Carteira',          type: 'Dinheiro espécie',           color: '#ffb020', icon: '💵', balance: 1200.00 },
+  { id: 'carteira',     name: 'Carteira',          type: 'Dinheiro espécie',           color: '#ffb020', icon: '💵', balance: 1200.00, noPluggy: true },
 ];
 
 // Auto-categorization rules: keyword → category
@@ -3770,28 +3768,49 @@ function renderContas() {
 
   // Renderiza lista dinâmica a partir de ACCOUNTS
   document.getElementById('plug-accounts-list').innerHTML = ACCOUNTS.map(acc => {
-    const conn   = stored.find(s => s.localId === acc.id);
-    const isConn = !!conn;
-    const bal    = typeof acc.balance === 'number' ? acc.balance : 0;
+    const conn    = stored.find(s => s.localId === acc.id);
+    const isConn  = !!conn;
+    const bal     = typeof acc.balance === 'number' ? acc.balance : 0;
+    const isManual = !!acc.noPluggy; // contas sem integração Pluggy (ex: Carteira)
+
+    // Badge de status
+    let statusBadge = '';
+    if (isManual) {
+      statusBadge = `<div style="font-size:10px;color:var(--text3);margin-top:2px">✏️ Lançamentos manuais</div>`;
+    } else if (conn) {
+      statusBadge = `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Conectado via ${conn.connector||'Pluggy'} · ${new Date(conn.connectedAt).toLocaleDateString('pt-BR')}</div>`;
+    }
+
+    // Botões de ação Pluggy
+    let pluggyBtn = '';
+    if (!isManual) {
+      pluggyBtn = isConn
+        ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="pluggyReconnect('${acc.id}')">⟳ Reconectar</button>`
+        : `<button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="pluggyConnect('${acc.id}')">+ Conectar</button>`;
+    }
+
+    // Botão destrutivo (desconectar ou excluir)
+    const destructBtn = isConn && !isManual
+      ? `<button onclick="pluggyDisconnect('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Desconectar Pluggy">🔌</button>`
+      : !isConn
+        ? `<button onclick="contaOpenModal('${acc.id}',true)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Excluir">🗑</button>`
+        : '';
+
     return `
     <div class="acc-breakdown-item" style="border-bottom:1px solid var(--border)">
       <div class="acc-icon" style="background:${acc.color}22;font-size:20px">${acc.icon}</div>
       <div class="acc-breakdown-info">
         <div class="acc-breakdown-name">${acc.name}</div>
         <div class="acc-breakdown-type">${acc.type}</div>
-        ${conn ? `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Conectado via ${conn.connector||'Pluggy'} · ${new Date(conn.connectedAt).toLocaleDateString('pt-BR')}</div>` : ''}
+        ${statusBadge}
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <div class="acc-breakdown-bal">R$ ${bal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-        ${isConn
-          ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="pluggyReconnect('${acc.id}')">⟳ Reconectar</button>`
-          : `<button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="pluggyConnect('${acc.id}')">+ Conectar</button>`
-        }
+        <div class="acc-breakdown-bal" style="font-family:var(--mono);font-weight:700;color:${bal>=0?'var(--green)':'var(--red)'}">
+          R$ ${bal.toLocaleString('pt-BR',{minimumFractionDigits:2})}
+        </div>
+        ${pluggyBtn}
         <button onclick="contaOpenModal('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px 6px" title="Editar">✏️</button>
-        ${isConn
-          ? `<button onclick="pluggyDisconnect('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Desconectar">🔌</button>`
-          : `<button onclick="contaOpenModal('${acc.id}',true)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Excluir">🗑</button>`
-        }
+        ${destructBtn}
       </div>
     </div>`;
   }).join('') + `
@@ -3809,6 +3828,12 @@ function contaOpenModal(id = null, focusDelete = false) {
   document.getElementById('conta-modal-title').textContent = isEdit ? '✏️ Editar Conta' : '➕ Nova Conta';
   document.getElementById('conta-del-btn').style.display  = isEdit ? '' : 'none';
   document.getElementById('conta-edit-id').value          = id || '';
+
+  // Popular grid de ícones via JS (evita template literal no HTML)
+  const icons = ['🟣','🔵','🟠','🟢','⚡','💵','🏦','💳','🏧','💰','📱','🌐','🏪','🏢','⭐','🔶','🔷','🏅','💎','🏋'];
+  document.getElementById('conta-icon-grid').innerHTML = icons.map(ic =>
+    `<button type="button" class="conta-icon-btn" data-icon="${ic}" onclick="contaSelectIcon(this)">${ic}</button>`
+  ).join('');
 
   if (isEdit) {
     const acc = ACCOUNTS.find(a => a.id === id);
@@ -3930,7 +3955,9 @@ async function pluggyConnect(localId) {
     showToast('⟳', `Abrindo conexão com ${localId}...`);
     const itemId = await window.PluggySync.openConnect(localId);
     if (itemId) {
-      showToast('✓', `${localId} conectado! Sincronizando...`);
+      showToast('✓', `${localId} conectado! Salvando conta e sincronizando...`);
+      // Garante que a conta existe no Supabase antes de tentar salvar transações
+      if (window.saveAllAccounts) await window.saveAllAccounts();
       renderContas();
       await pluggySyncAll();
     }
