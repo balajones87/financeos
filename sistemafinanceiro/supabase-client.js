@@ -158,13 +158,13 @@ async function getCategoryDbId(name) {
 async function getAccountDbId(localId) {
   if (!currentUser) return null;
   // Primeiro tenta no cache local
-  if (window._DB_ACCOUNTS) {
+  if (window._DB_ACCOUNTS?.length > 0) {
     const cached = window._DB_ACCOUNTS.find(a => a.local_id === localId);
     if (cached) return cached.id;
   }
-  // Busca no banco
+  // Busca no banco — usa maybeSingle para não lançar erro se não encontrar
   const { data } = await db.from('accounts')
-    .select('id').eq('user_id', currentUser.id).eq('local_id', localId).single();
+    .select('id').eq('user_id', currentUser.id).eq('local_id', localId).maybeSingle();
   return data?.id || null;
 }
 
@@ -195,9 +195,27 @@ async function loadTransactions(limit = 500) {
 
 async function saveTransaction(tx) {
   if (!currentUser) return;
-  const catId  = await getCategoryDbId(tx.category);
-  const accDbId = await getAccountDbId(tx.account);
-  if (!accDbId) return;
+  
+  // Garante que a conta existe no banco
+  let accDbId = await getAccountDbId(tx.account);
+  if (!accDbId) {
+    // Tenta salvar a conta primeiro
+    const localAcc = window.ACCOUNTS?.find(a => a.id === tx.account);
+    if (localAcc) {
+      const saved = await saveAccount(localAcc).catch(() => null);
+      if (saved) {
+        if (!window._DB_ACCOUNTS) window._DB_ACCOUNTS = [];
+        window._DB_ACCOUNTS.push(saved);
+        accDbId = saved.id;
+      }
+    }
+  }
+  if (!accDbId) {
+    console.warn('[Supabase] Conta não encontrada para:', tx.account);
+    return;
+  }
+
+  const catId = await getCategoryDbId(tx.category);
 
   const { error } = await db.from('transactions').upsert({
     id:          tx.id || undefined,
@@ -215,7 +233,9 @@ async function saveTransaction(tx) {
     updated_at:  new Date().toISOString(),
   }, { onConflict: 'external_id', ignoreDuplicates: false });
 
-  if (error && !error.message.includes('duplicate')) throw error;
+  if (error && !error.message.includes('duplicate')) {
+    console.warn('[Supabase] Erro ao salvar tx:', error.message);
+  }
 }
 
 async function saveBatchTransactions(txs) {
