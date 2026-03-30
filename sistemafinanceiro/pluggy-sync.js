@@ -41,9 +41,11 @@ const PluggyAPI = {
     const res  = await fetch(url);
     if (!res.ok) throw new Error(`Token error: ${res.status}`);
     const data = await res.json();
-    // Pluggy pode retornar accessToken ou connectToken dependendo da versão
-    const token = data.accessToken || data.connectToken || data.token;
-    if (!token) throw new Error(`Token não encontrado na resposta: ${JSON.stringify(data)}`);
+    // Log para debug
+    console.log('[Pluggy] Resposta connect-token:', JSON.stringify(data));
+    // Pluggy retorna { accessToken: "..." }
+    const token = data?.accessToken || data?.connectToken || data?.token;
+    if (!token) throw new Error(`Token não encontrado. Resposta: ${JSON.stringify(data)}`);
     return token;
   },
  
@@ -167,36 +169,44 @@ const PluggySync = {
       // 2. Carrega SDK
       await loadPluggySDK();
       if (!window.PluggyConnect) throw new Error('SDK PluggyConnect não carregou');
+      this.log(`SDK carregado, abrindo widget...`);
  
       // 3. Abre widget
       return new Promise((resolve, reject) => {
-        const pluggyConnect = new window.PluggyConnect({
-          connectToken,
-          onSuccess: async (itemData) => {
-            this.log(`✓ Conectado: ${itemData.item?.connector?.name || localAccountId}`, 'success');
-            const stored = loadStoredItems();
-            const existing = stored.findIndex(s => s.localId === localAccountId);
-            const entry = {
-              localId:     localAccountId,
-              itemId:      itemData.item.id,
-              connector:   itemData.item?.connector?.name || localAccountId,
-              connectedAt: new Date().toISOString(),
-            };
-            if (existing >= 0) stored[existing] = entry;
-            else stored.push(entry);
-            saveStoredItems(stored);
-            resolve(itemData.item.id);
-          },
-          onError: (error) => {
-            this.log(`Erro na conexão: ${JSON.stringify(error)}`, 'error');
-            reject(error);
-          },
-          onClose: () => {
-            this.log('Widget fechado');
-            resolve(null);
-          },
-        });
-        pluggyConnect.init();
+        try {
+          const pluggyConnect = new window.PluggyConnect({
+            connectToken,
+            onSuccess: async (itemData) => {
+              this.log(`✓ Conectado: ${itemData?.item?.connector?.name || localAccountId}`, 'success');
+              const stored = loadStoredItems();
+              const existing = stored.findIndex(s => s.localId === localAccountId);
+              const entry = {
+                localId:     localAccountId,
+                itemId:      itemData?.item?.id || itemData?.itemId,
+                connector:   itemData?.item?.connector?.name || localAccountId,
+                connectedAt: new Date().toISOString(),
+              };
+              if (existing >= 0) stored[existing] = entry;
+              else stored.push(entry);
+              saveStoredItems(stored);
+              resolve(entry.itemId);
+            },
+            onError: (error) => {
+              const msg = error?.message || error?.error || JSON.stringify(error) || 'Erro desconhecido';
+              this.log(`Erro na conexão: ${msg}`, 'error');
+              reject(new Error(msg));
+            },
+            onClose: () => {
+              this.log('Widget fechado');
+              resolve(null);
+            },
+          });
+          pluggyConnect.init();
+        } catch (widgetErr) {
+          const msg = widgetErr?.message || String(widgetErr) || 'Erro ao inicializar widget';
+          this.log(`Erro init widget: ${msg}`, 'error');
+          reject(new Error(msg));
+        }
       });
     } catch (err) {
       this.log(`Erro ao abrir widget: ${err.message}`, 'error');
