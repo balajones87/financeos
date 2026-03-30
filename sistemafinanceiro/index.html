@@ -1449,7 +1449,33 @@ body {
 }
 .alloc-seg { height: 100%; }
 
-/* ── IR & DEDUÇÕES 2.0 ──────────────────────────── */
+/* ── Modal Conta ─────────────────────────────────── */
+.conta-modal-overlay {
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:1000;align-items:center;justify-content:center;
+}
+.conta-modal-overlay.open { display:flex; }
+.conta-modal {
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:28px;width:440px;max-width:96vw;
+}
+.conta-modal-title { font-size:15px;font-weight:600;margin-bottom:20px; }
+.conta-field { margin-bottom:14px; }
+.conta-field label { display:block;font-size:11px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px; }
+.conta-field input,.conta-field select {
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;
+}
+.conta-field input:focus,.conta-field select:focus { outline:none;border-color:var(--green); }
+.conta-field-row { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.conta-icon-grid { display:flex;flex-wrap:wrap;gap:6px; }
+.conta-icon-btn {
+  width:36px;height:36px;border-radius:8px;border:2px solid var(--border);
+  background:var(--surface2);cursor:pointer;font-size:18px;
+  display:flex;align-items:center;justify-content:center;transition:border-color .15s;
+}
+.conta-icon-btn.selected { border-color:var(--green);background:var(--green-dim); }
+.conta-modal-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:20px; }
 .ir-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2127,9 +2153,12 @@ body {
       <div class="panel" style="margin-bottom:16px;">
         <div class="panel-header">
           <div class="panel-title">Suas Contas</div>
-          <button class="btn btn-primary" onclick="pluggySyncAll()" id="btn-sync-all" style="font-size:11px;padding:6px 12px">
-            ⟳ Sincronizar Tudo
-          </button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="contaOpenModal()">+ Nova Conta</button>
+            <button class="btn btn-primary" onclick="pluggySyncAll()" id="btn-sync-all" style="font-size:11px;padding:6px 12px">
+              ⟳ Sincronizar Tudo
+            </button>
+          </div>
         </div>
         <div id="plug-accounts-list"></div>
       </div>
@@ -2766,6 +2795,70 @@ body {
       </div>
     </div>
 
+    <!-- MODAL NOVA / EDITAR CONTA -->
+    <div class="conta-modal-overlay" id="conta-modal">
+      <div class="conta-modal">
+        <div class="conta-modal-title" id="conta-modal-title">➕ Nova Conta</div>
+        <input type="hidden" id="conta-edit-id">
+
+        <div class="conta-field-row">
+          <div class="conta-field">
+            <label>Nome da Conta</label>
+            <input type="text" id="conta-nome" placeholder="Ex: Mercado Pago">
+          </div>
+          <div class="conta-field">
+            <label>Tipo / Descrição</label>
+            <input type="text" id="conta-tipo" placeholder="Ex: Conta digital PF">
+          </div>
+        </div>
+
+        <div class="conta-field-row">
+          <div class="conta-field">
+            <label>Cor</label>
+            <input type="color" id="conta-cor" value="#4d9fff" style="height:38px;padding:2px 4px;cursor:pointer">
+          </div>
+          <div class="conta-field">
+            <label>Banco (para Pluggy)</label>
+            <select id="conta-banco">
+              <option value="">Sem integração Pluggy</option>
+              <option value="nubank-pf">Nubank PF</option>
+              <option value="nubank-pj">Nubank PJ / Empresas</option>
+              <option value="itau">Itaú</option>
+              <option value="unicred">Unicred</option>
+              <option value="mercadopago">Mercado Pago</option>
+              <option value="bradesco">Bradesco</option>
+              <option value="santander">Santander</option>
+              <option value="bb">Banco do Brasil</option>
+              <option value="caixa">Caixa Econômica</option>
+              <option value="sicoob">Sicoob</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="conta-field">
+          <label>Ícone</label>
+          <div class="conta-icon-grid" id="conta-icon-grid">
+            ${['🟣','🔵','🟠','🟢','⚡','💵','🏦','💳','🏧','💰','📱','🌐','🏪','🏢','⭐'].map(ic =>
+              `<button type="button" class="conta-icon-btn" data-icon="${ic}" onclick="contaSelectIcon(this)">${ic}</button>`
+            ).join('')}
+          </div>
+          <input type="hidden" id="conta-icone" value="🏦">
+        </div>
+
+        <div class="conta-field">
+          <label>Saldo Inicial (R$)</label>
+          <input type="number" id="conta-saldo" step="0.01" placeholder="0,00" value="0">
+        </div>
+
+        <div class="conta-modal-footer">
+          <button class="btn btn-ghost" onclick="contaCloseModal()">Cancelar</button>
+          <button class="btn btn-ghost" id="conta-del-btn" style="color:var(--red);display:none" onclick="contaDelete()">🗑 Excluir</button>
+          <button class="btn btn-primary" onclick="contaSave()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- RECORRENTES VIEW -->
     <div class="view" id="view-recorrentes">
 
@@ -3125,12 +3218,13 @@ const CATEGORIES = [
 ];
 
 var ACCOUNTS = [
-  { id: 'nubank-pf',   name: 'Nubank PF',        type: 'Conta corrente PF',       color: '#820ad1', icon: '🟣', balance: 8420.50 },
-  { id: 'nubank-pj',   name: 'Nubank PJ',         type: 'Consultório — Médico PJ', color: '#5a0090', icon: '🔵', balance: 15230.00 },
-  { id: 'itau',        name: 'Itaú Personnalité', type: 'Conta corrente PF',       color: '#ff6b00', icon: '🟠', balance: 42150.00 },
-  { id: 'unicred',     name: 'Unicred',           type: 'Conta corrente PF',       color: '#00a650', icon: '🟢', balance: 703.56 },
-  { id: 'energia-pj',  name: 'Energia PJ',        type: 'Usina Solar + Eletropostos', color: '#f59e0b', icon: '⚡', balance: 6800.00 },
-  { id: 'carteira',    name: 'Carteira',          type: 'Dinheiro espécie',        color: '#ffb020', icon: '💵', balance: 1200.00 },
+  { id: 'nubank-pf',    name: 'Nubank PF',        type: 'Conta corrente PF',          color: '#820ad1', icon: '🟣', balance: 8420.50 },
+  { id: 'nubank-pj',    name: 'Nubank PJ',         type: 'Consultório — Médico PJ',    color: '#5a0090', icon: '🔵', balance: 15230.00 },
+  { id: 'itau',         name: 'Itaú Personnalité', type: 'Conta corrente PF',          color: '#ff6b00', icon: '🟠', balance: 42150.00 },
+  { id: 'unicred',      name: 'Unicred',           type: 'Conta corrente cooperativa', color: '#00a650', icon: '🟢', balance: 703.56 },
+  { id: 'mercadopago',  name: 'Mercado Pago',      type: 'Conta digital PF',           color: '#00b1ea', icon: '🔷', balance: 0 },
+  { id: 'energia-pj',   name: 'Energia PJ',        type: 'Usina Solar + Eletropostos', color: '#f59e0b', icon: '⚡', balance: 6800.00 },
+  { id: 'carteira',     name: 'Carteira',          type: 'Dinheiro espécie',           color: '#ffb020', icon: '💵', balance: 1200.00 },
 ];
 
 // Auto-categorization rules: keyword → category
@@ -3660,53 +3754,170 @@ function renderWalletTx() {
 }
 
 function renderContas() {
-  const stored   = typeof loadStoredItems === 'function' ? loadStoredItems() : [];
-  const pending  = TRANSACTIONS.filter(t => !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
+  const stored  = typeof loadStoredItems === 'function' ? loadStoredItems() : [];
+  const pending = TRANSACTIONS.filter(t => !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
 
-  // Update summary cards
-  document.getElementById('plug-count-conn').textContent  = stored.length;
-  document.getElementById('plug-tx-count').textContent    = TRANSACTIONS.length;
-  document.getElementById('plug-pending').textContent     = pending + ' itens';
+  document.getElementById('plug-count-conn').textContent = stored.filter(s => ACCOUNTS.find(a=>a.id===s.localId)).length;
+  document.getElementById('plug-tx-count').textContent   = TRANSACTIONS.length;
+  document.getElementById('plug-pending').textContent    = pending + ' itens';
 
   if (stored.length > 0) {
     const last = stored.reduce((a,b) => a.connectedAt > b.connectedAt ? a : b);
-    document.getElementById('plug-last-sync').textContent  = '✓ Ativo';
+    document.getElementById('plug-last-sync').textContent   = '✓ Ativo';
     document.getElementById('plug-sync-detail').textContent = `Último: ${new Date(last.connectedAt).toLocaleDateString('pt-BR')}`;
     document.getElementById('plug-setup-panel').style.display = 'none';
   }
 
-  // Render account connection list
-  const ACCOUNT_DEFS = [
-    { id: 'nubank-pf',  label: 'Nubank PF',         sub: 'Conta corrente pessoal + Cartão',  color: '#820ad1', icon: '🟣' },
-    { id: 'nubank-pj',  label: 'Nubank PJ',          sub: 'Consultório — Conta empresarial',  color: '#5a0090', icon: '🔵' },
-    { id: 'itau',       label: 'Itaú Personnalité',  sub: 'Conta corrente + Visa Infinite',   color: '#ff6b00', icon: '🟠' },
-    { id: 'unicred',    label: 'Unicred',             sub: 'Conta corrente cooperativa',       color: '#00a650', icon: '🟢' },
-    { id: 'energia-pj', label: 'Energia PJ',          sub: 'Usina Solar + Eletropostos',       color: '#f59e0b', icon: '⚡' },
-  ];
-
-  document.getElementById('plug-accounts-list').innerHTML = ACCOUNT_DEFS.map(acc => {
-    const conn    = stored.find(s => s.localId === acc.id);
-    const localAcc = ACCOUNTS.find(a => a.id === acc.id);
-    const isConn  = !!conn;
-
+  // Renderiza lista dinâmica a partir de ACCOUNTS
+  document.getElementById('plug-accounts-list').innerHTML = ACCOUNTS.map(acc => {
+    const conn   = stored.find(s => s.localId === acc.id);
+    const isConn = !!conn;
+    const bal    = typeof acc.balance === 'number' ? acc.balance : 0;
     return `
     <div class="acc-breakdown-item" style="border-bottom:1px solid var(--border)">
       <div class="acc-icon" style="background:${acc.color}22;font-size:20px">${acc.icon}</div>
       <div class="acc-breakdown-info">
-        <div class="acc-breakdown-name">${acc.label}</div>
-        <div class="acc-breakdown-type">${acc.sub}</div>
-        ${conn ? `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Conectado via ${conn.connector} · ${new Date(conn.connectedAt).toLocaleDateString('pt-BR')}</div>` : ''}
+        <div class="acc-breakdown-name">${acc.name}</div>
+        <div class="acc-breakdown-type">${acc.type}</div>
+        ${conn ? `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Conectado via ${conn.connector||'Pluggy'} · ${new Date(conn.connectedAt).toLocaleDateString('pt-BR')}</div>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        ${localAcc ? `<div class="acc-breakdown-bal">R$ ${localAcc.balance.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>` : ''}
+        <div class="acc-breakdown-bal">R$ ${bal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
         ${isConn
-          ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="pluggyReconnect('${acc.id}')">⟳ Reconectar</button>
-             <button class="btn-icon danger" onclick="pluggyDisconnect('${acc.id}')" title="Desconectar">✕</button>`
+          ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="pluggyReconnect('${acc.id}')">⟳ Reconectar</button>`
           : `<button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="pluggyConnect('${acc.id}')">+ Conectar</button>`
+        }
+        <button onclick="contaOpenModal('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px 6px" title="Editar">✏️</button>
+        ${isConn
+          ? `<button onclick="pluggyDisconnect('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Desconectar">🔌</button>`
+          : `<button onclick="contaOpenModal('${acc.id}',true)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Excluir">🗑</button>`
         }
       </div>
     </div>`;
-  }).join('');
+  }).join('') + `
+    <div style="padding:12px 16px;border-top:1px solid var(--border);text-align:center;">
+      <button class="btn btn-ghost" style="font-size:12px" onclick="contaOpenModal()">+ Adicionar nova conta</button>
+    </div>`;
+}
+
+// ── CRUD Contas ──────────────────────────────────────────────
+let contaEditingId = null;
+
+function contaOpenModal(id = null, focusDelete = false) {
+  contaEditingId = id;
+  const isEdit = !!id;
+  document.getElementById('conta-modal-title').textContent = isEdit ? '✏️ Editar Conta' : '➕ Nova Conta';
+  document.getElementById('conta-del-btn').style.display  = isEdit ? '' : 'none';
+  document.getElementById('conta-edit-id').value          = id || '';
+
+  if (isEdit) {
+    const acc = ACCOUNTS.find(a => a.id === id);
+    if (acc) {
+      document.getElementById('conta-nome').value  = acc.name;
+      document.getElementById('conta-tipo').value  = acc.type;
+      document.getElementById('conta-cor').value   = acc.color || '#4d9fff';
+      document.getElementById('conta-saldo').value = acc.balance || 0;
+      document.getElementById('conta-icone').value = acc.icon || '🏦';
+      // selecionar ícone no grid
+      document.querySelectorAll('.conta-icon-btn').forEach(b => {
+        b.classList.toggle('selected', b.dataset.icon === acc.icon);
+      });
+    }
+  } else {
+    document.getElementById('conta-nome').value  = '';
+    document.getElementById('conta-tipo').value  = '';
+    document.getElementById('conta-cor').value   = '#4d9fff';
+    document.getElementById('conta-saldo').value = '0';
+    document.getElementById('conta-icone').value = '🏦';
+    document.querySelectorAll('.conta-icon-btn').forEach(b => b.classList.remove('selected'));
+  }
+
+  document.getElementById('conta-modal').classList.add('open');
+  if (focusDelete) setTimeout(() => document.getElementById('conta-del-btn').focus(), 100);
+}
+
+function contaCloseModal() {
+  document.getElementById('conta-modal').classList.remove('open');
+  contaEditingId = null;
+}
+
+function contaSelectIcon(btn) {
+  document.querySelectorAll('.conta-icon-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('conta-icone').value = btn.dataset.icon;
+}
+
+async function contaSave() {
+  const nome   = document.getElementById('conta-nome').value.trim();
+  const tipo   = document.getElementById('conta-tipo').value.trim();
+  const cor    = document.getElementById('conta-cor').value;
+  const icone  = document.getElementById('conta-icone').value || '🏦';
+  const saldo  = parseFloat(document.getElementById('conta-saldo').value) || 0;
+  const banco  = document.getElementById('conta-banco').value;
+  if (!nome) return alert('Informe o nome da conta.');
+
+  if (contaEditingId) {
+    // Editar existente
+    const idx = ACCOUNTS.findIndex(a => a.id === contaEditingId);
+    if (idx >= 0) {
+      ACCOUNTS[idx].name    = nome;
+      ACCOUNTS[idx].type    = tipo;
+      ACCOUNTS[idx].color   = cor;
+      ACCOUNTS[idx].icon    = icone;
+      ACCOUNTS[idx].balance = saldo;
+    }
+    // Persistir no Supabase
+    if (currentUser) {
+      const acc = ACCOUNTS[idx];
+      await db.from('accounts').update({
+        name: nome, type: tipo, color: cor, icon: icone, balance: saldo, bank: banco||null
+      }).eq('local_id', contaEditingId).eq('user_id', currentUser.id);
+    }
+    showToast('✓', `Conta "${nome}" atualizada`);
+  } else {
+    // Nova conta
+    const newId = banco || nome.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now();
+    const newAcc = { id: newId, name: nome, type: tipo, color: cor, icon: icone, balance: saldo };
+    ACCOUNTS.push(newAcc);
+    // Persistir no Supabase
+    if (currentUser) {
+      await db.from('accounts').insert({
+        user_id: currentUser.id, local_id: newId, name: nome, type: tipo,
+        color: cor, icon: icone, balance: saldo, bank: banco||null, is_active: true
+      });
+    }
+    showToast('✓', `Conta "${nome}" adicionada`);
+  }
+
+  contaCloseModal();
+  renderContas();
+  renderDashboard();
+}
+
+async function contaDelete() {
+  if (!contaEditingId) return;
+  const acc = ACCOUNTS.find(a => a.id === contaEditingId);
+  if (!confirm(`Excluir a conta "${acc?.name}"? Transações associadas serão mantidas.`)) return;
+
+  // Desconectar Pluggy se conectado
+  const stored = loadStoredItems ? loadStoredItems() : [];
+  if (stored.find(s => s.localId === contaEditingId) && window.PluggySync) {
+    await window.PluggySync.disconnect(contaEditingId);
+  }
+
+  // Remover do array local
+  const idx = ACCOUNTS.findIndex(a => a.id === contaEditingId);
+  if (idx >= 0) ACCOUNTS.splice(idx, 1);
+
+  // Remover do Supabase
+  if (currentUser) {
+    await db.from('accounts').update({ is_active: false }).eq('local_id', contaEditingId).eq('user_id', currentUser.id);
+  }
+
+  showToast('✓', `Conta excluída`);
+  contaCloseModal();
+  renderContas();
+  renderDashboard();
 }
 
 // ── Pluggy UI functions ──────────────────────────────────────
