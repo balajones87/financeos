@@ -798,19 +798,14 @@ body {
   position: relative;
   overflow: hidden;
   margin-bottom: 4px;
+  min-height: 110px;
 }
-
-.card-visual.nubank-pf {
-  background: linear-gradient(135deg, #7a1fa2 0%, #4a0080 100%);
-}
-
-.card-visual.nubank-pj {
-  background: linear-gradient(135deg, #1a1a2e 0%, #7a1fa2 100%);
-}
-
-.card-visual.itau {
-  background: linear-gradient(135deg, #ff6b00 0%, #cc4000 100%);
-}
+.card-visual.nubank-pf  { background: linear-gradient(135deg, #7a1fa2 0%, #4a0080 100%); }
+.card-visual.nubank-pj  { background: linear-gradient(135deg, #1a1a2e 0%, #7a1fa2 100%); }
+.card-visual.itau       { background: linear-gradient(135deg, #ff6b00 0%, #cc4000 100%); }
+.card-visual.unicred    { background: linear-gradient(135deg, #006633 0%, #004422 100%); }
+.card-visual.mercadopago{ background: linear-gradient(135deg, #009ee3 0%, #006fa3 100%); }
+.card-visual.generic    { background: linear-gradient(135deg, #374151 0%, #1f2937 100%); }
 
 .card-chip {
   width: 32px; height: 24px;
@@ -818,40 +813,59 @@ body {
   border-radius: 4px;
   margin-bottom: 20px;
 }
-
 .card-number {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: rgba(255,255,255,0.7);
-  letter-spacing: 2px;
-  margin-bottom: 14px;
+  font-family: var(--mono); font-size: 13px;
+  color: rgba(255,255,255,0.7); letter-spacing: 2px; margin-bottom: 14px;
 }
-
 .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
-.card-name { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 500; }
+.card-name  { font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 500; }
 .card-limit { font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.6); text-align: right; }
 .card-limit span { display: block; font-size: 16px; color: white; font-weight: 600; }
 
-.fatura-bar {
-  background: var(--surface2);
-  border-radius: 6px;
-  height: 8px;
-  margin: 12px 0;
-  overflow: hidden;
-}
+.fatura-bar  { background: var(--surface2); border-radius: 6px; height: 8px; margin: 12px 0; overflow: hidden; }
+.fatura-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--amber), var(--red)); }
 
-.fatura-fill {
-  height: 100%;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--amber), var(--red));
+/* Cartões — módulo dinâmico */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap:16px; margin-bottom:20px; }
+
+.card-info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
 }
+.card-info-row:last-child { border-bottom: none; }
+.card-info-label { color: var(--text3); }
+.card-info-val   { font-family: var(--mono); font-weight: 600; }
+
+.card-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.card-stat {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; text-align: center;
+}
+.card-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+.card-stat-val   { font-family: var(--mono); font-size: 16px; font-weight: 700; }
+
+.card-filter-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.card-filter-tabs select {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; color: var(--text); font-size: 12px;
+}
+.card-mes-btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 12px; cursor: pointer; color: var(--text2); font-size: 12px;
+}
+.card-mes-btn:hover { background: var(--surface3); }
+
+/* Badge vencimento */
+.venc-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+}
+.venc-badge.ok     { background: rgba(0,212,170,.1); color: var(--green); }
+.venc-badge.soon   { background: rgba(245,158,11,.1); color: var(--amber); }
+.venc-badge.urgent { background: rgba(239,68,68,.1);  color: var(--red); }
 
 /* EMPTY STATE */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text3);
-}
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
 
 .empty-icon { font-size: 32px; margin-bottom: 12px; }
 .empty-title { font-size: 14px; color: var(--text2); margin-bottom: 6px; }
@@ -1961,82 +1975,49 @@ body {
 
     <!-- CARTÕES VIEW -->
     <div class="view" id="view-cartoes">
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab(this,'faturas')">Faturas</div>
-        <div class="tab" onclick="switchTab(this,'gastos-cartao')">Gastos</div>
+
+      <!-- STATS TOPO -->
+      <div class="card-stat-grid" id="cards-stat-grid">
+        <div class="card-stat">
+          <div class="card-stat-label">Fatura Total Aberta</div>
+          <div class="card-stat-val amber" id="cards-total-fatura">R$ 0</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Limite Disponível</div>
+          <div class="card-stat-val green" id="cards-total-disponivel">R$ 0</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Uso do Limite</div>
+          <div class="card-stat-val" id="cards-uso-pct">0%</div>
+        </div>
       </div>
 
-      <div id="tab-faturas">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
-          <!-- NUBANK PF CARD -->
-          <div class="panel">
-            <div style="padding:16px 18px;">
-              <div class="card-visual nubank-pf">
-                <div class="card-chip"></div>
-                <div class="card-number">•••• •••• •••• 2341</div>
-                <div class="card-bottom">
-                  <div class="card-name">NUBANK PESSOAL</div>
-                  <div class="card-limit">Limite<span>R$ 12.000</span></div>
-                </div>
-              </div>
-              <div class="fatura-bar"><div class="fatura-fill" style="width:38%"></div></div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-                <span>Fatura atual: <span style="color:var(--amber);font-family:var(--mono);font-weight:600;">R$ 4.560,00</span></span>
-                <span>Vence 15/04</span>
-              </div>
-            </div>
-          </div>
+      <!-- CARDS VISUAIS -->
+      <div class="cards-grid" id="cards-visuais">
+        <div class="panel" style="padding:40px;text-align:center;color:var(--text3);grid-column:1/-1">
+          Sincronize suas contas para carregar os cartões
+        </div>
+      </div>
 
-          <!-- NUBANK PJ CARD -->
-          <div class="panel">
-            <div style="padding:16px 18px;">
-              <div class="card-visual nubank-pj">
-                <div class="card-chip"></div>
-                <div class="card-number">•••• •••• •••• 8812</div>
-                <div class="card-bottom">
-                  <div class="card-name">NUBANK EMPRESARIAL</div>
-                  <div class="card-limit">Limite<span>R$ 20.000</span></div>
-                </div>
-              </div>
-              <div class="fatura-bar"><div class="fatura-fill" style="width:21%"></div></div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-                <span>Fatura atual: <span style="color:var(--amber);font-family:var(--mono);font-weight:600;">R$ 4.200,00</span></span>
-                <span>Vence 20/04</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- ITAU CARD -->
-          <div class="panel">
-            <div style="padding:16px 18px;">
-              <div class="card-visual itau">
-                <div class="card-chip"></div>
-                <div class="card-number">•••• •••• •••• 5590</div>
-                <div class="card-bottom">
-                  <div class="card-name">PERSONNALITÉ</div>
-                  <div class="card-limit">Limite<span>R$ 50.000</span></div>
-                </div>
-              </div>
-              <div class="fatura-bar"><div class="fatura-fill" style="width:15%"></div></div>
-              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
-                <span>Fatura atual: <span style="color:var(--green);font-family:var(--mono);font-weight:600;">R$ 7.500,00</span></span>
-                <span>Vence 10/04</span>
-              </div>
-            </div>
+      <!-- FILTROS GASTOS -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Gastos no Cartão</div>
+          <div class="card-filter-tabs">
+            <select id="cards-filter-conta" onchange="renderCartoesGastos()">
+              <option value="">Todos os cartões</option>
+            </select>
+            <button class="card-mes-btn" onclick="cardsMudarMes(-1)">←</button>
+            <span id="cards-mes-label" style="font-size:12px;color:var(--text2);padding:0 4px"></span>
+            <button class="card-mes-btn" onclick="cardsMudarMes(1)">→</button>
           </div>
         </div>
-
-        <!-- CARD TRANSACTIONS -->
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title">Lançamentos do Cartão — Março 2025</div>
-            <select class="filter-select" style="background:var(--surface2)">
-              <option>Nubank Pessoal ••2341</option>
-              <option>Nubank PJ ••8812</option>
-              <option>Personnalité ••5590</option>
-            </select>
-          </div>
-          <div id="card-tx-list"></div>
+        <div id="cards-gastos-list">
+          <div style="text-align:center;padding:32px;color:var(--text3)">Nenhum gasto no cartão encontrado</div>
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:12px;">
+          <span style="color:var(--text3)">Total do período:</span>
+          <span style="font-family:var(--mono);font-weight:700;color:var(--red)" id="cards-gastos-total">R$ 0,00</span>
         </div>
       </div>
     </div>
@@ -3710,26 +3691,219 @@ function renderRules() {
   }).join('');
 }
 
-function renderCardTx() {
-  const list = document.getElementById('card-tx-list');
-  const cardTxs = TRANSACTIONS.filter(t => t.cardTx);
-  list.innerHTML = cardTxs.map(tx => {
-    const cat = tx.category ? getCatById(tx.category) : null;
+// ============================================================
+// CARTÕES ENGINE — Dinâmico via CREDIT_CARDS (Pluggy)
+// ============================================================
+
+// Estado global de cartões
+var CREDIT_CARDS = []; // populado pelo pluggy-sync ao fazer syncAll
+var cardsFilterMes = new Date().toISOString().slice(0,7); // 'YYYY-MM'
+
+// Mapa de classe CSS por conta
+const CARD_CSS_MAP = {
+  'nubank-pf':   'nubank-pf',
+  'nubank-pj':   'nubank-pj',
+  'itau':        'itau',
+  'unicred':     'unicred',
+  'mercadopago': 'mercadopago',
+};
+
+function cardsCssClass(localId) {
+  return CARD_CSS_MAP[localId] || 'generic';
+}
+
+function renderCartoes() {
+  renderCartoesVisuais();
+  renderCartoesGastos();
+}
+
+// ── Cards visuais ────────────────────────────────────────────
+function renderCartoesVisuais() {
+  const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const grid = document.getElementById('cards-visuais');
+
+  if (!CREDIT_CARDS.length) {
+    grid.innerHTML = `<div class="panel" style="padding:40px;text-align:center;color:var(--text3);grid-column:1/-1">
+      Nenhum cartão encontrado. Clique em <strong>Sincronizar</strong> para carregar os dados da Pluggy.
+    </div>`;
+    document.getElementById('cards-total-fatura').textContent    = fmt(0);
+    document.getElementById('cards-total-disponivel').textContent = fmt(0);
+    document.getElementById('cards-uso-pct').textContent          = '0%';
+    return;
+  }
+
+  // Stats totais
+  const totalFatura     = CREDIT_CARDS.reduce((s,c) => s + (c.balance||0), 0);
+  const totalLimite     = CREDIT_CARDS.reduce((s,c) => s + (c.creditLimit||0), 0);
+  const totalDisponivel = CREDIT_CARDS.reduce((s,c) => s + (c.availableLimit||0), 0);
+  const usoPct          = totalLimite > 0 ? (totalFatura/totalLimite*100).toFixed(1) : 0;
+  document.getElementById('cards-total-fatura').textContent     = fmt(totalFatura);
+  document.getElementById('cards-total-disponivel').textContent = fmt(totalDisponivel);
+  const usoPctEl = document.getElementById('cards-uso-pct');
+  usoPctEl.textContent = usoPct + '%';
+  usoPctEl.style.color = usoPct > 80 ? 'var(--red)' : usoPct > 50 ? 'var(--amber)' : 'var(--green)';
+
+  // Atualiza select de filtro
+  const sel = document.getElementById('cards-filter-conta');
+  const curVal = sel.value;
+  sel.innerHTML = '<option value="">Todos os cartões</option>' +
+    CREDIT_CARDS.map(c => `<option value="${c.localId}">${c.name}</option>`).join('');
+  if (curVal) sel.value = curVal;
+
+  // Renderiza cards
+  grid.innerHTML = CREDIT_CARDS.map(card => {
+    const fatura    = card.balance || 0;
+    const limite    = card.creditLimit || 0;
+    const disponivel = card.availableLimit || (limite - fatura);
+    const pct       = limite > 0 ? Math.min(100, fatura/limite*100) : 0;
+    const barColor  = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
+    const cssClass  = cardsCssClass(card.localId);
+
+    // Vencimento
+    let vencHtml = '';
+    if (card.dueDate) {
+      const due     = new Date(card.dueDate + 'T12:00:00');
+      const today   = new Date();
+      const diffDays = Math.round((due - today) / 86400000);
+      const dueFmt  = due.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+      const vencClass = diffDays < 0 ? 'urgent' : diffDays <= 5 ? 'urgent' : diffDays <= 10 ? 'soon' : 'ok';
+      const vencTxt   = diffDays < 0 ? `Venceu há ${Math.abs(diffDays)}d` : diffDays === 0 ? 'Vence hoje!' : `Vence em ${diffDays}d (${dueFmt})`;
+      vencHtml = `<span class="venc-badge ${vencClass}">📅 ${vencTxt}</span>`;
+    }
+
+    // Gastos do mês atual neste cartão
+    const gastosCardMes = TRANSACTIONS.filter(t =>
+      t.account === card.localId &&
+      t.amount < 0 &&
+      t.date?.slice(0,7) === cardsFilterMes &&
+      !t.txType?.includes('transfer')
+    ).reduce((s,t) => s + Math.abs(t.amount), 0);
+
     return `
-    <div class="tx-item" onclick="openCatPicker(event, ${tx.id})">
-      <div class="tx-icon" style="background:var(--surface2)">${cat ? cat.icon : '❓'}</div>
+    <div class="panel" style="padding:16px 18px;">
+      <div class="card-visual ${cssClass}">
+        <div class="card-chip"></div>
+        <div class="card-number">•••• •••• •••• ${card.lastFour||'????'}</div>
+        <div class="card-bottom">
+          <div class="card-name">${card.name.toUpperCase()}</div>
+          <div class="card-limit">Limite Total<span>${fmt(limite)}</span></div>
+        </div>
+      </div>
+      <div class="fatura-bar">
+        <div class="fatura-fill" style="width:${pct}%;background:linear-gradient(90deg,${barColor},${barColor})"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--text3)">
+          Fatura atual: <strong style="color:var(--amber);font-family:var(--mono)">${fmt(fatura)}</strong>
+        </span>
+        ${vencHtml}
+      </div>
+      <div class="card-info-row">
+        <span class="card-info-label">Disponível</span>
+        <span class="card-info-val" style="color:var(--green)">${fmt(disponivel)}</span>
+      </div>
+      <div class="card-info-row">
+        <span class="card-info-label">Uso do limite</span>
+        <span class="card-info-val" style="color:${barColor}">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="card-info-row">
+        <span class="card-info-label">Gastos em ${cardsFilterMes.slice(5)}/</span>
+        <span class="card-info-val" style="color:var(--red)">${fmt(gastosCardMes)}</span>
+      </div>
+      <div class="card-info-row">
+        <span class="card-info-label">Banco</span>
+        <span class="card-info-val" style="color:var(--text2)">${card.bankName||card.localId}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Gastos por cartão ────────────────────────────────────────
+function renderCartoesGastos() {
+  const contaFil = document.getElementById('cards-filter-conta')?.value || '';
+  const [ano, mes] = cardsFilterMes.split('-').map(Number);
+
+  // Label mês
+  const mesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mesLabel = document.getElementById('cards-mes-label');
+  if (mesLabel) mesLabel.textContent = `${mesNomes[mes-1]}/${ano}`;
+
+  // Filtrar transações de cartão no mês
+  let txs = TRANSACTIONS.filter(t =>
+    t.amount < 0 &&
+    !t.txType?.includes('transfer') &&
+    t.date?.slice(0,7) === cardsFilterMes
+  );
+
+  // Se tem cartões cadastrados, filtrar só txs dessas contas
+  const cardIds = CREDIT_CARDS.map(c => c.localId);
+  if (cardIds.length) txs = txs.filter(t => cardIds.includes(t.account));
+
+  // Filtro por conta específica
+  if (contaFil) txs = txs.filter(t => t.account === contaFil);
+
+  const total = txs.reduce((s,t) => s + Math.abs(t.amount), 0);
+  document.getElementById('cards-gastos-total').textContent =
+    'R$ ' + total.toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+  const list = document.getElementById('cards-gastos-list');
+  if (!txs.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text3)">
+      Nenhum gasto no cartão em ${mesNomes[mes-1]}/${ano}
+    </div>`;
+    return;
+  }
+
+  // Agrupa por categoria para mini-resumo
+  const porCat = {};
+  txs.forEach(t => {
+    const cat = t.category || 'Sem categoria';
+    porCat[cat] = (porCat[cat]||0) + Math.abs(t.amount);
+  });
+  const topCats = Object.entries(porCat).sort((a,b)=>b[1]-a[1]).slice(0,4);
+
+  // Resumo por categoria
+  const resumoHtml = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border)">
+      ${topCats.map(([cat,val]) => `
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--surface3);color:var(--text2)">
+          ${cat}: <strong style="font-family:var(--mono)">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})}</strong>
+        </span>`).join('')}
+    </div>`;
+
+  list.innerHTML = resumoHtml + txs.map(tx => {
+    const accName = ACCOUNTS.find(a=>a.id===tx.account)?.name || tx.account;
+    const cat = tx.category || null;
+    return `
+    <div class="tx-item" onclick="openCatPicker(event, '${tx.id}')">
+      <div class="tx-icon" style="background:var(--surface2)">${cat ? '🏷' : '❓'}</div>
       <div class="tx-info">
         <div class="tx-name">${tx.desc}</div>
         <div class="tx-meta">
           <span class="tx-date">${formatDate(tx.date)}</span>
-          ${cat ? `<span class="tx-cat ${cat.css}">${cat.name}</span>` : `<span class="tx-cat" style="background:var(--red-dim);color:var(--red)">Sem categoria</span>`}
+          <span style="font-size:10px;color:var(--text3)">${accName}</span>
+          ${cat
+            ? `<span class="tx-cat" style="background:var(--surface2);color:var(--text2)">${cat}</span>`
+            : `<span class="tx-cat" style="background:var(--red-dim);color:var(--red)">⚠ Sem categoria</span>`
+          }
           ${originBadge(tx.origin)}
         </div>
       </div>
-      <div class="tx-amount debit">${formatBRL(tx.amount)}</div>
+      <div class="tx-amount debit">- R$ ${Math.abs(tx.amount).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
     </div>`;
   }).join('');
 }
+
+function cardsMudarMes(delta) {
+  const [ano, mes] = cardsFilterMes.split('-').map(Number);
+  const d = new Date(ano, mes-1+delta, 1);
+  cardsFilterMes = d.toISOString().slice(0,7);
+  renderCartoesGastos();
+  renderCartoesVisuais();
+}
+
+// Mantém compatibilidade com chamadas antigas
+function renderCardTx() { renderCartoesGastos(); }
 
 function renderWalletTx() {
   const list = document.getElementById('wallet-tx-list');
@@ -4114,6 +4288,7 @@ function showView(viewId, navEl) {
   if (viewId === 'investimentos') renderInvestimentos();
   if (viewId === 'ir')            renderIR();
   if (viewId === 'documentos')    docsLoad();
+  if (viewId === 'cartoes')       renderCartoes();
 }
 
 // ============================================================
