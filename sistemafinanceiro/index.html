@@ -4567,6 +4567,15 @@ function showToast(icon, msg) {
 // ============================================================
 
 function init() {
+  // Expõe funções globalmente para supabase-client.js e pluggy-sync.js
+  window.renderDashboard     = renderDashboard;
+  window.renderDashboardTx   = renderDashboardTx;
+  window.renderCatBars       = renderCatBars;
+  window.renderTransactions  = renderTransactions;
+  window.renderRules         = renderRules;
+  window.autoCategorizeTx    = autoCategorizeTx;
+  window.updatePendingBadge  = updatePendingBadge;
+
   renderDashboard();
   renderDashboardTx();
   renderCatBars();
