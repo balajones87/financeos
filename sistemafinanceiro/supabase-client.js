@@ -97,9 +97,9 @@ async function loadAllData() {
 async function loadAccounts() {
   const { data, error } = await db.from('accounts').select('*').eq('user_id', currentUser.id);
   if (error) throw error;
-  window._DB_ACCOUNTS = data || []; // cache para getAccountDbId
+  window._DB_ACCOUNTS = data || [];
   if (data?.length > 0) {
-    window.ACCOUNTS = data.map(a => ({
+    const mapped = data.map(a => ({
       id:      a.local_id,
       _db_id:  a.id,
       name:    a.name,
@@ -111,6 +111,12 @@ async function loadAccounts() {
       pluggy_account_id: a.pluggy_account_id,
       last_sync: a.last_sync,
     }));
+    if (window.ACCOUNTS) {
+      window.ACCOUNTS.length = 0;
+      window.ACCOUNTS.push(...mapped);
+    } else {
+      window.ACCOUNTS = mapped;
+    }
   }
 }
 
@@ -177,25 +183,29 @@ async function loadTransactions(limit = 500) {
     .order('tx_date', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  if (data?.length > 0) {
-    window.TRANSACTIONS = data.map(t => ({
-      id:          t.id,
-      date:        t.tx_date,
-      desc:        t.description,
-      amount:      parseFloat(t.amount),
-      account:     t.accounts?.local_id || '',
-      category:    t.categories?.name || null,
-      txType:      t.tx_type,
-      origin:      t.cat_origin,
-      cardTx:      t.is_card_tx,
-      external_id: t.external_id,
-      notes:       t.notes,
-    }));
-    console.log(`[Supabase] ${window.TRANSACTIONS.length} transações carregadas`);
+
+  const mapped = (data || []).map(t => ({
+    id:          t.id,
+    date:        t.tx_date,
+    desc:        t.description,
+    amount:      parseFloat(t.amount),
+    account:     t.accounts?.local_id || '',
+    category:    t.categories?.name || null,
+    txType:      t.tx_type,
+    origin:      t.cat_origin,
+    cardTx:      t.is_card_tx,
+    external_id: t.external_id,
+    notes:       t.notes,
+  }));
+
+  // MUTATE o array em vez de substituir — mantém a referência que renderTransactions usa
+  if (window.TRANSACTIONS) {
+    window.TRANSACTIONS.length = 0;
+    window.TRANSACTIONS.push(...mapped);
   } else {
-    window.TRANSACTIONS = [];
-    console.log('[Supabase] Nenhuma transação no banco ainda');
+    window.TRANSACTIONS = mapped;
   }
+  console.log(`[Supabase] ${mapped.length} transações carregadas`);
 }
 
 async function saveTransaction(tx) {
