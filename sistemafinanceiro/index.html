@@ -4030,7 +4030,15 @@ function learnFromCorrection(tx, newCategory) {
       }
     }
     persistRuleToSupabase({ keyword: kw, txType: 'transfer_internal' });
-    showToast('⇄', 'Transferência interna — não conta como gasto ou receita');
+
+    // Aplicar retroativamente
+    if (kw) {
+      const updated = applyRuleRetroactive(kw, null, 'transfer_internal');
+      if (updated > 0) showToast('⇄', `Marcado como interno em mais ${updated} transação${updated>1?'ões':''}`);
+      else showToast('⇄', 'Transferência interna — não conta como gasto ou receita');
+    } else {
+      showToast('⇄', 'Transferência interna — não conta como gasto ou receita');
+    }
     renderTransactions(); renderDashboardTx(); renderCatBars(); updatePendingBadge(); renderDashboard();
     return;
   }
@@ -4084,7 +4092,52 @@ function learnFromCorrection(tx, newCategory) {
   if (typeof saveLearnedRule === 'function') saveLearnedRule(tx.desc, newCategory, tx.account);
   persistRuleToSupabase({ keyword: kw, category: newCategory, account: tx.account });
 
+  // ── Aplicar retroativamente em todas as transações pendentes similares ──
+  if (kw) {
+    const updated = applyRuleRetroactive(kw, newCategory, tx.txType);
+    if (updated > 0) {
+      showToast('⚡', `Regra aplicada em mais ${updated} transação${updated > 1 ? 'ões' : ''} similar${updated > 1 ? 'es' : ''}`);
+    }
+  }
+
   renderTransactions(); renderRules(); updatePendingBadge();
+}
+
+// Aplica regra retroativamente em transações pendentes existentes
+function applyRuleRetroactive(keyword, category, txType) {
+  let count = 0;
+  const kw = keyword.toUpperCase();
+  const toUpdate = [];
+
+  TRANSACTIONS.forEach(t => {
+    // Pular: já categorizada manualmente, interna, ou cartão
+    if (t.origin === 'manual') return;
+    if (isInternalTransfer(t)) return;
+    if (t.category && t.origin !== 'pending') return;
+    // Pular a própria transação que já foi atualizada
+    if ((t.desc||'').toUpperCase().includes(kw) && !t.category) {
+      if (txType === 'transfer_internal') {
+        t.txType   = 'transfer_internal';
+        t.category = null;
+        t.origin   = 'rule';
+      } else {
+        t.category = category;
+        t.origin   = 'rule';
+        t._suggested = null;
+      }
+      count++;
+      toUpdate.push({ txId: t.id, category: t.category, origin: t.origin });
+    }
+  });
+
+  // Persistir todas no Supabase em batch
+  if (window.persistChange && toUpdate.length > 0) {
+    toUpdate.forEach(u => {
+      window.persistChange('transaction_category', u);
+    });
+  }
+
+  return count;
 }
 
 // Extrai keyword útil e específica da descrição
@@ -5904,7 +5957,16 @@ function openCatPicker(e, txId) {
     if (s) s.focus();
   }, 50);
 
-  setTimeout(() => document.addEventListener('click', closePicker, {once:true}), 0);
+  // Fechar ao clicar FORA do picker (não dentro)
+  setTimeout(() => {
+    document.addEventListener('click', function outsideClick(e) {
+      const p = document.getElementById('cat-picker');
+      if (p && !p.contains(e.target)) {
+        closePicker();
+        document.removeEventListener('click', outsideClick);
+      }
+    });
+  }, 100);
 }
 
 function renderCatPickerContent(picker, searchTerm) {
@@ -5963,6 +6025,10 @@ function renderCatPickerContent(picker, searchTerm) {
       html += `<div class="cat-sub-option" onclick="assignCategory('${cat.name} > ${sub}')">${sub}</div>`;
     });
 
+    // Opção de adicionar nova subcategoria
+    html += `<div class="cat-sub-option" style="color:var(--text3);font-style:italic"
+      onclick="event.stopPropagation();addSubcategoria('${cat.name}', this)">+ Nova subcategoria...</div>`;
+
     html += `</div></div>`;
   });
 
@@ -5985,6 +6051,17 @@ function catPickerToggle(header) {
   header.classList.toggle('open');
   const subs = header.nextElementSibling;
   if (subs) subs.classList.toggle('open');
+}
+
+function addSubcategoria(catName, el) {
+  const nome = prompt(`Nova subcategoria em "${catName}":`);
+  if (!nome || !nome.trim()) return;
+  const sub = nome.trim();
+  // Adicionar na CATEGORIES_FULL
+  const cat = CATEGORIES_FULL.find(c => c.name === catName);
+  if (cat && !cat.subs.includes(sub)) cat.subs.push(sub);
+  // Aplicar direto
+  assignCategory(`${catName} > ${sub}`);
 }
 
 function closePicker() {
@@ -6016,8 +6093,10 @@ function assignCategory(catName) {
     learnFromAssignment(tx, catName);
   }
 
-  renderDashboardTx();
-  renderCardTx();
+  // Limpar sugestão automática se havia
+  tx._suggested = null;
+  tx._suggestedType = null;
+
   closePicker();
 
   // Persiste no Supabase
@@ -6025,8 +6104,13 @@ function assignCategory(catName) {
     window.persistChange('transaction_category', { txId: tx.id, category: tx.category, origin: tx.origin });
   }
 
-  if (wasNew) showToast('✓', `Categoria definida`);
-  else showToast('✓', `→ ${catName.split(' > ').pop()}`);
+  updatePendingBadge();
+  renderTransactions();
+  renderDashboardTx();
+  renderCardTx();
+
+  if (wasNew) showToast('✓', `Categoria definida: ${catName.split(' > ').pop()}`);
+  else showToast('✓', `Atualizado: ${catName.split(' > ').pop()}`);
 }
 
 // ============================================================
