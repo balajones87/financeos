@@ -721,6 +721,7 @@ window.DB             = db;
 window.persistChange  = persistChange;
 window.saveBatchTransactions = saveBatchTransactions;
 window.saveCatCache   = saveCatCache;
+window.saveCatEntry   = saveCatEntry;
 window.saveCatState   = saveCatState;
 window.clearCatCache  = clearCatCache;
 window.logSync        = logSync;
