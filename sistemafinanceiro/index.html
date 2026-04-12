@@ -3601,15 +3601,29 @@ body {
       <div id="inv-fields-cripto" style="display:none;flex-direction:column;gap:12px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Ticker</label>
-            <input id="inv-ticker" type="text" class="form-input" style="width:100%" placeholder="Ex: BTC, ETH, SOL"></div>
-          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Quantidade</label>
-            <input id="inv-qtd" type="number" step="any" class="form-input" style="width:100%" placeholder="0.00000"></div>
+            <input id="cr-ticker" type="text" class="form-input" style="width:100%;text-transform:uppercase" placeholder="BTC, ETH, SOL..." oninput="this.value=this.value.toUpperCase()"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Quantidade total</label>
+            <input id="cr-qtd" type="number" step="any" class="form-input" style="width:100%" placeholder="0.00000000" oninput="crUpdatePreview()"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Custo médio (R$/unidade)</label>
-            <input id="inv-custo" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Total investido (R$)</label>
+            <input id="cr-total-inv" type="number" class="form-input" style="width:100%" placeholder="0,00" oninput="crUpdatePreview()">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">Soma de todas as compras</div></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço médio de compra (R$)</label>
+            <input id="cr-custo" type="number" class="form-input" style="width:100%" placeholder="0,00" oninput="crSyncFromCusto()">
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">Calculado automaticamente</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço atual (R$/unidade)</label>
-            <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+            <input id="cr-atual" type="number" class="form-input" style="width:100%" placeholder="0,00" oninput="crUpdatePreview()"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço de venda alvo (R$)</label>
+            <input id="cr-alvo" type="number" class="form-input" style="width:100%" placeholder="0,00 (opcional)" oninput="crUpdatePreview()"></div>
+        </div>
+        <!-- Preview P&L em tempo real -->
+        <div id="cr-preview" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px">
+          <div><div style="color:var(--text3)">Valor atual</div><div id="cr-prev-atual" style="font-family:var(--mono);font-weight:700;margin-top:2px">—</div></div>
+          <div><div style="color:var(--text3)">P&L não realizado</div><div id="cr-prev-pl" style="font-family:var(--mono);font-weight:700;margin-top:2px">—</div></div>
+          <div><div style="color:var(--text3)">Lucro se vender no alvo</div><div id="cr-prev-alvo" style="font-family:var(--mono);font-weight:700;margin-top:2px">—</div></div>
         </div>
       </div>
 
@@ -7044,6 +7058,44 @@ var OUTROS_ATIVOS = [];
 function calcPL(invest, atual) { return invest > 0 ? ((atual - invest) / invest * 100) : 0; }
 
 // ── CRUD de Investimentos ─────────────────────────────────────
+// ── Preview P&L de cripto em tempo real ──────────────────────
+function crUpdatePreview() {
+  const qtd      = parseFloat(document.getElementById('cr-qtd')?.value) || 0;
+  const totalInv = parseFloat(document.getElementById('cr-total-inv')?.value) || 0;
+  const atual    = parseFloat(document.getElementById('cr-atual')?.value) || 0;
+  const alvo     = parseFloat(document.getElementById('cr-alvo')?.value) || 0;
+  const custo    = document.getElementById('cr-custo');
+
+  // Auto-calcular preço médio
+  if (qtd > 0 && totalInv > 0 && custo) custo.value = (totalInv / qtd).toFixed(2);
+
+  const fmt = v => v >= 0
+    ? '+ R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2})
+    : '- R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2});
+
+  const valorAtual = qtd * atual;
+  const pl = totalInv > 0 ? valorAtual - totalInv : 0;
+  const plAlvo = qtd > 0 && alvo > 0 ? (qtd * alvo) - totalInv : 0;
+  const plColor = v => v >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const prevAtual = document.getElementById('cr-prev-atual');
+  const prevPl    = document.getElementById('cr-prev-pl');
+  const prevAlvo  = document.getElementById('cr-prev-alvo');
+  if (prevAtual) prevAtual.textContent = valorAtual > 0 ? 'R$ ' + valorAtual.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+  if (prevPl)    { prevPl.textContent = pl !== 0 ? fmt(pl) : '—'; prevPl.style.color = pl !== 0 ? plColor(pl) : 'var(--text3)'; }
+  if (prevAlvo)  { prevAlvo.textContent = plAlvo !== 0 ? fmt(plAlvo) : '—'; prevAlvo.style.color = plAlvo !== 0 ? plColor(plAlvo) : 'var(--text3)'; }
+}
+
+function crSyncFromCusto() {
+  const qtd  = parseFloat(document.getElementById('cr-qtd')?.value) || 0;
+  const custo = parseFloat(document.getElementById('cr-custo')?.value) || 0;
+  if (qtd > 0 && custo > 0) {
+    const totalEl = document.getElementById('cr-total-inv');
+    if (totalEl && !totalEl.value) totalEl.value = (qtd * custo).toFixed(2);
+  }
+  crUpdatePreview();
+}
+
 function invAddDialog(tipo) {
   const modal = document.getElementById('modal-inv');
   const title = { rf:'Renda Fixa', acoes:'Ação / FII', cripto:'Criptomoeda', outros:'Outro Ativo' }[tipo];
@@ -7051,9 +7103,12 @@ function invAddDialog(tipo) {
   document.getElementById('modal-inv-tipo').value = tipo;
   document.getElementById('modal-inv-idx').value = '';
   // Limpar campos
-  ['inv-nome','inv-ticker','inv-qtd','inv-custo','inv-investido','inv-atual','inv-venc','inv-renda'].forEach(id => {
+  ['inv-nome','inv-ticker','inv-qtd','inv-custo','inv-investido','inv-atual','inv-venc','inv-renda',
+   'cr-ticker','cr-qtd','cr-total-inv','cr-custo','cr-atual','cr-alvo'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
+  // Resetar preview
+  ['cr-prev-atual','cr-prev-pl','cr-prev-alvo'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent='—'; });
   // Mostrar campos relevantes por tipo
   document.getElementById('inv-fields-rf').style.display     = tipo === 'rf'     ? '' : 'none';
   document.getElementById('inv-fields-acoes').style.display  = tipo === 'acoes'  ? '' : 'none';
@@ -7097,15 +7152,20 @@ function invSave() {
     else ACOES_FIIS.push(item);
 
   } else if (tipo === 'cripto') {
+    const qtd      = parseFloat(document.getElementById('cr-qtd').value) || 0;
+    const totalInv = parseFloat(document.getElementById('cr-total-inv').value) || 0;
+    const custoMedio = qtd > 0 && totalInv > 0 ? totalInv / qtd : (parseFloat(document.getElementById('cr-custo').value) || 0);
     item = {
-      ticker:         (document.getElementById('inv-ticker').value || '').trim().toUpperCase(),
+      ticker:         (document.getElementById('cr-ticker').value || '').trim().toUpperCase(),
       nome:           document.getElementById('inv-nome').value.trim(),
-      qtd:            parseFloat(document.getElementById('inv-qtd').value) || 0,
-      custoMedio:     parseFloat(document.getElementById('inv-custo').value) || 0,
-      atualBRL:       parseFloat(document.getElementById('inv-atual').value) || 0,
+      qtd,
+      custoMedio,
+      atualBRL:       parseFloat(document.getElementById('cr-atual').value) || 0,
+      totalInvestido: totalInv || (qtd * custoMedio),
+      alvoVenda:      parseFloat(document.getElementById('cr-alvo').value) || 0,
     };
-    item.totalInvestido = item.qtd * item.custoMedio;
     if (!item.nome && !item.ticker) return alert('Informe nome ou ticker');
+    if (!item.nome) item.nome = item.ticker;
     if (idx !== '') CRIPTO[parseInt(idx)] = item;
     else CRIPTO.push(item);
 
