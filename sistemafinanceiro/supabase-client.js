@@ -517,30 +517,12 @@ async function saveConsorcio(cons) {
 
 // ─── INVESTIMENTOS ────────────────────────────────────────────
 async function loadInvestimentos() {
-  const [rf, acoes, cripto] = await Promise.all([
-    db.from('investimentos_rf').select('*').eq('user_id', currentUser.id),
-    db.from('investimentos_acoes').select('*').eq('user_id', currentUser.id),
-    db.from('investimentos_cripto').select('*').eq('user_id', currentUser.id),
-  ]);
-
-  if (rf.data?.length > 0) {
-    window.RENDA_FIXA = rf.data.map(r => ({
-      nome: r.nome, investido: parseFloat(r.investido), atual: parseFloat(r.atual),
-      venc: r.vencimento, rentab: parseFloat(r.rentab_pct) || 0,
-    }));
-  }
-  if (acoes.data?.length > 0) {
-    window.ACOES_FIIS = acoes.data.map(a => ({
-      ticker: a.ticker, nome: a.nome, tipo: a.tipo,
-      qtd: parseFloat(a.qtd), pMedio: parseFloat(a.p_medio), atual: parseFloat(a.p_atual),
-    }));
-  }
-  if (cripto.data?.length > 0) {
-    window.CRIPTO = cripto.data.map(c => ({
-      ticker: c.ticker, nome: c.nome, qtd: parseFloat(c.qtd),
-      custoMedio: parseFloat(c.custo_medio_brl), atualBRL: parseFloat(c.preco_atual_brl),
-      totalInvestido: parseFloat(c.total_investido),
-    }));
+  // Investimentos armazenados no localStorage (não em tabelas separadas do Supabase)
+  // A função real de carregamento está em index.html: loadInvestimentos() via INVEST_STORE
+  // Esta função é mantida apenas para compatibilidade com o Promise.all do init
+  if (window.CRIPTO !== undefined) {
+    // Já carregado pelo localStorage em index.html — não fazer nada
+    return;
   }
 }
 
