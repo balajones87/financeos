@@ -8952,8 +8952,13 @@ function showToast(icon, msg) {
 function init() {
   // Carregar subcategorias customizadas do localStorage
   loadCustomCategories();
-  // Carregar investimentos do localStorage
+  // Carregar investimentos do localStorage (antes do Supabase init)
   loadInvestimentos();
+  // Expor arrays como globals para supabase-client verificar
+  window.CRIPTO        = CRIPTO;
+  window.RENDA_FIXA    = RENDA_FIXA;
+  window.ACOES_FIIS    = ACOES_FIIS;
+  window.OUTROS_ATIVOS = OUTROS_ATIVOS;
 
   // Expõe funções globalmente para supabase-client.js
   window.renderDashboard     = renderDashboard;
