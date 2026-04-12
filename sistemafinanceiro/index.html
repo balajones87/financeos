@@ -2340,97 +2340,37 @@ body {
       <!-- STATUS GERAL -->
       <div class="dash-grid-top" style="margin-bottom:16px;">
         <div class="balance-card total" style="margin:0">
-          <div class="card-label">Contas Conectadas</div>
+          <div class="card-label">Contas Cadastradas</div>
           <div class="card-value" id="plug-count-conn">0</div>
-          <div class="card-sub">Via Pluggy Open Finance</div>
+          <div class="card-sub">Bancos e carteiras</div>
         </div>
         <div class="balance-card income" style="margin:0">
-          <div class="card-label">Última Sincronização</div>
-          <div class="card-value green" style="font-size:16px" id="plug-last-sync">—</div>
-          <div class="card-sub" id="plug-sync-detail">Nunca sincronizado</div>
+          <div class="card-label">Transações Importadas</div>
+          <div class="card-value green" style="font-size:16px" id="plug-tx-count">0</div>
+          <div class="card-sub">Via Despezzas XLSX</div>
         </div>
         <div class="balance-card expense" style="margin:0">
-          <div class="card-label">Transações Importadas</div>
-          <div class="card-value" id="plug-tx-count">0</div>
-          <div class="card-sub">Total no sistema</div>
-        </div>
-        <div class="balance-card pending" style="margin:0">
           <div class="card-label">A Categorizar</div>
           <div class="card-value amber" id="plug-pending">—</div>
           <div class="card-sub">Pendentes de revisão</div>
         </div>
-      </div>
-
-      <!-- SETUP STEPS (visível até configurar) -->
-      <div class="panel" style="margin-bottom:16px;" id="plug-setup-panel">
-        <div class="panel-header">
-          <div class="panel-title">⚡ Configuração Pluggy — 3 passos</div>
-          <div style="font-size:11px;color:var(--text3)">Faça uma vez, funciona para sempre</div>
-        </div>
-        <div style="padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-          <!-- PASSO 1 -->
-          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface2);">
-            <div style="font-family:var(--mono);font-size:22px;color:var(--text3);margin-bottom:8px;">01</div>
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Criar conta Pluggy</div>
-            <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:12px;">
-              Acesse <strong style="color:var(--blue)">pluggy.ai</strong> → Criar conta gratuita → Painel → Criar nova aplicação → copiar Client ID e Client Secret
-            </div>
-            <a href="https://pluggy.ai" target="_blank" class="btn btn-ghost" style="font-size:11px;text-decoration:none;display:inline-flex">
-              → Abrir Pluggy
-            </a>
-          </div>
-          <!-- PASSO 2 -->
-          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface2);">
-            <div style="font-family:var(--mono);font-size:22px;color:var(--text3);margin-bottom:8px;">02</div>
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Configurar Netlify</div>
-            <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-bottom:12px;">
-              No painel Netlify do seu site → <strong>Site Settings → Environment Variables</strong> → adicionar:<br><br>
-              <code style="font-family:var(--mono);background:var(--surface3);padding:2px 6px;border-radius:4px;font-size:10px">PLUGGY_CLIENT_ID</code><br>
-              <code style="font-family:var(--mono);background:var(--surface3);padding:2px 6px;border-radius:4px;font-size:10px">PLUGGY_CLIENT_SECRET</code>
-            </div>
-            <a href="https://app.netlify.com" target="_blank" class="btn btn-ghost" style="font-size:11px;text-decoration:none;display:inline-flex">
-              → Abrir Netlify
-            </a>
-          </div>
-          <!-- PASSO 3 -->
-          <div style="border:1px solid var(--border2);border-radius:var(--radius);padding:16px;background:var(--green-dim);">
-            <div style="font-family:var(--mono);font-size:22px;color:var(--green);margin-bottom:8px;">03</div>
-            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--green)">Conectar seus bancos</div>
-            <div style="font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
-              Após configurar o Netlify, volte aqui e clique em "Conectar" em cada conta abaixo. O widget Pluggy vai abrir e você faz login no banco normalmente.
-            </div>
-            <div style="font-size:10px;color:var(--text3)">✓ Nubank PF · Nubank PJ · Itaú · Unicred · Cartões inclusos</div>
-          </div>
+        <div class="balance-card pending" style="margin:0">
+          <div class="card-label">Última Importação</div>
+          <div class="card-value" style="font-size:14px" id="plug-last-sync">—</div>
+          <div class="card-sub" id="plug-sync-detail">Nenhuma importação</div>
         </div>
       </div>
 
-      <!-- LISTA DE CONTAS PARA CONECTAR -->
+      <!-- LISTA DE CONTAS -->
       <div class="panel" style="margin-bottom:16px;">
         <div class="panel-header">
           <div class="panel-title">Suas Contas</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="contaOpenModal()">+ Nova Conta</button>
-            <button class="btn btn-primary" onclick="pluggySyncAll()" id="btn-sync-all" style="font-size:11px;padding:6px 12px">
-              ⟳ Sincronizar Tudo
-            </button>
-          </div>
+          <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px" onclick="contaOpenModal()">+ Nova Conta</button>
         </div>
         <div id="plug-accounts-list"></div>
       </div>
 
-      <!-- LOG DE SINCRONIZAÇÃO -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title">Log de Sincronização</div>
-          <div style="font-size:11px;color:var(--text3)">Últimas 20 ações</div>
-        </div>
-        <div id="sync-log" style="padding:8px 16px;min-height:60px;font-family:var(--mono);font-size:11px;max-height:300px;overflow-y:auto;">
-          <div style="color:var(--text3);padding:10px 0">Nenhuma sincronização realizada ainda.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROJEÇÃO 12M VIEW -->
+      <!-- PROJEÇÃO 12M VIEW -->
     <div class="view" id="view-projecao">
 
       <!-- RESUMO ANUAL -->
@@ -5308,49 +5248,36 @@ function renderWalletTx() {
 }
 
 function renderContas() {
-  const stored  = typeof loadStoredItems === 'function' ? loadStoredItems() : [];
   const pending = TRANSACTIONS.filter(t => !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
 
-  document.getElementById('plug-count-conn').textContent = stored.filter(s => ACCOUNTS.find(a=>a.id===s.localId)).length;
-  document.getElementById('plug-tx-count').textContent   = TRANSACTIONS.length;
-  document.getElementById('plug-pending').textContent    = pending + ' itens';
+  // Atualizar stats do painel de contas
+  const statsConn  = document.getElementById('plug-count-conn');
+  const statsTx    = document.getElementById('plug-tx-count');
+  const statsPend  = document.getElementById('plug-pending');
+  if (statsConn) statsConn.textContent = ACCOUNTS.length;
 
-  if (stored.length > 0) {
-    const last = stored.reduce((a,b) => a.connectedAt > b.connectedAt ? a : b);
-    document.getElementById('plug-last-sync').textContent   = '✓ Ativo';
-    document.getElementById('plug-sync-detail').textContent = `Último: ${new Date(last.connectedAt).toLocaleDateString('pt-BR')}`;
-    document.getElementById('plug-setup-panel').style.display = 'none';
-  }
+  // Última importação
+  const lastImport = document.getElementById('plug-last-sync');
+  const lastImportSub = document.getElementById('plug-sync-detail');
+  try {
+    const hist = JSON.parse(localStorage.getItem('financeos_import_hist') || '[]');
+    if (hist.length && lastImport) {
+      const d = new Date(hist[0].ts);
+      lastImport.textContent = d.toLocaleDateString('pt-BR');
+      if(lastImportSub) lastImportSub.textContent = hist[0].arquivo || 'Despezzas';
+    }
+  } catch(e) {}
+  if (statsTx)   statsTx.textContent   = TRANSACTIONS.length;
+  if (statsPend)  statsPend.textContent = pending + ' itens';
 
-  // Renderiza lista dinâmica a partir de ACCOUNTS
+  // Esconder painel de setup do Pluggy se existir
+  // Renderiza lista de contas
   document.getElementById('plug-accounts-list').innerHTML = ACCOUNTS.map(acc => {
-    const conn    = stored.find(s => s.localId === acc.id);
-    const isConn  = !!conn;
-    const bal     = typeof acc.balance === 'number' ? acc.balance : 0;
-    const isManual = !!acc.noPluggy; // contas sem integração Pluggy (ex: Carteira)
-
-    // Badge de status
-    let statusBadge = '';
-    if (isManual) {
-      statusBadge = `<div style="font-size:10px;color:var(--text3);margin-top:2px">✏️ Lançamentos manuais</div>`;
-    } else if (conn) {
-      statusBadge = `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Conectado via ${conn.connector||'Pluggy'} · ${new Date(conn.connectedAt).toLocaleDateString('pt-BR')}</div>`;
-    }
-
-    // Botões de ação Pluggy
-    let pluggyBtn = '';
-    if (!isManual) {
-      pluggyBtn = isConn
-        ? `<button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="pluggyReconnect('${acc.id}')">⟳ Reconectar</button>`
-        : `<button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="pluggyConnect('${acc.id}')">+ Conectar</button>`;
-    }
-
-    // Botão destrutivo (desconectar ou excluir)
-    const destructBtn = isConn && !isManual
-      ? `<button onclick="pluggyDisconnect('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Desconectar Pluggy">🔌</button>`
-      : !isConn
-        ? `<button onclick="contaOpenModal('${acc.id}',true)" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:4px 6px" title="Excluir">🗑</button>`
-        : '';
+    const bal      = typeof acc.balance === 'number' ? acc.balance : 0;
+    const isManual = !!acc.noPluggy;
+    const statusLabel = isManual
+      ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">✏️ Lançamentos manuais</div>`
+      : `<div style="font-size:10px;color:var(--green);margin-top:2px">✓ Importação via Despezzas</div>`;
 
     return `
     <div class="acc-breakdown-item" style="border-bottom:1px solid var(--border)">
@@ -5358,13 +5285,12 @@ function renderContas() {
       <div class="acc-breakdown-info">
         <div class="acc-breakdown-name">${acc.name}</div>
         <div class="acc-breakdown-type">${acc.type}</div>
-        ${statusBadge}
+        ${statusLabel}
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="acc-breakdown-bal" style="font-family:var(--mono);font-weight:700;color:${bal>=0?'var(--green)':'var(--red)'}">
           R$ ${bal.toLocaleString('pt-BR',{minimumFractionDigits:2})}
         </div>
-        ${pluggyBtn}
         <button onclick="contaOpenModal('${acc.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px 6px" title="Editar">✏️</button>
         ${destructBtn}
       </div>
@@ -6873,7 +6799,7 @@ function showView(viewId, navEl) {
     documentos:     '📁 Documentos Fiscais',
     recorrentes:    '🔁 Lançamentos Recorrentes',
     regras:         'Regras de Auto-Categorização',
-    contas:         'Contas Conectadas',
+    contas:         'Contas',
     pj:             'P&L Empresas — Pessoa Jurídica',
   };
   document.getElementById('page-title').textContent = titles[viewId] || viewId;
