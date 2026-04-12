@@ -6204,9 +6204,19 @@ function assignCategory(catName) {
 
   closePicker();
 
-  // Persiste no Supabase
+  // Persiste no Supabase (e no cache local automaticamente via persistChange)
   if (window.persistChange) {
-    window.persistChange('transaction_category', { txId: tx.id, category: tx.category, origin: tx.origin });
+    window.persistChange('transaction_category', {
+      txId:     tx.id,
+      category: tx.category,
+      origin:   tx.origin,
+      txType:   tx.txType || null,
+    });
+  } else {
+    // Fallback: salvar direto no cache local se persistChange não disponível
+    if (window.saveCatCache) {
+      window.saveCatCache(tx.id, tx.external_id, tx.category, tx.txType, tx.origin);
+    }
   }
 
   updatePendingBadge();
