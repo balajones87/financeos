@@ -18,6 +18,43 @@ const SUPABASE_ANON = 'sb_publishable_8vZzoOg0jMrDtQKugF7ZmQ_SPQL1lCW';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+// ── Cache local de categorias (sobrevive a reloads e falhas de rede) ──────
+const CAT_CACHE_KEY = 'financeos_cat_cache_v2';
+
+function saveCatCache(txId, extId, category, txType, origin) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(CAT_CACHE_KEY) || '{}');
+    const entry = { category, txType: txType || null, origin: origin || 'manual', ts: Date.now() };
+    if (txId)  cache[txId]  = entry;
+    if (extId) cache[extId] = entry;
+    localStorage.setItem(CAT_CACHE_KEY, JSON.stringify(cache));
+  } catch(e) {}
+}
+
+function applyCatCache(transactions) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(CAT_CACHE_KEY) || '{}');
+    if (!Object.keys(cache).length) return transactions;
+    transactions.forEach(tx => {
+      const hit = cache[tx.id] || cache[tx.external_id];
+      if (!hit) return;
+      // Só sobrescreve se o cache for mais recente que o dado do banco
+      // (origin manual/rule no cache > pending no banco)
+      if (hit.origin === 'manual' || hit.origin === 'rule' ||
+          !tx.category || tx.origin === 'pending') {
+        tx.category = hit.category;
+        tx.txType   = hit.txType || tx.txType;
+        tx.origin   = hit.origin;
+      }
+    });
+  } catch(e) {}
+  return transactions;
+}
+
+function clearCatCache() {
+  localStorage.removeItem(CAT_CACHE_KEY);
+}
+
 // ─── Auth state ───────────────────────────────────────────────
 let currentUser = null;
 
@@ -207,7 +244,6 @@ async function loadTransactions(limit = 500) {
     desc:        t.description,
     amount:      parseFloat(t.amount),
     account:     t.accounts?.local_id || '',
-    // Migra nomes antigos de categorias para o novo padrão
     category:    window.migrateCatName ? window.migrateCatName(t.categories?.name || null) : (t.categories?.name || null),
     txType:      t.tx_type,
     origin:      t.cat_origin,
@@ -215,6 +251,10 @@ async function loadTransactions(limit = 500) {
     external_id: t.external_id,
     notes:       t.notes,
   }));
+
+  // Aplicar cache local de categorias — sobrescreve dados do Supabase
+  // garante que categorias definidas nesta sessão não se percam
+  applyCatCache(mapped);
 
   // MUTATE o array em vez de substituir — mantém a referência que renderTransactions usa
   if (window.TRANSACTIONS) {
@@ -299,21 +339,21 @@ async function saveBatchTransactions(txs) {
   return saved;
 }
 
-async function updateTransactionCategory(txId, categoryName, origin = 'manual') {
+async function updateTransactionCategory(txId, categoryName, origin = 'manual', txType = null) {
   if (!currentUser) return;
   const catId = categoryName ? await getCategoryDbId(categoryName) : null;
   const payload = {
     cat_origin:  origin,
     updated_at:  new Date().toISOString(),
   };
-  // Só atualiza category_id se temos o ID — senão salva pelo menos o origin
-  if (catId) payload.category_id = catId;
+  if (catId)  payload.category_id = catId;
+  if (txType) payload.tx_type     = txType;
 
   const { error } = await db.from('transactions')
     .update(payload)
     .eq('id', txId)
     .eq('user_id', currentUser.id);
-  if (error) console.warn('[Supabase] updateTransactionCategory:', error.message);
+  if (error) console.warn('[Supabase] updateTransactionCategory:', error.message, 'id:', txId);
 }
 
 // ─── REGRAS ───────────────────────────────────────────────────
@@ -522,11 +562,18 @@ async function logSync(status, txImported, txDuplicates, txCategorized, errorMsg
 
 // ─── SAVE TUDO (chamado ao categorizar, criar regra, etc) ─────
 async function persistChange(type, data) {
-  if (!currentUser) return; // sem user, não persiste (modo demo)
+  if (type === 'transaction_category') {
+    // Salvar no cache LOCAL imediatamente — não depende do Supabase
+    const tx = window.TRANSACTIONS?.find(t => String(t.id) === String(data.txId));
+    saveCatCache(data.txId, tx?.external_id, data.category, data.txType, data.origin);
+  }
+
+  if (!currentUser) return; // sem auth, cache local já salvou
+
   try {
     switch(type) {
       case 'transaction_category':
-        await updateTransactionCategory(data.txId, data.category, data.origin);
+        await updateTransactionCategory(data.txId, data.category, data.origin, data.txType);
         break;
       case 'rule':
         await saveRule(data);
@@ -545,7 +592,7 @@ async function persistChange(type, data) {
         break;
     }
   } catch (err) {
-    console.error('[Supabase] Erro ao persistir:', type, err);
+    console.warn('[Supabase] Erro ao persistir (cache local preservado):', type, err.message);
   }
 }
 
@@ -645,6 +692,8 @@ function useDemo() {
 window.DB             = db;
 window.persistChange  = persistChange;
 window.saveBatchTransactions = saveBatchTransactions;
+window.saveCatCache   = saveCatCache;
+window.clearCatCache  = clearCatCache;
 window.logSync        = logSync;
 window.loadAllData    = loadAllData;
 window.logout         = logout;
