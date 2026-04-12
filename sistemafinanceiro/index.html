@@ -2090,6 +2090,7 @@ body {
         <div class="filter-chip" onclick="toggleChip(this,'transfer')" style="border-color:var(--blue-dim);color:var(--blue)">⇄ Transferências</div>
         <div class="filter-chip" id="chip-cartao" onclick="toggleCartao(this)" style="border-color:rgba(130,10,209,.4);color:#a040e0">💳 Cartões</div>
         <div class="filter-chip" onclick="detectDuplicatas(this)" style="border-color:rgba(239,68,68,.3);color:var(--red)" title="Detectar e remover transações duplicadas">🔍 Duplicatas</div>
+        <div class="filter-chip" onclick="deleteAllTransactions()" style="border-color:rgba(239,68,68,.5);color:var(--red)" title="Apagar todas as transações">🗑 Apagar tudo</div>
       </div>
 
       <!-- Bulk auto-categorize bar -->
@@ -6409,6 +6410,36 @@ function addCategoriaPrincipal() {
 
 // ── Editar / Excluir transações ───────────────────────────────
 let editTxId = null;
+
+function deleteAllTransactions() {
+  const total = TRANSACTIONS.length;
+  if (!total) { showToast('ℹ', 'Nenhuma transação para apagar.'); return; }
+  if (!confirm(`Apagar TODAS as ${total} transações?\n\nEssa ação não pode ser desfeita.`)) return;
+
+  // Limpar memória
+  window.TRANSACTIONS.length = 0;
+
+  // Limpar cache local
+  localStorage.removeItem('financeos_cats_v3');
+  localStorage.removeItem('financeos_imported_ids');
+
+  // Apagar no Supabase
+  if (window.currentUser && window.db) {
+    window.db.from('transactions')
+      .delete()
+      .eq('user_id', window.currentUser.id)
+      .then(({ error }) => {
+        if (error) console.warn('[Supabase] deleteAll:', error.message);
+        else showToast('✓', `${total} transações apagadas`);
+      });
+  } else {
+    showToast('✓', `${total} transações apagadas da memória`);
+  }
+
+  renderTransactions();
+  renderDashboard();
+  updatePendingBadge();
+}
 
 function detectDuplicatas(el) {
   // Agrupar transações por chave: data + valor + descrição (30 chars)
