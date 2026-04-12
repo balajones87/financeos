@@ -5866,20 +5866,33 @@ async function importConfirm() {
   const btn = document.getElementById('imp-confirm-btn');
   btn.disabled=true; btn.textContent='⏳ Importando...';
   try {
+    // Categorias que são sempre despesas — se o valor vier positivo, inverter
+    const EXPENSE_CATS = ['alimentação','moradia','transporte','saúde','educação',
+      'assinaturas','streaming','entretenimento','compras','lazer','seguros',
+      'empréstimos','financiamentos','serviços','impostos'];
+
     const normalized = toImport.map(tx => {
       const catLow = (tx.category || '').toLowerCase();
       const isInternalCat = catLow.includes('transferências entre minhas contas') ||
                             catLow.includes('transferencias entre minhas contas');
+
+      // Auto-corrigir sinal: se tem categoria de despesa mas veio positivo → inverter
+      let amount = tx.amount;
+      if (amount > 0 && !isInternalCat && catLow &&
+          EXPENSE_CATS.some(c => catLow.startsWith(c))) {
+        amount = -amount; // corrige sinal
+      }
       return {
         id:          crypto.randomUUID(),
         date:        tx.date,
         desc:        tx.desc,
-        amount:      tx.amount,
+        amount:      amount,  // usa o valor com sinal corrigido
         account:     contaOverride || tx.account || 'outros',
-        txType:      isInternalCat ? 'transfer_internal' : (tx.txType || (tx.amount > 0 ? 'credit' : 'debit')),
+        txType:      isInternalCat ? 'transfer_internal' : (amount > 0 ? 'credit' : 'debit'),
         category:    isInternalCat ? null : (tx.category || null),
         origin:      isInternalCat ? 'rule' : (tx.category ? 'import' : 'pending'),
-        cardTx:      tx.cardTx || false,
+        cardTx:      tx.cardTx === true,  // boolean explícito
+        cardKey:     tx.cardKey || null,
         external_id: tx.external_id,
       };
     });
