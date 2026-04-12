@@ -5743,6 +5743,7 @@ function clearImportCache() {
   localStorage.removeItem('financeos_cat_cache_v2');
   localStorage.removeItem('financeos_learned_rules');
   localStorage.removeItem('financeos_import_hist');
+  // NÃO remove: financeos_custom_cats_v1, financeos_custom_main_cats_v1, financeos_imported_ids
   showToast('✓', 'Cache limpo. Recarregue a página (F5).');
 }
 
@@ -6392,6 +6393,15 @@ function addCategoriaPrincipal() {
   if (outrosIdx >= 0) CATEGORIES_FULL.splice(outrosIdx, 0, newCat);
   else CATEGORIES_FULL.push(newCat);
 
+  // Persistir no localStorage — não some mais no reload
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_MAIN_CATS_KEY) || '[]');
+    if (!saved.find(c => c.name === newCat.name)) {
+      saved.push(newCat);
+      localStorage.setItem(CUSTOM_MAIN_CATS_KEY, JSON.stringify(saved));
+    }
+  } catch(e) {}
+
   // Aplicar imediatamente na transação ativa
   assignCategory(nome_clean);
   showToast('✓', `Categoria "${nome_clean}" criada`);
@@ -6583,12 +6593,25 @@ function deleteTx(txId) {
 
 const CUSTOM_CATS_KEY = 'financeos_custom_cats_v1';
 
+const CUSTOM_MAIN_CATS_KEY = 'financeos_custom_main_cats_v1';
+
 function loadCustomCategories() {
   try {
+    // Carregar subcategorias customizadas
     const saved = JSON.parse(localStorage.getItem(CUSTOM_CATS_KEY) || '{}');
     Object.entries(saved).forEach(([catName, subs]) => {
       const cat = CATEGORIES_FULL.find(c => c.name === catName);
       if (cat) subs.forEach(sub => { if (!cat.subs.includes(sub)) cat.subs.push(sub); });
+    });
+    // Carregar categorias principais customizadas
+    const mainCats = JSON.parse(localStorage.getItem(CUSTOM_MAIN_CATS_KEY) || '[]');
+    mainCats.forEach(cat => {
+      const exists = CATEGORIES_FULL.find(c => c.name === cat.name);
+      if (!exists) {
+        const outrosIdx = CATEGORIES_FULL.findIndex(c => c.id === 'outros');
+        if (outrosIdx >= 0) CATEGORIES_FULL.splice(outrosIdx, 0, cat);
+        else CATEGORIES_FULL.push(cat);
+      }
     });
   } catch(e) {}
 }
