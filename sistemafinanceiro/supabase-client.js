@@ -278,7 +278,7 @@ async function loadTransactions(limit = 500) {
     category:    window.migrateCatName ? window.migrateCatName(t.categories?.name || null) : (t.categories?.name || null),
     txType:      t.tx_type,
     origin:      t.cat_origin,
-    cardTx:      t.is_card_tx,
+    cardTx:      t.is_card_tx === true,  // garantir boolean
     external_id: t.external_id,
     notes:       t.notes,
   }));
