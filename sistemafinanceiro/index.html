@@ -5445,7 +5445,6 @@ async function contaDelete() {
 // ── Pluggy UI functions ──────────────────────────────────────
 async function pluggyConnect(localId) {
   if (!window.PluggySync) {
-    showToast('⚠', 'pluggy-sync.js não carregado. Verifique o deploy.');
     return;
   }
   try {
@@ -8956,7 +8955,7 @@ function init() {
   // Carregar investimentos do localStorage
   loadInvestimentos();
 
-  // Expõe funções globalmente para supabase-client.js e pluggy-sync.js
+  // Expõe funções globalmente para supabase-client.js
   window.renderDashboard     = renderDashboard;
   window.renderDashboardTx   = renderDashboardTx;
   window.renderCatBars       = renderCatBars;
@@ -8981,6 +8980,5 @@ document.addEventListener('DOMContentLoaded', init);
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <!-- Pluggy Sync Engine -->
-<script src="pluggy-sync.js"></script>
 </body>
 </html>
