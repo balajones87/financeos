@@ -2209,6 +2209,7 @@ body {
         <div class="panel" style="margin-top:16px;">
           <div class="panel-header">
             <div class="panel-title">Histórico de importações</div>
+            <button class="btn btn-ghost" style="font-size:11px" onclick="clearImportCache()" title="Limpar cache se transações estiverem sumindo">🗑 Limpar cache</button>
           </div>
           <div id="import-historico">
             <div style="text-align:center;padding:24px;color:var(--text3);font-size:12px">Nenhuma importação realizada ainda</div>
@@ -5736,13 +5737,54 @@ function learnFromAssignment(tx, category) {
 }
 
 // ── Deduplicação ─────────────────────────────────────────────
+function clearImportCache() {
+  if (!confirm('Limpar cache local de categorias? Use isso se as transações estiverem sumindo após reload.\n\nAs categorias salvas no Supabase não são afetadas.')) return;
+  localStorage.removeItem('financeos_cats_v3');
+  localStorage.removeItem('financeos_cat_cache_v2');
+  localStorage.removeItem('financeos_learned_rules');
+  localStorage.removeItem('financeos_import_hist');
+  showToast('✓', 'Cache limpo. Recarregue a página (F5).');
+}
+
+// Verifica se um arquivo já foi importado (pelo nome + total de transações)
+function isFileAlreadyImported(filename, totalTxs) {
+  return importHistorico.some(h =>
+    h.arquivo === filename && Math.abs(h.total - totalTxs) <= 2
+  );
+}
+
 function isDuplicateImport(tx) {
-  return TRANSACTIONS.some(t =>
+  // Verificar contra transações em memória
+  const inMemory = TRANSACTIONS.some(t =>
     t.date === tx.date &&
     Math.abs(parseFloat(t.amount) - tx.amount) < 0.01 &&
     (t.external_id === tx.external_id ||
      (t.desc||'').slice(0,20) === (tx.desc||'').slice(0,20))
   );
+  if (inMemory) return true;
+
+  // Verificar contra cache de external_ids já importados
+  try {
+    const imported = JSON.parse(localStorage.getItem('financeos_imported_ids') || '{}');
+    if (imported[tx.external_id]) return true;
+  } catch(e) {}
+
+  return false;
+}
+
+// Salvar external_ids após importar (para deduplicação futura mesmo com memória vazia)
+function saveImportedIds(txs) {
+  try {
+    const existing = JSON.parse(localStorage.getItem('financeos_imported_ids') || '{}');
+    txs.forEach(tx => { if (tx.external_id) existing[tx.external_id] = 1; });
+    // Manter apenas os últimos 5000
+    const keys = Object.keys(existing);
+    if (keys.length > 5000) {
+      const toRemove = keys.slice(0, keys.length - 5000);
+      toRemove.forEach(k => delete existing[k]);
+    }
+    localStorage.setItem('financeos_imported_ids', JSON.stringify(existing));
+  } catch(e) {}
 }
 
 // ── Preview ──────────────────────────────────────────────────
@@ -5812,6 +5854,9 @@ async function importConfirm() {
     });
 
     window.TRANSACTIONS = [...normalized, ...window.TRANSACTIONS];
+
+    // Salvar external_ids para deduplicação futura (mesmo com memória vazia)
+    saveImportedIds(normalized);
 
     // Salvar cache LOCAL imediatamente — garante que categorias sobrevivem a reloads
     if (window.saveCatState) window.saveCatState();
