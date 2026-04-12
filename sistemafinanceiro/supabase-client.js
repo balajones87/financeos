@@ -322,12 +322,13 @@ async function saveTransaction(tx) {
       }
     }
   }
+  // NÃO abortar se accDbId for null — salva sem account_id (melhor ter a tx do que perder)
   if (!accDbId) {
-    console.warn('[Supabase] Conta não encontrada para:', tx.account);
-    return;
+    console.warn('[Supabase] Conta não encontrada para:', tx.account, '— salvando sem account_id');
   }
 
   const externalId = tx.external_id || null;
+  const catId = tx.category ? await getCategoryDbId(tx.category).catch(() => null) : null;
 
   // Se não tem external_id, usa insert simples
   if (!externalId) {
