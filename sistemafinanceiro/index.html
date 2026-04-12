@@ -3570,7 +3570,7 @@ body {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Investido (R$)</label>
             <input id="inv-investido" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
-          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Atual (R$)</label>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Atual (R$) <span style="opacity:.5">— deixe vazio se igual ao investido</span></label>
             <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
         </div>
         <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Vencimento</label>
@@ -7142,10 +7142,12 @@ function invSave() {
   let item;
 
   if (tipo === 'rf') {
+    const investido = parseFloat(document.getElementById('inv-investido').value) || 0;
+    const atualRaw  = parseFloat(document.getElementById('inv-atual').value) || 0;
     item = {
       nome:      document.getElementById('inv-nome').value.trim(),
-      investido: parseFloat(document.getElementById('inv-investido').value) || 0,
-      atual:     parseFloat(document.getElementById('inv-atual').value) || 0,
+      investido,
+      atual:     atualRaw || investido, // se atual não preenchido → usa investido
       venc:      document.getElementById('inv-venc').value.trim(),
     };
     item.rentab = item.investido > 0 ? ((item.atual - item.investido)/item.investido*100) : 0;
