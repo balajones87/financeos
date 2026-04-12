@@ -18,42 +18,70 @@ const SUPABASE_ANON = 'sb_publishable_8vZzoOg0jMrDtQKugF7ZmQ_SPQL1lCW';
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ── Cache local de categorias (sobrevive a reloads e falhas de rede) ──────
-const CAT_CACHE_KEY = 'financeos_cat_cache_v2';
+// ── Cache de categorias — estado completo em localStorage ────────────────
+const CAT_STORE_KEY = 'financeos_cats_v3';
 
-function saveCatCache(txId, extId, category, txType, origin) {
+// Salva estado de TODAS as transações categorizadas
+function saveCatState() {
   try {
-    const cache = JSON.parse(localStorage.getItem(CAT_CACHE_KEY) || '{}');
-    const entry = { category, txType: txType || null, origin: origin || 'manual', ts: Date.now() };
-    if (txId)  cache[txId]  = entry;
-    if (extId) cache[extId] = entry;
-    localStorage.setItem(CAT_CACHE_KEY, JSON.stringify(cache));
-  } catch(e) {}
-}
-
-function applyCatCache(transactions) {
-  try {
-    const cache = JSON.parse(localStorage.getItem(CAT_CACHE_KEY) || '{}');
-    if (!Object.keys(cache).length) return transactions;
-    transactions.forEach(tx => {
-      const hit = cache[tx.id] || cache[tx.external_id];
-      if (!hit) return;
-      // Só sobrescreve se o cache for mais recente que o dado do banco
-      // (origin manual/rule no cache > pending no banco)
-      if (hit.origin === 'manual' || hit.origin === 'rule' ||
-          !tx.category || tx.origin === 'pending') {
-        tx.category = hit.category;
-        tx.txType   = hit.txType || tx.txType;
-        tx.origin   = hit.origin;
+    const state = {};
+    (window.TRANSACTIONS || []).forEach(tx => {
+      // Salva qualquer transação que foi modificada (tem categoria ou origin != pending)
+      if (tx.category || tx.txType === 'transfer_internal' || 
+          tx.origin === 'manual' || tx.origin === 'rule') {
+        const key = tx.external_id || tx.id;
+        if (key) {
+          state[key] = {
+            category: tx.category || null,
+            txType:   tx.txType   || null,
+            origin:   tx.origin   || 'pending',
+          };
+        }
       }
     });
-  } catch(e) {}
+    localStorage.setItem(CAT_STORE_KEY, JSON.stringify(state));
+  } catch(e) { console.warn('[Cache] Erro ao salvar:', e.message); }
+}
+
+// Aplica estado salvo nas transações vindas do Supabase
+function applyCatCache(transactions) {
+  try {
+    const raw = localStorage.getItem(CAT_STORE_KEY);
+    if (!raw) return transactions;
+    const state = JSON.parse(raw);
+    if (!Object.keys(state).length) return transactions;
+
+    transactions.forEach(tx => {
+      const key = tx.external_id || tx.id;
+      const hit = state[key];
+      if (!hit) return;
+      // Cache local sempre tem prioridade sobre dados do Supabase pendentes
+      tx.category = hit.category;
+      tx.txType   = hit.txType   || tx.txType;
+      tx.origin   = hit.origin   || tx.origin;
+    });
+  } catch(e) { console.warn('[Cache] Erro ao aplicar:', e.message); }
   return transactions;
 }
 
-function clearCatCache() {
-  localStorage.removeItem(CAT_CACHE_KEY);
+// Salva uma entrada específica sem esperar saveCatState completo
+function saveCatEntry(extId, txId, category, txType, origin) {
+  try {
+    const raw   = localStorage.getItem(CAT_STORE_KEY) || '{}';
+    const state = JSON.parse(raw);
+    const key   = extId || txId;
+    if (key) {
+      state[key] = { category: category || null, txType: txType || null, origin: origin || 'manual' };
+      // Se tiver ambos, salva nos dois keys
+      if (extId && txId && extId !== txId) state[txId] = state[key];
+    }
+    localStorage.setItem(CAT_STORE_KEY, JSON.stringify(state));
+  } catch(e) {}
 }
+
+function clearCatCache() { localStorage.removeItem(CAT_STORE_KEY); }
+// alias para compatibilidade
+const saveCatCache = (txId, extId, cat, txType, origin) => saveCatEntry(extId, txId, cat, txType, origin);
 
 // ─── Auth state ───────────────────────────────────────────────
 let currentUser = null;
@@ -693,6 +721,7 @@ window.DB             = db;
 window.persistChange  = persistChange;
 window.saveBatchTransactions = saveBatchTransactions;
 window.saveCatCache   = saveCatCache;
+window.saveCatState   = saveCatState;
 window.clearCatCache  = clearCatCache;
 window.logSync        = logSync;
 window.loadAllData    = loadAllData;
