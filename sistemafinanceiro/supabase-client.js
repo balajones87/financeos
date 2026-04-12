@@ -55,10 +55,18 @@ function applyCatCache(transactions) {
       const key = tx.external_id || tx.id;
       const hit = state[key];
       if (!hit) return;
-      // Cache local sempre tem prioridade sobre dados do Supabase pendentes
-      tx.category = hit.category;
-      tx.txType   = hit.txType   || tx.txType;
-      tx.origin   = hit.origin   || tx.origin;
+
+      // Só aplicar cache se ele MELHORA o dado do Supabase:
+      // - Supabase veio sem categoria (pending) e cache tem categoria → aplicar
+      // - Supabase veio com categoria → confiar no Supabase, ignorar cache
+      const supabaseHasCategory = tx.category && tx.origin !== 'pending';
+      if (supabaseHasCategory) return; // Supabase já tem dados bons
+
+      if (hit.category || hit.origin === 'rule' || hit.origin === 'manual') {
+        tx.category = hit.category;
+        tx.txType   = hit.txType || tx.txType;
+        tx.origin   = hit.origin || tx.origin;
+      }
     });
   } catch(e) { console.warn('[Cache] Erro ao aplicar:', e.message); }
   return transactions;
