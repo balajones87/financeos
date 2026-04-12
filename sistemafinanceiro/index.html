@@ -455,6 +455,8 @@ body {
 
 /* TRANSFER ROW — visualmente neutro */
 .tx-table-row:hover .tx-actions { opacity: 1 !important; }
+.modal-overlay.open { display:flex !important; }
+
 .tx-table-row.is-transfer { opacity: 0.72; }
 .tx-table-row.is-transfer:hover { opacity: 1; }
 .transfer-pill {
@@ -1798,7 +1800,6 @@ body {
 
 </style>
   <!-- Pluggy Connect SDK — carregado estaticamente para garantir disponibilidade do window.PluggyConnect -->
-  <script src="https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js"></script>
 </head>
 <body>
 
@@ -1913,8 +1914,7 @@ body {
         <div class="sync-dot"></div>
         Sincronizado há 12min
       </div>
-      <button class="btn btn-ghost" onclick="pluggySyncAll()">⟳ Sincronizar</button>
-      <button class="btn btn-primary" onclick="openModal('add-tx')">+ Lançamento</button>
+            <button class="btn btn-primary" onclick="openModal('add-tx')">+ Lançamento</button>
     </div>
   </div>
 
@@ -2533,6 +2533,7 @@ body {
         <div class="panel">
           <div class="panel-header" style="cursor:pointer" onclick="invToggleSegmento('rf')">
             <div class="panel-title">🏦 Renda Fixa</div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();invAddDialog('rf')">+ Adicionar</button>
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--blue)" id="inv-rf-total">R$ 0</div>
               <div style="font-size:11px;color:var(--text3)" id="inv-rf-change"></div>
@@ -2548,6 +2549,7 @@ body {
         <div class="panel">
           <div class="panel-header" style="cursor:pointer" onclick="invToggleSegmento('acoes')">
             <div class="panel-title">📊 Ações & FIIs</div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();invAddDialog('acoes')">+ Adicionar</button>
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--purple)" id="inv-acoes-total">R$ 0</div>
               <div style="font-size:11px;color:var(--text3)" id="inv-acoes-change"></div>
@@ -2563,6 +2565,7 @@ body {
         <div class="panel">
           <div class="panel-header" style="cursor:pointer" onclick="invToggleSegmento('cripto')">
             <div class="panel-title">₿ Criptomoedas</div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();invAddDialog('cripto')">+ Adicionar</button>
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)" id="inv-cripto-total">R$ 0</div>
               <div style="font-size:11px;color:var(--text3)" id="inv-cripto-change"></div>
@@ -2578,6 +2581,7 @@ body {
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title">⚡ Outros Ativos Reais</div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="event.stopPropagation();invAddDialog('outros')">+ Adicionar</button>
             <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber)" id="inv-outros-total">R$ 0</div>
           </div>
           <div id="inv-outros-rows"></div>
@@ -3606,7 +3610,85 @@ body {
 <!-- CAT PICKER -->
 <div class="cat-picker" id="cat-picker" style="position:fixed;"></div>
 
-<!-- MODAL EDITAR TRANSAÇÃO -->
+<!-- MODAL INVESTIMENTO -->
+<div class="modal-overlay" id="modal-inv" onclick="if(event.target===this)invCloseDialog()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;display:none">
+  <div onclick="event.stopPropagation()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:460px;max-width:95vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div id="modal-inv-title" style="font-size:15px;font-weight:600"></div>
+      <span onclick="invCloseDialog()" style="cursor:pointer;font-size:18px;color:var(--text3);padding:4px 8px">✕</span>
+    </div>
+    <input type="hidden" id="modal-inv-tipo">
+    <input type="hidden" id="modal-inv-idx">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <!-- Campo comum: nome -->
+      <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Nome / Descrição</label>
+        <input id="inv-nome" class="form-input" style="width:100%" placeholder="Ex: CDB Nubank 110% CDI"></div>
+
+      <!-- Renda Fixa -->
+      <div id="inv-fields-rf" style="display:none;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Investido (R$)</label>
+            <input id="inv-investido" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Atual (R$)</label>
+            <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+        </div>
+        <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Vencimento</label>
+          <input id="inv-venc" class="form-input" style="width:100%" placeholder="Ex: Jan/2027"></div>
+      </div>
+
+      <!-- Ações / FIIs -->
+      <div id="inv-fields-acoes" style="display:none;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Ticker</label>
+            <input id="inv-ticker" class="form-input" style="width:100%" placeholder="Ex: MXRF11"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Tipo</label>
+            <select id="inv-acao-tipo" class="form-input" style="width:100%">
+              <option value="FII">FII</option><option value="Ação">Ação</option><option value="ETF">ETF</option>
+            </select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Quantidade</label>
+            <input id="inv-qtd" type="number" class="form-input" style="width:100%" placeholder="0"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço médio</label>
+            <input id="inv-custo" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço atual</label>
+            <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+        </div>
+      </div>
+
+      <!-- Cripto -->
+      <div id="inv-fields-cripto" style="display:none;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Ticker</label>
+            <input id="inv-ticker" type="text" class="form-input" style="width:100%" placeholder="Ex: BTC, ETH, SOL"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Quantidade</label>
+            <input id="inv-qtd" type="number" step="any" class="form-input" style="width:100%" placeholder="0.00000"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Custo médio (R$/unidade)</label>
+            <input id="inv-custo" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Preço atual (R$/unidade)</label>
+            <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+        </div>
+      </div>
+
+      <!-- Outros -->
+      <div id="inv-fields-outros" style="display:none;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor do ativo (R$)</label>
+            <input id="inv-investido" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Renda mensal (R$)</label>
+            <input id="inv-renda" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-ghost" style="flex:1" onclick="invCloseDialog()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="invSave()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="modal-edit-tx" onclick="closeEditTx()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center;">
   <div onclick="event.stopPropagation()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:440px;max-width:95vw;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
@@ -6992,36 +7074,128 @@ function renderImoveis() {
 // INVESTIMENTOS ENGINE
 // ============================================================
 // ── RENDA FIXA (manter como referência) ─────────────────────
-const RENDA_FIXA = [
-  { nome: 'CDB Nubank 110% CDI',  investido: 45000, atual: 47820, venc: 'Jan/2027', rentab: 6.27 },
-  { nome: 'LCI Itaú 98% CDI',     investido: 30000, atual: 31560, venc: 'Mar/2027', rentab: 5.20 },
-  { nome: 'Tesouro IPCA+ 2029',   investido: 25000, atual: 28100, venc: 'Mai/2029', rentab: 12.40 },
-  { nome: 'LCA Unicred 97% CDI',  investido: 15000, atual: 15720, venc: 'Jun/2026', rentab: 4.80 },
-];
+// ── Investimentos — carregados do localStorage ───────────────
+const INVEST_STORE = 'financeos_investimentos_v1';
 
-const ACOES_FIIS = [
-  { ticker: 'MXRF11', nome: 'Maxi Renda FII',    qtd: 200, pMedio: 9.82,   atual: 10.65, tipo: 'FII' },
-  { ticker: 'HGLG11', nome: 'CSHG Logística',    qtd: 50,  pMedio: 162.00, atual: 178.50,tipo: 'FII' },
-  { ticker: 'PETR4',  nome: 'Petrobras PN',       qtd: 100, pMedio: 36.40,  atual: 38.20, tipo: 'Ação'},
-  { ticker: 'KNRI11', nome: 'Kinea Renda Imob',   qtd: 30,  pMedio: 142.00, atual: 155.80,tipo: 'FII' },
-];
+function loadInvestimentos() {
+  try {
+    const d = JSON.parse(localStorage.getItem(INVEST_STORE) || '{}');
+    RENDA_FIXA.length = 0;   (d.rendaFixa  || []).forEach(x => RENDA_FIXA.push(x));
+    ACOES_FIIS.length = 0;   (d.acoesFiis  || []).forEach(x => ACOES_FIIS.push(x));
+    CRIPTO.length     = 0;   (d.cripto     || []).forEach(x => CRIPTO.push(x));
+    OUTROS_ATIVOS.length=0;  (d.outros     || []).forEach(x => OUTROS_ATIVOS.push(x));
+  } catch(e) {}
+}
 
-// ── CRIPTO REAL (dados das suas screenshots) ─────────────────
-// Nubank Cripto · Investimento total: R$ 77.903,66 · 19 compras
-const CRIPTO = [
-  // qtd real, custo médio real, preço atual (BRL) — atualizar manualmente ou via API
-  { nome: 'Ethereum', ticker: 'ETH', qtd: 2.32207844, custoMedio: 10998.25, atualBRL: 10526.17, totalInvestido: 25541.84 },
-  { nome: 'Solana',   ticker: 'SOL', qtd: 26.11072000,custoMedio: 458.66,   atualBRL: 430.96,   totalInvestido: 11976.87 },
-  { nome: 'Bitcoin',  ticker: 'BTC', qtd: 0.11106936, custoMedio: 363637.64,atualBRL: 349874.00,totalInvestido: 40384.95 },
-];
-// P&L não realizado: -R$ 3.348,11
+function saveInvestimentos() {
+  try {
+    localStorage.setItem(INVEST_STORE, JSON.stringify({
+      rendaFixa: RENDA_FIXA, acoesFiis: ACOES_FIIS,
+      cripto: CRIPTO, outros: OUTROS_ATIVOS
+    }));
+  } catch(e) {}
+}
 
-// ── USINA SOLAR ──────────────────────────────────────────────
-const OUTROS_ATIVOS = [
-  { nome: 'Usina Solar — EletroPonto', valor: 85000, rendaMensal: 3200, tipo: 'Ativo Real' },
-];
+var RENDA_FIXA    = [];
+var ACOES_FIIS    = [];
+var CRIPTO        = [];
+var OUTROS_ATIVOS = [];
 
 function calcPL(invest, atual) { return invest > 0 ? ((atual - invest) / invest * 100) : 0; }
+
+// ── CRUD de Investimentos ─────────────────────────────────────
+function invAddDialog(tipo) {
+  const modal = document.getElementById('modal-inv');
+  const title = { rf:'Renda Fixa', acoes:'Ação / FII', cripto:'Criptomoeda', outros:'Outro Ativo' }[tipo];
+  document.getElementById('modal-inv-title').textContent = '+ ' + title;
+  document.getElementById('modal-inv-tipo').value = tipo;
+  document.getElementById('modal-inv-idx').value = '';
+  // Limpar campos
+  ['inv-nome','inv-ticker','inv-qtd','inv-custo','inv-investido','inv-atual','inv-venc','inv-renda'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  // Mostrar campos relevantes por tipo
+  document.getElementById('inv-fields-rf').style.display     = tipo === 'rf'     ? '' : 'none';
+  document.getElementById('inv-fields-acoes').style.display  = tipo === 'acoes'  ? '' : 'none';
+  document.getElementById('inv-fields-cripto').style.display = tipo === 'cripto' ? '' : 'none';
+  document.getElementById('inv-fields-outros').style.display = tipo === 'outros' ? '' : 'none';
+  modal.classList.add('open');
+}
+
+function invCloseDialog() {
+  document.getElementById('modal-inv').classList.remove('open');
+}
+
+function invSave() {
+  const tipo = document.getElementById('modal-inv-tipo').value;
+  const idx  = document.getElementById('modal-inv-idx').value;
+  let item;
+
+  if (tipo === 'rf') {
+    item = {
+      nome:      document.getElementById('inv-nome').value.trim(),
+      investido: parseFloat(document.getElementById('inv-investido').value) || 0,
+      atual:     parseFloat(document.getElementById('inv-atual').value) || 0,
+      venc:      document.getElementById('inv-venc').value.trim(),
+    };
+    item.rentab = item.investido > 0 ? ((item.atual - item.investido)/item.investido*100) : 0;
+    if (!item.nome) return alert('Informe o nome do ativo');
+    if (idx !== '') RENDA_FIXA[parseInt(idx)] = item;
+    else RENDA_FIXA.push(item);
+
+  } else if (tipo === 'acoes') {
+    item = {
+      ticker: (document.getElementById('inv-ticker').value || '').trim().toUpperCase(),
+      nome:   document.getElementById('inv-nome').value.trim(),
+      tipo:   document.getElementById('inv-acao-tipo').value,
+      qtd:    parseFloat(document.getElementById('inv-qtd').value) || 0,
+      pMedio: parseFloat(document.getElementById('inv-custo').value) || 0,
+      atual:  parseFloat(document.getElementById('inv-atual').value) || 0,
+    };
+    if (!item.ticker) return alert('Informe o ticker');
+    if (idx !== '') ACOES_FIIS[parseInt(idx)] = item;
+    else ACOES_FIIS.push(item);
+
+  } else if (tipo === 'cripto') {
+    item = {
+      ticker:         (document.getElementById('inv-ticker').value || '').trim().toUpperCase(),
+      nome:           document.getElementById('inv-nome').value.trim(),
+      qtd:            parseFloat(document.getElementById('inv-qtd').value) || 0,
+      custoMedio:     parseFloat(document.getElementById('inv-custo').value) || 0,
+      atualBRL:       parseFloat(document.getElementById('inv-atual').value) || 0,
+    };
+    item.totalInvestido = item.qtd * item.custoMedio;
+    if (!item.nome && !item.ticker) return alert('Informe nome ou ticker');
+    if (idx !== '') CRIPTO[parseInt(idx)] = item;
+    else CRIPTO.push(item);
+
+  } else if (tipo === 'outros') {
+    item = {
+      nome:        document.getElementById('inv-nome').value.trim(),
+      valor:       parseFloat(document.getElementById('inv-investido').value) || 0,
+      rendaMensal: parseFloat(document.getElementById('inv-renda').value) || 0,
+      tipo:        'Ativo Real',
+    };
+    if (!item.nome) return alert('Informe o nome do ativo');
+    if (idx !== '') OUTROS_ATIVOS[parseInt(idx)] = item;
+    else OUTROS_ATIVOS.push(item);
+  }
+
+  saveInvestimentos();
+  invCloseDialog();
+  renderInvestimentos();
+  renderDashboard();
+  showToast('✓', 'Investimento salvo!');
+}
+
+function invDelete(tipo, idx) {
+  if (!confirm('Remover este investimento?')) return;
+  const arr = { rf: RENDA_FIXA, acoes: ACOES_FIIS, cripto: CRIPTO, outros: OUTROS_ATIVOS }[tipo];
+  if (arr) arr.splice(idx, 1);
+  saveInvestimentos();
+  renderInvestimentos();
+  renderDashboard();
+}
 
 function renderInvestimentos() {
   const totalRF      = RENDA_FIXA.reduce((s,r) => s + r.atual, 0);
@@ -8770,6 +8944,8 @@ function showToast(icon, msg) {
 function init() {
   // Carregar subcategorias customizadas do localStorage
   loadCustomCategories();
+  // Carregar investimentos do localStorage
+  loadInvestimentos();
 
   // Expõe funções globalmente para supabase-client.js e pluggy-sync.js
   window.renderDashboard     = renderDashboard;
