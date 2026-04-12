@@ -7197,6 +7197,18 @@ function invDelete(tipo, idx) {
 }
 
 function renderInvestimentos() {
+  // Sempre recarregar do localStorage antes de renderizar
+  try {
+    const raw = localStorage.getItem('financeos_investimentos_v1');
+    if (raw) {
+      const d = JSON.parse(raw);
+      RENDA_FIXA.length = 0;    (d.rendaFixa || []).forEach(x => RENDA_FIXA.push(x));
+      ACOES_FIIS.length = 0;    (d.acoesFiis || []).forEach(x => ACOES_FIIS.push(x));
+      CRIPTO.length     = 0;    (d.cripto    || []).forEach(x => CRIPTO.push(x));
+      OUTROS_ATIVOS.length = 0; (d.outros    || []).forEach(x => OUTROS_ATIVOS.push(x));
+    }
+  } catch(e) {}
+
   try {
   const totalRF      = RENDA_FIXA.reduce((s,r) => s + (r.atual||0), 0);
   const totalRFinv   = RENDA_FIXA.reduce((s,r) => s + (r.investido||0), 0);
