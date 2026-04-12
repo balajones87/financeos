@@ -7058,6 +7058,22 @@ function calcPL(invest, atual) { return invest > 0 ? ((atual - invest) / invest 
 
 // ── CRUD de Investimentos ─────────────────────────────────────
 // ── Preview P&L de cripto em tempo real ──────────────────────
+function invEditCripto(idx) {
+  const c = CRIPTO[idx];
+  if (!c) return;
+  invAddDialog('cripto');
+  document.getElementById('modal-inv-idx').value  = idx;
+  document.getElementById('modal-inv-title').textContent = `✏ Editar ${c.ticker}`;
+  document.getElementById('inv-nome').value        = c.nome || '';
+  document.getElementById('cr-ticker').value       = c.ticker || '';
+  document.getElementById('cr-qtd').value          = c.qtd || '';
+  document.getElementById('cr-total-inv').value    = c.totalInvestido || '';
+  document.getElementById('cr-custo').value        = c.custoMedio || '';
+  document.getElementById('cr-atual').value        = c.atualBRL || '';
+  document.getElementById('cr-alvo').value         = c.alvoVenda || '';
+  setTimeout(crUpdatePreview, 100);
+}
+
 function crUpdatePreview() {
   const qtd      = parseFloat(document.getElementById('cr-qtd')?.value) || 0;
   const totalInv = parseFloat(document.getElementById('cr-total-inv')?.value) || 0;
@@ -7304,9 +7320,123 @@ function renderInvestimentos() {
         </div>`;
       }).join('');
 
-  // ── Cripto ──
+  // ── Cripto — Cards visuais ──
   const crTotal = document.getElementById('inv-cripto-total');
   const crRows  = document.getElementById('inv-cripto-rows');
+  if (crTotal) crTotal.textContent = fmt(totalCrAtual);
+
+  const CRIPTO_META = {
+    BTC: { color: '#f7931a', bg: 'rgba(247,147,26,.12)', icon: '₿', name: 'Bitcoin' },
+    ETH: { color: '#627eea', bg: 'rgba(98,126,234,.12)',  icon: 'Ξ', name: 'Ethereum' },
+    SOL: { color: '#9945ff', bg: 'rgba(153,69,255,.12)',  icon: '◎', name: 'Solana' },
+    BNB: { color: '#f3ba2f', bg: 'rgba(243,186,47,.12)',  icon: 'B', name: 'BNB' },
+  };
+
+  if (crRows) crRows.innerHTML = CRIPTO.length === 0
+    ? '<div style="padding:30px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
+    : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:4px 0">` +
+      CRIPTO.map((c,i) => {
+        const meta     = CRIPTO_META[c.ticker] || { color:'var(--amber)', bg:'rgba(255,176,32,.1)', icon:'◈', name: c.nome };
+        const posAtual = (c.qtd||0) * (c.atualBRL||0);
+        const plVal    = posAtual - (c.totalInvestido||0);
+        const plPct    = c.totalInvestido > 0 ? plVal/c.totalInvestido*100 : 0;
+        const plPos    = plVal >= 0;
+        const alloc    = totalCrAtual > 0 ? (posAtual/totalCrAtual*100) : 0;
+        const pm       = c.custoMedio || (c.totalInvestido&&c.qtd ? c.totalInvestido/c.qtd : 0);
+        const varDia   = c.atualBRL > 0 && pm > 0 ? ((c.atualBRL - pm) / pm * 100) : 0;
+
+        // Barra de progresso da posição vs investido
+        const barPct = Math.min(100, Math.max(0, posAtual / (c.totalInvestido||1) * 100));
+
+        return `
+        <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:18px;position:relative;overflow:hidden;cursor:pointer"
+             onclick="invEditCripto(${i})" title="Clique para editar">
+
+          <!-- Fundo decorativo -->
+          <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;
+                      background:${meta.bg};border-radius:50%;filter:blur(20px);pointer-events:none"></div>
+
+          <!-- Header: ícone + ticker + nome + excluir -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:40px;height:40px;border-radius:10px;background:${meta.bg};
+                          border:1px solid ${meta.color}44;display:flex;align-items:center;
+                          justify-content:center;font-size:18px;font-weight:900;color:${meta.color}">
+                ${meta.icon}
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:14px;font-family:var(--mono);color:${meta.color}">${c.ticker}</div>
+                <div style="font-size:10px;color:var(--text3)">${meta.name}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="font-size:10px;color:var(--text3);background:var(--surface2);
+                          border:1px solid var(--border);border-radius:12px;padding:2px 8px">
+                ${alloc.toFixed(1)}% portfolio
+              </div>
+              <button onclick="event.stopPropagation();invDelete('cripto',${i})"
+                style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 4px;opacity:.5"
+                title="Remover">🗑</button>
+            </div>
+          </div>
+
+          <!-- Valor atual destaque -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px">Valor Atual</div>
+            <div style="font-size:22px;font-weight:800;font-family:var(--mono);color:var(--text)">
+              ${fmt(posAtual)}
+            </div>
+            <div style="font-size:11px;color:${plPos?'var(--green)':'var(--red)'};margin-top:2px;font-weight:600">
+              ${plPos?'▲':'▼'} ${fmt(Math.abs(plVal))} (${plPos?'+':''}${plPct.toFixed(2)}%)
+            </div>
+          </div>
+
+          <!-- Barra de progresso investido vs atual -->
+          <div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:14px;overflow:hidden">
+            <div style="height:100%;width:${barPct}%;background:${plPos?'var(--green)':'var(--red)'};
+                        border-radius:2px;transition:width .3s"></div>
+          </div>
+
+          <!-- Grid de métricas -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+            <div style="background:var(--surface);border-radius:7px;padding:8px 10px">
+              <div style="color:var(--text3);margin-bottom:2px">Total Investido</div>
+              <div style="font-family:var(--mono);font-weight:600">${fmt(c.totalInvestido||0)}</div>
+            </div>
+            <div style="background:var(--surface);border-radius:7px;padding:8px 10px">
+              <div style="color:var(--text3);margin-bottom:2px">Preço Médio</div>
+              <div style="font-family:var(--mono);font-weight:600">${fmt(pm)}</div>
+            </div>
+            <div style="background:var(--surface);border-radius:7px;padding:8px 10px">
+              <div style="color:var(--text3);margin-bottom:2px">Preço Atual</div>
+              <div style="font-family:var(--mono);font-weight:600;color:${meta.color}">${fmt(c.atualBRL||0)}</div>
+            </div>
+            <div style="background:var(--surface);border-radius:7px;padding:8px 10px">
+              <div style="color:var(--text3);margin-bottom:2px">Quantidade</div>
+              <div style="font-family:var(--mono);font-weight:600">${(c.qtd||0).toFixed(6)}</div>
+            </div>
+            <div style="background:var(--surface);border-radius:7px;padding:8px 10px;grid-column:1/-1">
+              <div style="color:var(--text3);margin-bottom:4px">Lucro / Prejuízo</div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div style="font-family:var(--mono);font-weight:700;font-size:13px;color:${plPos?'var(--green)':'var(--red)'}">
+                  ${plPos?'+ ':'- '}${fmt(Math.abs(plVal))}
+                </div>
+                <div style="font-size:12px;font-weight:700;color:${plPos?'var(--green)':'var(--red)'}">
+                  ${plPos?'+':''}${plPct.toFixed(2)}%
+                </div>
+              </div>
+              ${c.alvoVenda ? `
+              <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);
+                          font-size:10px;color:var(--text3)">
+                Alvo: ${fmt(c.alvoVenda)} → lucro potencial:
+                <span style="color:var(--green);font-weight:600">
+                  + ${fmt((c.qtd||0)*c.alvoVenda - (c.totalInvestido||0))}
+                </span>
+              </div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('') + `</div>`;
   if (crTotal) crTotal.textContent = fmt(totalCrAtual);
   if (crRows) crRows.innerHTML = CRIPTO.length === 0
     ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
