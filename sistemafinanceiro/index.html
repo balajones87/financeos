@@ -3974,18 +3974,18 @@ function isRealIncome(tx)  { return tx.amount > 0 && !isInternalTransfer(tx); }
 function autoCategorizeTx(tx) {
   if (isInternalTransfer(tx)) return { category: null, origin: 'rule' };
 
-  const desc   = (tx.desc || '').toUpperCase();
+  const desc   = normalizeDesc(tx.desc); // normaliza datas antes de comparar
   const amount = Math.abs(parseFloat(tx.amount) || 0);
 
-  // Regras ordenadas por especificidade (valorFixo = mais específica)
+  // Regras ordenadas por especificidade
   const sorted = [...RULES].sort((a,b) => {
     const aSpec = (a.valorFixo != null ? 2 : 0) + (a.account ? 1 : 0);
     const bSpec = (b.valorFixo != null ? 2 : 0) + (b.account ? 1 : 0);
-    return bSpec - aSpec; // mais específica primeiro
+    return bSpec - aSpec;
   });
 
   for (const rule of sorted) {
-    const kw = (rule.keyword || '').toUpperCase();
+    const kw = normalizeDesc(rule.keyword || '');
     if (!kw || !desc.includes(kw)) continue;
     if (rule.account && rule.account !== tx.account) continue;
     if (rule.valorFixo != null) {
@@ -4020,8 +4020,9 @@ function learnFromCorrection(tx, newCategory) {
 
     // Extrair keyword específica da descrição
     const kw = extractCorrectionKeyword(tx.desc);
-    if (kw && !INTERNAL_TRANSFER_KEYWORDS.includes(kw)) {
-      INTERNAL_TRANSFER_KEYWORDS.push(kw);
+    const kwNormIT = normalizeDesc(kw);
+    if (kwNormIT && !INTERNAL_TRANSFER_KEYWORDS.some(k => normalizeDesc(k) === kwNormIT)) {
+      INTERNAL_TRANSFER_KEYWORDS.push(kwNormIT);
       // Salvar como regra para persistir
       const existingRule = RULES.find(r => r.keyword.toUpperCase() === kw);
       if (!existingRule) {
@@ -4106,19 +4107,17 @@ function learnFromCorrection(tx, newCategory) {
 
 // Aplica regra retroativamente em transações pendentes existentes
 function applyRuleRetroactive(keyword, category, txType) {
-  if (!keyword || keyword.length < 5) return 0; // keyword muito curta = muito genérica
+  if (!keyword || keyword.length < 4) return 0; // mínimo 4 chars
 
-  const kw = keyword.toUpperCase();
-
-  // Verificar se é termo genérico demais
-  if (GENERIC_BANKING_TERMS.has(kw)) return 0;
+  const kwNorm = normalizeDesc(keyword); // compara sem datas
+  if (!kwNorm || GENERIC_BANKING_TERMS.has(kwNorm)) return 0;
 
   const candidates = TRANSACTIONS.filter(t => {
     if (t.origin === 'manual') return false;
     if (isInternalTransfer(t)) return false;
     if (t.category && t.origin !== 'pending') return false;
-    if (t._suggested) return false; // já tem sugestão
-    return (t.desc || '').toUpperCase().includes(kw);
+    if (t._suggested) return false;
+    return normalizeDesc(t.desc).includes(kwNorm); // ignora datas na comparação
   });
 
   if (candidates.length === 0) return 0;
@@ -4157,44 +4156,63 @@ function applyRuleRetroactive(keyword, category, txType) {
 }
 
 // Extrai keyword útil e específica da descrição
-// Palavras genéricas que sozinhas não servem como regra
+// Normaliza descrição para comparação — remove datas, horas, sufixos variáveis
+function normalizeDesc(desc) {
+  if (!desc) return '';
+  return desc
+    .toUpperCase()
+    .replace(/\d{2}\/\d{2}(\/\d{2,4})?/g, '')   // datas DD/MM ou DD/MM/AAAA
+    .replace(/\d{2}:\d{2}(:\d{2})?/g, '')         // horas HH:MM
+    .replace(/\s+\d{4,}\s*/g, ' ')                // números longos (códigos)
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 const GENERIC_BANKING_TERMS = new Set([
   'PIX','TED','DOC','TRANSF','TRANSFERENCIA','TRANSFERÊNCIA',
   'PAG','PAGAMENTO','PGTO','DEV','DEVOL','DEVOLUCAO',
   'PIX TRANSF','TED TRANSF','CRED','DEBITO','DEBIT',
   'PIX QRS','QRS','SAQUE','DEP','DEPOSITO','ENTRADA','SAIDA',
   'PIX ENVIO','PIX REC','RECEBIMENTO','ENVIO',
+  'JOAO','JOSE','MARIA','LUIZ','LUIZA','JUNIOR','NETO',
 ]);
 
 function extractCorrectionKeyword(desc) {
   if (!desc) return '';
 
-  let s = desc
-    .replace(/^A vista sem juros - (Visa|Mastercard) - /i, '')
-    .replace(/^\d+x - /i, '')
-    .replace(/\s+(FOZ DO IGUACU|SAO PAULO|CURITIBA|RIO DE JANEIRO|BR)\s*$/i, '')
-    .replace(/\s+\d{2}\/\d{2}(\s|$)/g, '') // remove datas como "08/04"
+  // Normalizar — remove datas e sufixos variáveis
+  let s = normalizeDesc(desc)
+    .replace(/^A VISTA SEM JUROS - (VISA|MASTERCARD) - /i, '')
+    .replace(/^PARCELA LOJISTA - (VISA|MASTERCARD) - /i, '')
     .trim();
 
   // PAG TIT INT — usar código do banco (muito específico)
-  if (s.toUpperCase().startsWith('PAG TIT INT')) {
-    return s.slice(0, 20).toUpperCase().trim();
+  if (s.startsWith('PAG TIT INT')) {
+    return s.slice(0, 20).trim();
   }
   // PAG BOLETO — extrair nome da empresa
-  if (s.toUpperCase().startsWith('PAG BOLETO')) {
-    const parts = s.split(' ').filter(w => w.length > 3 && !/^(PAG|BOLETO|DO|DE|SA|LTDA|S\/A)$/i.test(w));
-    const kw = (parts[0] || '').toUpperCase().trim();
-    return kw.length >= 4 ? kw : '';
+  if (s.startsWith('PAG BOLETO')) {
+    const parts = s.replace('PAG BOLETO', '').trim()
+      .split(' ').filter(w => w.length > 3 && !/^(DO|DE|SA|LTDA|S\/A|DA|DOS)$/.test(w));
+    return parts[0] || '';
   }
 
-  // Extrair palavra mais significativa (não genérica, não número, ≥5 chars)
-  const words = s.toUpperCase().split(/[\s|\/\*\-]+/)
-    .filter(w => w.length >= 5 && !/^\d+$/.test(w) && !GENERIC_BANKING_TERMS.has(w));
+  // PIX TRANSF / PIX QRS — pegar nome da pessoa (2 palavras)
+  if (s.startsWith('PIX TRANSF') || s.startsWith('PIX QRS') || s.startsWith('PIX ')) {
+    const after = s.replace(/^PIX\s+(TRANSF|QRS|ENVIO|REC)?\s*/i, '').trim();
+    const words = after.split(' ').filter(w => w.length >= 3 && !/^\d+$/.test(w));
+    if (words.length >= 2) return words.slice(0,2).join(' ').slice(0,20);
+    if (words.length === 1 && words[0].length >= 4) return words[0].slice(0,15);
+    return ''; // PIX genérico sem nome → sem regra
+  }
 
-  // Se nenhuma palavra específica encontrada → não criar regra automática
+  // Genérico — pegar primeiras 2 palavras significativas (≥4 chars, não número)
+  const words = s.split(/[\s|\/\*\-]+/)
+    .filter(w => w.length >= 4 && !/^\d+$/.test(w) && !GENERIC_BANKING_TERMS.has(w));
+
   if (!words.length) return '';
-
-  return words[0].slice(0, 25).trim();
+  // Usar 2 palavras quando possível para mais especificidade
+  return words.slice(0, 2).join(' ').slice(0, 25).trim();
 }
 
 // Persiste regra aprendida no Supabase
@@ -5548,26 +5566,24 @@ function saveLearnedRule(desc, category, account) {
 
 function extractKeyword(desc) {
   if (!desc) return '';
-  // Remove prefixos comuns do Despezzas
-  let s = desc
-    .replace(/^A vista sem juros - Visa - /i, '')
-    .replace(/^A vista sem juros - Mastercard - /i, '')
-    .replace(/^\d+x - /i, '')
-    .replace(/\s+(FOZ DO IGUACU|SAO PAULO|CURITIBA|BR)\s*$/i, '')
-    .trim();
-  // Pegar primeiras 2-3 palavras significativas
-  const words = s.split(/\s+/).filter(w => w.length > 2).slice(0,3);
-  return words.join(' ').toUpperCase().slice(0,30);
+  // Normalizar primeiro (remove datas, prefixos de cartão)
+  return normalizeDesc(desc)
+    .replace(/^A VISTA SEM JUROS - (VISA|MASTERCARD) - /i, '')
+    .replace(/^PARCELA LOJISTA - (VISA|MASTERCARD) - /i, '')
+    .split(/\s+/).filter(w => w.length > 2).slice(0,3)
+    .join(' ').slice(0,30);
 }
 
 function applyLearnedRules(tx) {
-  if (tx.category) return tx; // já tem categoria
+  if (tx.category) return tx;
   const rules = getLearnedRules();
-  const keyword = extractKeyword(tx.desc);
-  const match = rules.find(r => keyword.includes(r.keyword) || r.keyword.includes(keyword.slice(0,15)));
-  if (match) {
-    return { ...tx, category: match.category, origin: 'rule_learned' };
-  }
+  const kwNorm = normalizeDesc(tx.desc); // normaliza antes de comparar
+  // Verificar regras (normalizadas também)
+  const match = rules.find(r => {
+    const rNorm = normalizeDesc(r.keyword);
+    return kwNorm.includes(rNorm) || rNorm.includes(kwNorm.slice(0,15));
+  });
+  if (match) return { ...tx, category: match.category, origin: 'rule_learned' };
   return tx;
 }
 
