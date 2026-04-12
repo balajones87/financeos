@@ -4106,64 +4106,95 @@ function learnFromCorrection(tx, newCategory) {
 
 // Aplica regra retroativamente em transações pendentes existentes
 function applyRuleRetroactive(keyword, category, txType) {
-  let count = 0;
-  const kw = keyword.toUpperCase();
-  const toUpdate = [];
+  if (!keyword || keyword.length < 5) return 0; // keyword muito curta = muito genérica
 
-  TRANSACTIONS.forEach(t => {
-    // Pular: já categorizada manualmente, interna, ou cartão
-    if (t.origin === 'manual') return;
-    if (isInternalTransfer(t)) return;
-    if (t.category && t.origin !== 'pending') return;
-    // Pular a própria transação que já foi atualizada
-    if ((t.desc||'').toUpperCase().includes(kw) && !t.category) {
-      if (txType === 'transfer_internal') {
-        t.txType   = 'transfer_internal';
-        t.category = null;
-        t.origin   = 'rule';
-      } else {
-        t.category = category;
-        t.origin   = 'rule';
-        t._suggested = null;
-      }
-      count++;
-      toUpdate.push({ txId: t.id, category: t.category, origin: t.origin });
-    }
+  const kw = keyword.toUpperCase();
+
+  // Verificar se é termo genérico demais
+  if (GENERIC_BANKING_TERMS.has(kw)) return 0;
+
+  const candidates = TRANSACTIONS.filter(t => {
+    if (t.origin === 'manual') return false;
+    if (isInternalTransfer(t)) return false;
+    if (t.category && t.origin !== 'pending') return false;
+    if (t._suggested) return false; // já tem sugestão
+    return (t.desc || '').toUpperCase().includes(kw);
   });
 
-  // Persistir todas no Supabase em batch
-  if (window.persistChange && toUpdate.length > 0) {
-    toUpdate.forEach(u => {
-      window.persistChange('transaction_category', u);
-    });
+  if (candidates.length === 0) return 0;
+
+  // Se forem muitas transações (>5) pedir confirmação
+  if (candidates.length > 5) {
+    const exemplos = candidates.slice(0,3).map(t => `• ${t.desc}`).join('\n');
+    const ok = confirm(
+      `Encontrei ${candidates.length} transações similares com "${keyword}":\n\n${exemplos}\n...\n\n` +
+      `Aplicar "${category || 'Transferência Interna'}" em todas?`
+    );
+    if (!ok) return 0;
+  }
+
+  let count = 0;
+  const toUpdate = [];
+  candidates.forEach(t => {
+    if (txType === 'transfer_internal') {
+      t.txType   = 'transfer_internal';
+      t.category = null;
+      t.origin   = 'rule';
+    } else {
+      t.category = category;
+      t.origin   = 'rule';
+      t._suggested = null;
+    }
+    count++;
+    toUpdate.push({ txId: t.id, category: t.category, origin: t.origin });
+  });
+
+  if (window.persistChange && toUpdate.length) {
+    toUpdate.forEach(u => window.persistChange('transaction_category', u));
   }
 
   return count;
 }
 
 // Extrai keyword útil e específica da descrição
+// Palavras genéricas que sozinhas não servem como regra
+const GENERIC_BANKING_TERMS = new Set([
+  'PIX','TED','DOC','TRANSF','TRANSFERENCIA','TRANSFERÊNCIA',
+  'PAG','PAGAMENTO','PGTO','DEV','DEVOL','DEVOLUCAO',
+  'PIX TRANSF','TED TRANSF','CRED','DEBITO','DEBIT',
+  'PIX QRS','QRS','SAQUE','DEP','DEPOSITO','ENTRADA','SAIDA',
+  'PIX ENVIO','PIX REC','RECEBIMENTO','ENVIO',
+]);
+
 function extractCorrectionKeyword(desc) {
   if (!desc) return '';
-  // Remover prefixos genéricos de cartão
+
   let s = desc
     .replace(/^A vista sem juros - (Visa|Mastercard) - /i, '')
     .replace(/^\d+x - /i, '')
     .replace(/\s+(FOZ DO IGUACU|SAO PAULO|CURITIBA|RIO DE JANEIRO|BR)\s*$/i, '')
+    .replace(/\s+\d{2}\/\d{2}(\s|$)/g, '') // remove datas como "08/04"
     .trim();
 
-  // Para "PAG TIT INT XXX" — usar os primeiros 15 chars (inclui o banco)
+  // PAG TIT INT — usar código do banco (muito específico)
   if (s.toUpperCase().startsWith('PAG TIT INT')) {
     return s.slice(0, 20).toUpperCase().trim();
   }
+  // PAG BOLETO — extrair nome da empresa
   if (s.toUpperCase().startsWith('PAG BOLETO')) {
-    // "PAG BOLETO UNIMED DO ESTADO..." → "UNIMED"
     const parts = s.split(' ').filter(w => w.length > 3 && !/^(PAG|BOLETO|DO|DE|SA|LTDA|S\/A)$/i.test(w));
-    return (parts[0] || s.slice(0,15)).toUpperCase().trim();
+    const kw = (parts[0] || '').toUpperCase().trim();
+    return kw.length >= 4 ? kw : '';
   }
 
-  // Para descrições longas, pegar primeiro token com mais de 4 chars
-  const words = s.split(/[\s|\/\*]+/).filter(w => w.length > 3 && !/^\d+$/.test(w));
-  return (words[0] || s.slice(0,15)).toUpperCase().trim();
+  // Extrair palavra mais significativa (não genérica, não número, ≥5 chars)
+  const words = s.toUpperCase().split(/[\s|\/\*\-]+/)
+    .filter(w => w.length >= 5 && !/^\d+$/.test(w) && !GENERIC_BANKING_TERMS.has(w));
+
+  // Se nenhuma palavra específica encontrada → não criar regra automática
+  if (!words.length) return '';
+
+  return words[0].slice(0, 25).trim();
 }
 
 // Persiste regra aprendida no Supabase
