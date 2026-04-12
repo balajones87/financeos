@@ -5875,6 +5875,11 @@ async function importConfirm() {
       if (tx.category) learnFromAssignment(tx, tx.category);
     });
 
+    // Garantir que contas estão no Supabase antes de salvar transações
+    if (window.saveAllAccounts) {
+      await window.saveAllAccounts().catch(e => console.warn('[Import] saveAllAccounts:', e.message));
+    }
+
     // Salvar no Supabase (em background — não bloqueia)
     if (window.saveBatchTransactions) {
       window.saveBatchTransactions(normalized).catch(e =>
