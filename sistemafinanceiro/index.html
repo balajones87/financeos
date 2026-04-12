@@ -2089,6 +2089,7 @@ body {
         <div class="filter-chip" onclick="toggleChip(this,'debito')">↓ Débitos</div>
         <div class="filter-chip" onclick="toggleChip(this,'transfer')" style="border-color:var(--blue-dim);color:var(--blue)">⇄ Transferências</div>
         <div class="filter-chip" id="chip-cartao" onclick="toggleCartao(this)" style="border-color:rgba(130,10,209,.4);color:#a040e0">💳 Cartões</div>
+        <div class="filter-chip" onclick="detectDuplicatas(this)" style="border-color:rgba(239,68,68,.3);color:var(--red)" title="Detectar e remover transações duplicadas">🔍 Duplicatas</div>
       </div>
 
       <!-- Bulk auto-categorize bar -->
@@ -6217,6 +6218,61 @@ function addCategoriaPrincipal() {
 
 // ── Editar / Excluir transações ───────────────────────────────
 let editTxId = null;
+
+function detectDuplicatas(el) {
+  // Agrupar transações por chave: data + valor + descrição (30 chars)
+  const groups = {};
+  TRANSACTIONS.forEach(tx => {
+    const key = `${tx.date}|${Math.round(Math.abs(tx.amount)*100)}|${(tx.desc||'').slice(0,30)}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  });
+
+  // Filtrar grupos com mais de 1 transação = duplicatas
+  const dupGroups = Object.entries(groups).filter(([,txs]) => txs.length > 1);
+  const dupCount  = dupGroups.reduce((s,[,txs]) => s + txs.length - 1, 0);
+
+  if (!dupCount) {
+    showToast('✓', 'Nenhuma duplicata encontrada!');
+    return;
+  }
+
+  const exemplos = dupGroups.slice(0,5).map(([,txs]) =>
+    `• ${txs[0].desc?.slice(0,40)} (${txs.length}×)`
+  ).join('\n');
+
+  const ok = confirm(
+    `Encontrei ${dupCount} transações duplicadas em ${dupGroups.length} grupo${dupGroups.length>1?'s':''}:\n\n${exemplos}\n\n` +
+    `Remover as duplicatas? (mantém a 1ª ocorrência de cada)`
+  );
+  if (!ok) return;
+
+  // Remover — manter só a primeira de cada grupo
+  const toDelete = [];
+  dupGroups.forEach(([,txs]) => {
+    // Ordenar por data de criação (ou by index) — manter o primeiro
+    txs.slice(1).forEach(tx => toDelete.push(tx.id));
+  });
+
+  toDelete.forEach(txId => {
+    const idx = TRANSACTIONS.findIndex(t => String(t.id) === String(txId));
+    if (idx >= 0) TRANSACTIONS.splice(idx, 1);
+
+    // Deletar do Supabase
+    if (window.currentUser && window.db) {
+      window.db.from('transactions')
+        .delete()
+        .eq('id', txId)
+        .eq('user_id', window.currentUser.id)
+        .then(({error}) => { if(error) console.warn('[Supabase] dup delete:', error.message); });
+    }
+  });
+
+  renderTransactions();
+  renderDashboard();
+  updatePendingBadge();
+  showToast('✓', `${toDelete.length} duplicatas removidas!`);
+}
 
 function openEditTx(txId) {
   const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
