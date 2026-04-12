@@ -287,6 +287,7 @@ async function loadTransactions(limit = 500) {
     txType:      t.tx_type,
     origin:      t.cat_origin,
     cardTx:      t.is_card_tx === true,  // garantir boolean
+    cardKey:     (() => { try { return JSON.parse(t.raw_data||'{}').cardKey || null; } catch(e) { return null; } })(),
     external_id: t.external_id,
     notes:       t.notes,
   }));
@@ -360,7 +361,7 @@ async function saveTransaction(tx) {
     is_card_tx:  tx.cardTx || false,
     cat_origin:  tx.origin || 'pending',
     external_id: externalId,
-    raw_data:    tx.raw_data || null,
+    raw_data:    tx.cardKey ? JSON.stringify({ cardKey: tx.cardKey }) : (tx.raw_data || null),
     updated_at:  new Date().toISOString(),
   }, { onConflict: 'external_id' });
 
