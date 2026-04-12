@@ -7137,129 +7137,138 @@ function invDelete(tipo, idx) {
 }
 
 function renderInvestimentos() {
-  const totalRF      = RENDA_FIXA.reduce((s,r) => s + r.atual, 0);
-  const totalRFinv   = RENDA_FIXA.reduce((s,r) => s + r.investido, 0);
-  const totalAcoes   = ACOES_FIIS.reduce((s,a) => s + a.qtd * a.atual, 0);
-  const totalAcInv   = ACOES_FIIS.reduce((s,a) => s + a.qtd * a.pMedio, 0);
-  // Cripto — usa estrutura real
-  const totalCrInv   = CRIPTO.reduce((s,c) => s + c.totalInvestido, 0);
-  const totalCrAtual = CRIPTO.reduce((s,c) => s + c.qtd * c.atualBRL, 0);
-  const totalOutros  = OUTROS_ATIVOS.reduce((s,o) => s + o.valor, 0);
+  try {
+  const totalRF      = RENDA_FIXA.reduce((s,r) => s + (r.atual||0), 0);
+  const totalRFinv   = RENDA_FIXA.reduce((s,r) => s + (r.investido||0), 0);
+  const totalAcoes   = ACOES_FIIS.reduce((s,a) => s + (a.qtd||0) * (a.atual||0), 0);
+  const totalAcInv   = ACOES_FIIS.reduce((s,a) => s + (a.qtd||0) * (a.pMedio||0), 0);
+  const totalCrInv   = CRIPTO.reduce((s,c) => s + (c.totalInvestido||0), 0);
+  const totalCrAtual = CRIPTO.reduce((s,c) => s + (c.qtd||0) * (c.atualBRL||0), 0);
+  const totalOutros  = OUTROS_ATIVOS.reduce((s,o) => s + (o.valor||0), 0);
   const totalPort    = totalRF + totalAcoes + totalCrAtual + totalOutros;
   const totalInv     = totalRFinv + totalAcInv + totalCrInv;
   const plTotal      = totalPort - totalInv;
   const plPct        = totalInv > 0 ? (plTotal / totalInv * 100) : 0;
+  const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  const pct = (v, total) => total > 0 ? (v/total*100).toFixed(0) + '%' : '0%';
 
   // Summary cards
-  document.getElementById('inv-summary-cards').innerHTML = `
+  const summaryEl = document.getElementById('inv-summary-cards');
+  if (summaryEl) summaryEl.innerHTML = `
     <div class="ir-card" style="border-color:var(--border)">
       <div class="ir-card-label">Portfólio Total</div>
-      <div class="ir-card-val" style="color:var(--green)">R$ ${totalPort.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div class="ir-card-sub">4 classes de ativos</div>
+      <div class="ir-card-val" style="color:var(--green)">${fmt(totalPort)}</div>
+      <div class="ir-card-sub">${[RENDA_FIXA.length && 'RF', ACOES_FIIS.length && 'Ações', CRIPTO.length && 'Cripto', OUTROS_ATIVOS.length && 'Outros'].filter(Boolean).join(' + ') || 'Sem ativos cadastrados'}</div>
     </div>
     <div class="ir-card" style="border-color:var(--border)">
       <div class="ir-card-label">P&L Total</div>
       <div class="ir-card-val" style="color:${plTotal>=0?'var(--green)':'var(--red)'}">
-        ${plTotal>=0?'+':''} R$ ${plTotal.toLocaleString('pt-BR',{minimumFractionDigits:0})}
+        ${plTotal>=0?'+ ':'- '}${fmt(Math.abs(plTotal))}
       </div>
       <div class="ir-card-sub">${plPct.toFixed(2)}% sobre investido</div>
     </div>
     <div class="ir-card" style="border-color:var(--border)">
       <div class="ir-card-label">Renda Passiva / Mês</div>
-      <div class="ir-card-val" style="color:var(--blue)">R$ ${(OUTROS_ATIVOS.reduce((s,o)=>s+o.rendaMensal,0) + IMOVEIS.reduce((s,i)=>s+i.aluguel,0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div class="ir-card-val" style="color:var(--blue)">${fmt((OUTROS_ATIVOS.reduce((s,o)=>s+(o.rendaMensal||0),0)) + ((typeof IMOVEIS!=='undefined'?IMOVEIS:[]).reduce((s,i)=>s+(i.aluguel||0),0)))}</div>
       <div class="ir-card-sub">Aluguéis + Usina + Dividendos</div>
     </div>
     <div class="ir-card" style="border-color:var(--border)">
       <div class="ir-card-label">Maior Posição</div>
-      <div class="ir-card-val" style="color:var(--blue)">Renda Fixa</div>
-      <div class="ir-card-sub">${(totalRF/totalPort*100).toFixed(0)}% do portfólio</div>
+      <div class="ir-card-val" style="color:var(--blue)">${totalPort > 0 ? [['Renda Fixa',totalRF],['Cripto',totalCrAtual],['Ações',totalAcoes],['Outros',totalOutros]].sort((a,b)=>b[1]-a[1])[0][0] : '—'}</div>
+      <div class="ir-card-sub">${totalPort > 0 ? pct(Math.max(totalRF,totalAcoes,totalCrAtual,totalOutros), totalPort) + ' do portfólio' : 'Adicione seus investimentos'}</div>
     </div>`;
 
   // Alloc bar
   const segs = [
-    { label: 'Renda Fixa', val: totalRF,       color: '#4d9fff' },
-    { label: 'Ações/FIIs', val: totalAcoes,    color: '#9d7fff' },
-    { label: 'Cripto',     val: totalCrAtual,  color: '#ffb020' },
-    { label: 'Outros',     val: totalOutros,   color: '#64c864' },
+    { label:'Renda Fixa', val: totalRF,      color:'#4d9fff' },
+    { label:'Ações/FIIs', val: totalAcoes,   color:'#9d7fff' },
+    { label:'Cripto',     val: totalCrAtual, color:'#ffb020' },
+    { label:'Outros',     val: totalOutros,  color:'#64c864' },
   ];
-  document.getElementById('inv-alloc-bar').innerHTML = segs.map(s =>
-    `<div class="alloc-seg" style="flex:${s.val};background:${s.color}" title="${s.label}: R$ ${s.val.toLocaleString('pt-BR')}"></div>`
-  ).join('');
-  document.getElementById('inv-alloc-legend').innerHTML = segs.map(s =>
-    `<span><span class="legend-dot" style="background:${s.color}"></span>${s.label} ${(s.val/totalPort*100).toFixed(0)}%</span>`
-  ).join('');
+  const allocBar = document.getElementById('inv-alloc-bar');
+  const allocLeg = document.getElementById('inv-alloc-legend');
+  if (allocBar) allocBar.innerHTML = totalPort > 0
+    ? segs.filter(s=>s.val>0).map(s => `<div class="alloc-seg" style="flex:${s.val};background:${s.color}" title="${s.label}"></div>`).join('')
+    : '<div class="alloc-seg" style="flex:1;background:var(--border)" title="Sem dados"></div>';
+  if (allocLeg) allocLeg.innerHTML = totalPort > 0
+    ? segs.filter(s=>s.val>0).map(s=>`<span><span class="legend-dot" style="background:${s.color}"></span>${s.label} ${pct(s.val,totalPort)}</span>`).join('')
+    : '<span style="color:var(--text3)">Adicione investimentos para ver a alocação</span>';
 
-  // Renda Fixa
-  document.getElementById('inv-rf-total').textContent = `R$ ${totalRF.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('inv-rf-change').textContent = `+${calcPL(totalRFinv,totalRF).toFixed(2)}%`;
-  document.getElementById('inv-rf-rows').innerHTML = RENDA_FIXA.map(r => {
-    const pl = calcPL(r.investido, r.atual);
-    return `<div class="inv-ativo-row">
-      <div><div class="inv-ticker">${r.nome.split(' ')[0]}</div><div class="inv-nome">${r.nome}</div></div>
-      <div style="font-family:var(--mono);font-size:12px">R$ ${r.investido.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--green)">R$ ${r.atual.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div>
-      <div style="font-size:11px;color:var(--text3)">${r.venc}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">+${pl.toFixed(2)}%</div>
-    </div>`;
-  }).join('');
+  // ── Renda Fixa ──
+  const rfTotal = document.getElementById('inv-rf-total');
+  const rfRows  = document.getElementById('inv-rf-rows');
+  if (rfTotal) rfTotal.textContent = fmt(totalRF);
+  if (rfRows) rfRows.innerHTML = RENDA_FIXA.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
+    : RENDA_FIXA.map((r,i) => {
+        const pl = r.investido > 0 ? ((r.atual-r.investido)/r.investido*100) : 0;
+        return `<div class="inv-ativo-row">
+          <div><div class="inv-ticker">${r.nome.split(' ')[0]}</div><div class="inv-nome">${r.nome}</div></div>
+          <div style="font-family:var(--mono);font-size:12px">${fmt(r.investido)}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--green)">${fmt(r.atual)}</div>
+          <div style="font-size:11px;color:var(--text3)">${r.venc||'—'}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">${pl>=0?'+':''}${pl.toFixed(2)}%</div>
+          <div><button onclick="invDelete('rf',${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px" title="Remover">🗑</button></div>
+        </div>`;
+      }).join('');
 
-  // Ações & FIIs
-  document.getElementById('inv-acoes-total').textContent = `R$ ${totalAcoes.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('inv-acoes-change').textContent = `${calcPL(totalAcInv,totalAcoes)>=0?'+':''}${calcPL(totalAcInv,totalAcoes).toFixed(2)}%`;
-  document.getElementById('inv-acoes-rows').innerHTML = ACOES_FIIS.map(a => {
-    const posAtual = a.qtd * a.atual;
-    const posInv   = a.qtd * a.pMedio;
-    const pl       = calcPL(posInv, posAtual);
-    return `<div class="inv-ativo-row">
-      <div>
-        <div class="inv-ticker" style="color:${a.tipo==='FII'?'var(--blue)':'var(--purple)'}">${a.ticker}</div>
-        <div class="inv-nome">${a.nome} · <span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${a.tipo==='FII'?'var(--blue-dim)':'var(--purple-dim)'};color:${a.tipo==='FII'?'var(--blue)':'var(--purple)'}">${a.tipo}</span></div>
-      </div>
-      <div style="font-family:var(--mono);font-size:12px">${a.qtd}</div>
-      <div style="font-family:var(--mono);font-size:12px">R$ ${a.pMedio.toFixed(2)}</div>
-      <div style="font-family:var(--mono);font-size:12px">R$ ${a.atual.toFixed(2)}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">
-        ${pl>=0?'+':''}${pl.toFixed(2)}%
-        <div style="font-size:10px;color:var(--text3)">R$ ${(posAtual-posInv).toFixed(0)}</div>
-      </div>
-    </div>`;
-  }).join('');
+  // ── Ações & FIIs ──
+  const acTotal = document.getElementById('inv-acoes-total');
+  const acRows  = document.getElementById('inv-acoes-rows');
+  if (acTotal) acTotal.textContent = fmt(totalAcoes);
+  if (acRows) acRows.innerHTML = ACOES_FIIS.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
+    : ACOES_FIIS.map((a,i) => {
+        const posAtual = (a.qtd||0) * (a.atual||0);
+        const posInv   = (a.qtd||0) * (a.pMedio||0);
+        const pl       = posInv > 0 ? (posAtual-posInv)/posInv*100 : 0;
+        return `<div class="inv-ativo-row">
+          <div><div class="inv-ticker" style="color:var(--blue)">${a.ticker}</div><div class="inv-nome">${a.nome}</div></div>
+          <div style="font-family:var(--mono);font-size:12px">${a.qtd}</div>
+          <div style="font-family:var(--mono);font-size:12px">${fmt(a.pMedio)}</div>
+          <div style="font-family:var(--mono);font-size:12px">${fmt(a.atual)}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">${pl>=0?'+':''}${pl.toFixed(2)}%</div>
+          <div><button onclick="invDelete('acoes',${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px" title="Remover">🗑</button></div>
+        </div>`;
+      }).join('');
 
-  // Cripto — usando estrutura real com custo médio em BRL
-  document.getElementById('inv-cripto-total').textContent = `R$ ${totalCrAtual.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  const crPL = calcPL(totalCrInv, totalCrAtual);
-  document.getElementById('inv-cripto-change').textContent = `${crPL>=0?'+':''}${crPL.toFixed(2)}%`;
-  document.getElementById('inv-cripto-rows').innerHTML = CRIPTO.map(c => {
-    const posAtual = c.qtd * c.atualBRL;
-    const pl       = calcPL(c.totalInvestido, posAtual);
-    const plAbs    = posAtual - c.totalInvestido;
-    return `<div class="inv-ativo-row">
-      <div><div class="inv-ticker" style="color:var(--amber)">${c.ticker}</div><div class="inv-nome">${c.nome}</div></div>
-      <div style="font-family:var(--mono);font-size:11px">${c.qtd.toFixed(5)}</div>
-      <div style="font-family:var(--mono);font-size:12px">R$ ${c.custoMedio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div style="font-family:var(--mono);font-size:12px">R$ ${c.atualBRL.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">
-        ${pl>=0?'+':''}${pl.toFixed(2)}%
-        <div style="font-size:10px;color:${plAbs>=0?'var(--green)':'var(--red)'}">R$ ${plAbs.toFixed(0)}</div>
-      </div>
-    </div>`;
-  }).join('');
+  // ── Cripto ──
+  const crTotal = document.getElementById('inv-cripto-total');
+  const crRows  = document.getElementById('inv-cripto-rows');
+  if (crTotal) crTotal.textContent = fmt(totalCrAtual);
+  if (crRows) crRows.innerHTML = CRIPTO.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
+    : CRIPTO.map((c,i) => {
+        const posAtual = (c.qtd||0) * (c.atualBRL||0);
+        const pl       = c.totalInvestido > 0 ? (posAtual-c.totalInvestido)/c.totalInvestido*100 : 0;
+        return `<div class="inv-ativo-row">
+          <div><div class="inv-ticker" style="color:var(--amber)">${c.ticker}</div><div class="inv-nome">${c.nome}</div></div>
+          <div style="font-family:var(--mono);font-size:11px">${c.qtd}</div>
+          <div style="font-family:var(--mono);font-size:12px">${fmt(c.custoMedio)}</div>
+          <div style="font-family:var(--mono);font-size:12px">${fmt(c.atualBRL)}</div>
+          <div style="font-family:var(--mono);font-size:12px;color:${pl>=0?'var(--green)':'var(--red)'}">${pl>=0?'+':''}${pl.toFixed(2)}%<div style="font-size:10px">${pl>=0?'+':''} ${fmt(posAtual-c.totalInvestido)}</div></div>
+          <div><button onclick="invDelete('cripto',${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px" title="Remover">🗑</button></div>
+        </div>`;
+      }).join('');
 
-  // Outros ativos reais
-  document.getElementById('inv-outros-total').textContent = `R$ ${totalOutros.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
-  document.getElementById('inv-outros-rows').innerHTML = OUTROS_ATIVOS.map(o => `
-    <div class="inv-segment">
-      <div class="inv-seg-icon">${o.tipo==='Consórcio'?'📄':'⚡'}</div>
-      <div class="inv-seg-info">
-        <div class="inv-seg-name">${o.nome}</div>
-        <div class="inv-seg-sub">${o.tipo}${o.rendaMensal>0?' · Renda: R$ '+o.rendaMensal.toLocaleString('pt-BR')+'/mês':''}</div>
-      </div>
-      <div class="inv-seg-right">
-        <div class="inv-seg-val" style="color:var(--amber)">R$ ${o.valor.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div>
-      </div>
-    </div>`).join('');
+  // ── Outros Ativos ──
+  const outTotal = document.getElementById('inv-outros-total');
+  const outRows  = document.getElementById('inv-outros-rows');
+  if (outTotal) outTotal.textContent = fmt(totalOutros);
+  if (outRows) outRows.innerHTML = OUTROS_ATIVOS.length === 0
+    ? '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Nenhum ativo — clique em <b>+ Adicionar</b></div>'
+    : OUTROS_ATIVOS.map((o,i) => `<div class="inv-ativo-row">
+        <div><div class="inv-ticker">⚡</div><div class="inv-nome">${o.nome}</div></div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--amber)">${fmt(o.valor)}</div>
+        <div style="font-size:11px;color:var(--green)">+ ${fmt(o.rendaMensal)}/mês</div>
+        <div></div><div></div>
+        <div><button onclick="invDelete('outros',${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:12px" title="Remover">🗑</button></div>
+      </div>`).join('');
+
+  } catch(err) {
+    console.error('[renderInvestimentos]', err);
+  }
 }
-
 function invToggleSegmento(seg) { /* expansão futura */ }
 
 // ============================================================
