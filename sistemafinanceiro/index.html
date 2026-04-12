@@ -4547,6 +4547,8 @@ function confirmAllSuggestions() {
   });
 
   document.getElementById('bulk-cat-bar').style.display = 'none';
+  // Salvar estado completo após confirmar todas
+  if (window.saveCatState) window.saveCatState();
   updatePendingBadge();
   renderTransactions();
   renderDashboard();
@@ -6218,6 +6220,9 @@ function assignCategory(catName) {
       window.saveCatCache(tx.id, tx.external_id, tx.category, tx.txType, tx.origin);
     }
   }
+
+  // Salvar estado completo de categorias — garante persistência mesmo com falha do Supabase
+  if (window.saveCatState) window.saveCatState();
 
   updatePendingBadge();
   renderTransactions();
