@@ -955,7 +955,7 @@ body {
   max-height: 480px;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  display: block !important;
+  display: none;
 }
 .cat-picker-header {
   padding: 8px 12px;
@@ -1001,6 +1001,7 @@ body {
 .cat-picker-group-icon { font-size: 15px; }
 .cat-picker-chevron { margin-left: auto; font-size: 10px; color: var(--text3); transition: transform .15s; }
 .cat-picker-group-header.open .cat-picker-chevron { transform: rotate(90deg); }
+.cat-picker.open { display: block; }
 .cat-picker-subs { display: none; padding: 2px 0 4px 32px; }
 .cat-picker-subs.open { display: block; }
 .cat-sub-option {
@@ -3599,7 +3600,7 @@ body {
 </div>
 
 <!-- CAT PICKER -->
-<div class="cat-picker" id="cat-picker" style="display:none;position:fixed;"></div>
+<div class="cat-picker" id="cat-picker" style="position:fixed;"></div>
 
 <script>
 
@@ -5949,7 +5950,7 @@ function openCatPicker(e, txId) {
   const y = Math.min(e.clientY + 8, window.innerHeight - 500);
   picker.style.left = x + 'px';
   picker.style.top  = y + 'px';
-  picker.style.display = 'block';
+  picker.classList.add('open');
 
   // Focar busca
   setTimeout(() => {
@@ -6066,7 +6067,7 @@ function addSubcategoria(catName, el) {
 
 function closePicker() {
   const p = document.getElementById('cat-picker');
-  if (p) p.style.display = 'none';
+  if (p) p.classList.remove('open');
   activeTxId = null;
 }
 
