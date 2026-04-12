@@ -6062,6 +6062,15 @@ function renderCatPickerContent(picker, searchTerm) {
 
   picker.innerHTML = html;
 
+  // Botão de nova categoria principal — fixo no final
+  const addMain = document.createElement('div');
+  addMain.style.cssText = 'padding:10px 14px;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface2)';
+  addMain.innerHTML = `<div style="cursor:pointer;font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;border:1px dashed var(--border)" 
+    onclick="event.stopPropagation();addCategoriaPrincipal()">
+    ＋ Criar nova categoria principal
+  </div>`;
+  picker.appendChild(addMain);
+
   // Re-abrir grupos que estavam abertos se tiver busca
   if (q) {
     picker.querySelectorAll('.cat-picker-group-header').forEach(h => {
@@ -6079,6 +6088,34 @@ function catPickerToggle(header) {
   header.classList.toggle('open');
   const subs = header.nextElementSibling;
   if (subs) subs.classList.toggle('open');
+}
+
+function addCategoriaPrincipal() {
+  const nome = prompt('Nome da nova categoria:');
+  if (!nome || !nome.trim()) return;
+  const nome_clean = nome.trim();
+
+  // Emojis disponíveis para escolher
+  const icones = ['🏷️','💼','🔖','📌','🎯','💡','🔑','🧾','📊','🏗️','🌱','🎪'];
+  const icone  = prompt(`Emoji para "${nome_clean}" (ou deixe vazio para 🏷️):`) || '🏷️';
+
+  const newCat = {
+    id:    nome_clean.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,''),
+    name:  nome_clean,
+    icon:  icone.trim() || '🏷️',
+    color: '#6b7280',
+    type:  'expense',
+    subs:  [],
+  };
+
+  // Adicionar no CATEGORIES_FULL antes de "Outros"
+  const outrosIdx = CATEGORIES_FULL.findIndex(c => c.id === 'outros');
+  if (outrosIdx >= 0) CATEGORIES_FULL.splice(outrosIdx, 0, newCat);
+  else CATEGORIES_FULL.push(newCat);
+
+  // Aplicar imediatamente na transação ativa
+  assignCategory(nome_clean);
+  showToast('✓', `Categoria "${nome_clean}" criada`);
 }
 
 function addSubcategoria(catName, el) {
