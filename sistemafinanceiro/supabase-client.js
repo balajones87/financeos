@@ -146,7 +146,10 @@ async function loadAllData() {
     ]);
     console.log('[Supabase] Dados carregados com sucesso');
 
-    // 3. Atualiza a UI
+    // 3. Corrigir transações de cartão identificadas por padrão de descrição
+    if (window.fixCardTransactions) window.fixCardTransactions();
+
+    // 4. Atualiza a UI
     if (window.autoCategorizePending) window.autoCategorizePending();
     if (window.renderDashboard)     window.renderDashboard();
     if (window.renderDashboardTx)  window.renderDashboardTx();
