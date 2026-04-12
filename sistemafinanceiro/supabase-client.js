@@ -301,13 +301,19 @@ async function saveBatchTransactions(txs) {
 
 async function updateTransactionCategory(txId, categoryName, origin = 'manual') {
   if (!currentUser) return;
-  const catId = await getCategoryDbId(categoryName);
-  const { error } = await db.from('transactions').update({
-    category_id: catId,
+  const catId = categoryName ? await getCategoryDbId(categoryName) : null;
+  const payload = {
     cat_origin:  origin,
     updated_at:  new Date().toISOString(),
-  }).eq('id', txId).eq('user_id', currentUser.id);
-  if (error) throw error;
+  };
+  // Só atualiza category_id se temos o ID — senão salva pelo menos o origin
+  if (catId) payload.category_id = catId;
+
+  const { error } = await db.from('transactions')
+    .update(payload)
+    .eq('id', txId)
+    .eq('user_id', currentUser.id);
+  if (error) console.warn('[Supabase] updateTransactionCategory:', error.message);
 }
 
 // ─── REGRAS ───────────────────────────────────────────────────
