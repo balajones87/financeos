@@ -946,27 +946,81 @@ body {
 .editable-cat:hover { opacity: 0.7; }
 
 .cat-picker {
-  position: absolute;
+  position: fixed;
   background: var(--surface2);
   border: 1px solid var(--border2);
   border-radius: var(--radius);
-  padding: 8px;
-  z-index: 50;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  min-width: 220px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 9999;
+  width: 300px;
+  max-height: 480px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  display: block !important;
 }
-
-.cat-option {
-  padding: 7px 10px;
+.cat-picker-header {
+  padding: 8px 12px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cat-picker-search {
+  width: 100%;
+  background: var(--surface3);
+  border: 1px solid var(--border);
   border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 12px;
+  margin: 6px 0 2px;
+  box-sizing: border-box;
+}
+.cat-picker-search:focus { outline: none; border-color: var(--green); }
+.cat-picker-section { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.cat-picker-section:last-child { border-bottom: none; }
+.cat-picker-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  transition: background .1s;
+  user-select: none;
+}
+.cat-picker-group-header:hover { background: var(--surface3); }
+.cat-picker-group-icon { font-size: 15px; }
+.cat-picker-chevron { margin-left: auto; font-size: 10px; color: var(--text3); transition: transform .15s; }
+.cat-picker-group-header.open .cat-picker-chevron { transform: rotate(90deg); }
+.cat-picker-subs { display: none; padding: 2px 0 4px 32px; }
+.cat-picker-subs.open { display: block; }
+.cat-sub-option {
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text2);
+  border-radius: 4px;
+  transition: background .1s;
+}
+.cat-sub-option:hover { background: var(--surface3); color: var(--text); }
+.cat-option {
+  padding: 7px 12px;
   font-size: 12px;
   cursor: pointer;
   transition: background 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-
 .cat-option:hover { background: var(--surface3); }
 
 /* SPARK CHART */
@@ -998,7 +1052,7 @@ body {
   overflow: hidden;
 }
 .pl-hero::before {
-  content: 'NUBANK PJ — CONSULTÓRIO MÉDICO';
+  content: 'NUBANK PJ — J PIMENTA LTDA';
   position: absolute; top: 14px; right: 20px;
   font-size: 9px; letter-spacing: 2px; color: #1e5a28;
   font-family: var(--mono);
@@ -1463,7 +1517,73 @@ body {
 }
 .alloc-seg { height: 100%; }
 
-/* ── Modal Conta ─────────────────────────────────── */
+/* ── Importar Extrato ───────────────────────────── */
+.import-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  margin-bottom: 16px;
+}
+.import-drop-zone:hover, .import-drop-zone.drag-over {
+  border-color: var(--green);
+  background: rgba(0,212,170,.04);
+}
+.import-drop-icon  { font-size: 40px; margin-bottom: 12px; }
+.import-drop-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.import-drop-sub   { font-size: 12px; color: var(--text3); }
+
+.import-formats {
+  display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap;
+}
+.import-fmt-badge {
+  font-size: 11px; padding: 3px 12px; border-radius: 20px;
+  border: 1px solid var(--border); color: var(--text2);
+}
+.import-fmt-badge.active { border-color: var(--green); color: var(--green); background: rgba(0,212,170,.08); }
+
+.import-preview-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; flex-wrap: wrap; gap: 10px;
+}
+.import-stats {
+  display: flex; gap: 16px; font-size: 12px;
+}
+.import-stat { color: var(--text3); }
+.import-stat strong { color: var(--text); }
+
+.import-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.import-table th {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--text3); padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border); background: var(--surface2);
+  position: sticky; top: 0;
+}
+.import-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.import-table tr:hover td { background: var(--surface2); }
+.import-table tr.dup td { opacity: .45; }
+.import-table tr.dup td:first-child::before {
+  content: '↩ '; color: var(--text3);
+}
+.import-dup-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 10px;
+  background: rgba(100,100,100,.15); color: var(--text3);
+}
+.import-new-badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 10px;
+  background: rgba(0,212,170,.1); color: var(--green);
+}
+
+.import-table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+
+/* ── Pluggy saldo-only badge ────────────────────── */
+.pluggy-balance-only {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  background: rgba(77,159,255,.1); color: var(--blue);
+  margin-left: 6px;
+}
 .conta-modal-overlay {
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
   z-index:1000;align-items:center;justify-content:center;
@@ -1697,6 +1817,9 @@ body {
         <span class="nav-icon">⇄</span> Transações
         <span class="nav-badge" id="pending-badge">7</span>
       </div>
+      <div class="nav-item" onclick="showView('importar', this)">
+        <span class="nav-icon">⬆</span> Importar Extrato
+      </div>
       <div class="nav-item" onclick="showView('projecao', this)">
         <span class="nav-icon">📅</span> Projeção 12M
       </div>
@@ -1815,14 +1938,14 @@ body {
             <div class="ph-pillar-sub" id="dash-pf-contas">—</div>
           </div>
           <div class="ph-pillar" style="background:rgba(0,212,170,0.06);border-color:rgba(0,212,170,0.15)">
-            <div class="ph-pillar-label">Consultório PJ</div>
+            <div class="ph-pillar-label">J PIMENTA LTDA</div>
             <div class="ph-pillar-value" style="color:var(--green)" id="dash-pj1-total">R$ 0</div>
             <div class="ph-pillar-sub">Nubank PJ</div>
           </div>
           <div class="ph-pillar" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2)">
-            <div class="ph-pillar-label">Energia PJ</div>
+            <div class="ph-pillar-label">Usina Solar PJ</div>
             <div class="ph-pillar-value" style="color:var(--amber)" id="dash-pj2-total">R$ 0</div>
-            <div class="ph-pillar-sub">Energia Solar + EV</div>
+            <div class="ph-pillar-sub">Empresas PJ</div>
           </div>
         </div>
       </div>
@@ -1973,6 +2096,107 @@ body {
       </div>
     </div>
 
+    <!-- IMPORTAR EXTRATO VIEW -->
+    <div class="view" id="view-importar">
+      <div style="max-width:900px;margin:0 auto;">
+
+        <!-- DROP ZONE -->
+        <div class="import-drop-zone" id="import-drop-zone"
+             onclick="document.getElementById('import-file-input').click()"
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="importHandleDrop(event)">
+          <div class="import-drop-icon">📂</div>
+          <div class="import-drop-title">Arraste o extrato aqui ou clique para selecionar</div>
+          <div class="import-drop-sub">Suporta OFX, CSV e Excel — Nubank, Itaú, Unicred e outros</div>
+          <div class="import-formats">
+            <span class="import-fmt-badge active">OFX</span>
+            <span class="import-fmt-badge active">CSV</span>
+            <span class="import-fmt-badge active">XLSX</span>
+            <span class="import-fmt-badge">PDF — não suportado</span>
+          </div>
+        </div>
+        <input type="file" id="import-file-input" style="display:none"
+               accept=".ofx,.csv,.xlsx,.xls"
+               onchange="importHandleFile(this.files[0])">
+
+        <!-- CONFIGURAÇÃO -->
+        <div class="panel" style="margin-bottom:16px;" id="import-config-panel" style="display:none">
+          <div class="panel-header">
+            <div class="panel-title">Configuração da importação</div>
+          </div>
+          <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+            <div>
+              <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">Conta de destino</label>
+              <select id="import-conta-sel" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;"></select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">Banco detectado</label>
+              <div id="import-banco-detectado" style="padding:8px 10px;font-size:13px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:6px;">—</div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px">Arquivo</label>
+              <div id="import-file-nome" style="padding:8px 10px;font-size:12px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div id="import-preview-section" style="display:none">
+          <div class="import-preview-header">
+            <div style="font-size:15px;font-weight:600">Preview das transações</div>
+            <div class="import-stats">
+              <span class="import-stat">Total: <strong id="imp-total">0</strong></span>
+              <span class="import-stat" style="color:var(--green)">Novas: <strong id="imp-novas">0</strong></span>
+              <span class="import-stat" style="color:var(--text3)">Duplicatas: <strong id="imp-dups">0</strong></span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text3)">
+                <input type="checkbox" id="imp-hide-dups" onchange="importRenderPreview()" checked>
+                Ocultar duplicatas
+              </label>
+              <button class="btn btn-ghost" onclick="importReset()">✕ Cancelar</button>
+              <button class="btn btn-primary" id="imp-confirm-btn" onclick="importConfirm()">
+                ⬆ Importar transações novas
+              </button>
+            </div>
+          </div>
+
+          <div class="import-table-wrap">
+            <table class="import-table">
+              <thead>
+                <tr>
+                  <th style="width:30px"><input type="checkbox" id="imp-check-all" onchange="importToggleAll(this.checked)" checked></th>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Conta</th>
+                  <th>Categoria</th>
+                  <th style="text-align:right">Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="import-preview-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:12px;padding:10px 14px;background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.2);border-radius:var(--radius);font-size:12px;color:var(--text3)">
+            💡 Duplicatas são detectadas por data + valor + descrição. Marque/desmarque individualmente para ajustar.
+          </div>
+        </div>
+
+        <!-- HISTÓRICO DE IMPORTAÇÕES -->
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-header">
+            <div class="panel-title">Histórico de importações</div>
+          </div>
+          <div id="import-historico">
+            <div style="text-align:center;padding:24px;color:var(--text3);font-size:12px">Nenhuma importação realizada ainda</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- CARTÕES VIEW -->
     <div class="view" id="view-cartoes">
 
@@ -2046,15 +2270,42 @@ body {
     <div class="view" id="view-regras">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div>
-          <div style="font-size:13px;color:var(--text2);">⚡ O motor aprende automaticamente quando você corrige uma categoria.</div>
+          <div style="font-size:18px;font-weight:700">Regras de Auto-Categorização</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:3px">Defina uma vez — o sistema categoriza automaticamente em todas as importações</div>
         </div>
         <button class="btn btn-primary" onclick="openModal('add-rule')">+ Nova Regra</button>
       </div>
 
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+        <div class="panel" style="padding:14px 16px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Regras ativas</div>
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:4px" id="rules-count">—</div>
+        </div>
+        <div class="panel" style="padding:14px 16px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Boletos fixos mapeados</div>
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:4px;color:var(--amber)" id="rules-boletos-count">—</div>
+        </div>
+        <div class="panel" style="padding:14px 16px;">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Regras aprendidas</div>
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:4px;color:var(--blue)" id="rules-learned-count">—</div>
+        </div>
+      </div>
+
+      <!-- Boletos fixos (destaque) -->
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-header">
+          <div class="panel-title">📄 Boletos Recorrentes com Valor Fixo</div>
+          <div style="font-size:11px;color:var(--text3)">Categorizados automaticamente por padrão + valor</div>
+        </div>
+        <div id="rules-boletos-list"></div>
+      </div>
+
+      <!-- Regras gerais por keyword -->
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title">Regras de Auto-Categorização</div>
-          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="rules-count">— regras ativas</div>
+          <div class="panel-title">⚡ Regras por Palavra-chave</div>
+          <div style="font-size:11px;color:var(--text3)">Aplicadas a qualquer valor quando a descrição contém a palavra</div>
         </div>
         <div class="rules-list" id="rules-list"></div>
       </div>
@@ -2876,8 +3127,10 @@ body {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="tabs" style="margin-bottom:0">
-            <div class="tab active" id="tab-consultorio" onclick="switchEmpresa('consultorio', this)">🏥 Consultório Médico</div>
-            <div class="tab" id="tab-energia" onclick="switchEmpresa('energia', this)">⚡ Energia Solar + EV</div>
+            <div class="tab active" id="tab-consultorio" onclick="switchEmpresa('consultorio', this)">🏥 J PIMENTA LTDA</div>
+            <div class="tab" id="tab-usina" onclick="switchEmpresa('usina', this)">☀️ Usina Solar</div>
+            <div class="tab" id="tab-eletroposto" onclick="switchEmpresa('eletroposto', this)">⚡ EletroPosto</div>
+            <div class="tab" id="tab-vending" onclick="switchEmpresa('vending', this)">🥤 Vending Machine</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
@@ -2892,6 +3145,12 @@ body {
           <button class="btn btn-ghost" style="font-size:11px">⬇ Exportar IR</button>
         </div>
       </div>
+
+      <!-- Status pré-operacional -->
+      <div id="pj-status-bar"></div>
+
+      <!-- PJ GENÉRICO (oculto quando vending está ativo) -->
+      <div id="pj-generic">
 
       <!-- HERO P&L -->
       <div class="pl-hero" id="pj-hero">
@@ -2936,11 +3195,11 @@ body {
 
           <div class="pl-divider">RECEITAS</div>
           <div class="pl-line">
-            <div class="pl-line-label">💰 Honorários médicos</div>
+            <div class="pl-line-label" id="dre-honorarios-label">💰 Honorários médicos</div>
             <div class="pl-line-value green" id="dre-honorarios">R$ 0</div>
           </div>
           <div class="pl-line">
-            <div class="pl-line-label">💰 Outros recebimentos PJ</div>
+            <div class="pl-line-label" id="dre-outros-rec-label">💰 Outros recebimentos PJ</div>
             <div class="pl-line-value green" id="dre-outros-rec">R$ 0</div>
           </div>
           <div class="pl-line" style="background:var(--green-dim)">
@@ -3000,6 +3259,153 @@ body {
         </div>
         <div id="pj-tx-list"><!-- rendered by JS --></div>
       </div>
+
+        <!-- PAINEL ROI / PAYBACK -->
+        <div class="panel" id="pj-roi-panel" style="display:none;margin-top:14px;">
+          <div class="panel-header">
+            <div class="panel-title">📊 Retorno do Investimento</div>
+          </div>
+          <div id="pj-roi-content" style="padding:16px 20px;"></div>
+        </div>
+
+      </div><!-- end pj-generic -->
+
+      <!-- VENDING DASHBOARD (só aparece na aba vending) -->
+      <div id="pj-vending-dashboard" style="display:none">
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="vd-kpi-grid">
+          <div class="panel" style="padding:16px 18px;border-top:2px solid var(--green)">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">💰 Faturamento Semana</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700" id="vd-kpi-fat">R$ —</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px" id="vd-kpi-fat-d">sem lançamentos ainda</div>
+          </div>
+          <div class="panel" style="padding:16px 18px;border-top:2px solid var(--amber)">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📦 Unidades Vendidas</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700" id="vd-kpi-units">—</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px" id="vd-kpi-units-d">sem lançamentos ainda</div>
+          </div>
+          <div class="panel" style="padding:16px 18px;border-top:2px solid var(--blue)">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📈 Lucro Bruto Semana</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)" id="vd-kpi-lucro">R$ —</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px" id="vd-kpi-mg">margem —</div>
+          </div>
+          <div class="panel" style="padding:16px 18px;border-top:2px solid var(--red)">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">⏱ Payback Acumulado</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--amber)" id="vd-kpi-pb">0%</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:5px">de R$ 20.500 investidos</div>
+          </div>
+        </div>
+
+        <!-- Controles semana -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:600">Estoque &amp; Vendas</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="vdChangeWeek(-1)" class="card-mes-btn">←</button>
+            <span id="vd-week-label" style="font-family:var(--mono);font-size:13px;min-width:90px;text-align:center">Semana 1</span>
+            <button onclick="vdChangeWeek(1)" class="card-mes-btn">→</button>
+          </div>
+        </div>
+
+        <!-- Grid principal -->
+        <div style="display:grid;grid-template-columns:1fr 300px;gap:14px;margin-bottom:14px">
+          <!-- Tabela de estoque -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Produtos</div>
+              <div style="font-size:11px;color:var(--text3)" id="vd-alertas-label"></div>
+            </div>
+            <div style="overflow-x:auto">
+              <table class="import-table" style="font-size:12px">
+                <thead>
+                  <tr>
+                    <th>Produto</th><th>Cat.</th>
+                    <th style="text-align:right">Vendas</th>
+                    <th style="text-align:right">Estoque</th>
+                    <th>Margem</th>
+                    <th style="text-align:right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="vd-stock-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <!-- Donut mix -->
+            <div class="panel" style="padding:16px">
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Mix de Receita</div>
+              <div style="display:flex;flex-direction:column;align-items:center">
+                <svg width="120" height="120" viewBox="0 0 140 140">
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--surface2)" stroke-width="22"/>
+                  <g id="vd-donut-arcs"></g>
+                  <text x="70" y="68" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="700" fill="#6B7280" id="vd-donut-val">—</text>
+                  <text x="70" y="82" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#6B7280">receita</text>
+                </svg>
+                <div style="width:100%;margin-top:10px" id="vd-donut-legend"></div>
+              </div>
+            </div>
+
+            <!-- Payback -->
+            <div class="panel" style="padding:16px">
+              <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Payback</div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+                Acumulado: <strong id="vd-pb-acum" style="color:var(--text)">R$ 0,00</strong> / R$ 20.500
+              </div>
+              <div style="height:8px;background:var(--surface2);border-radius:6px;overflow:hidden;margin-bottom:6px">
+                <div id="vd-pb-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:6px;transition:width .6s"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--mono)">
+                <span>0%</span><span id="vd-pb-pct">0%</span><span>100%</span>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">
+                Previsão: <strong id="vd-pb-prev" style="color:var(--amber)">aguardando dados</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid inferior -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <!-- Ranking margem -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">🏆 Top por Margem</div></div>
+            <div id="vd-rank-list" style="padding:0 4px 8px"></div>
+          </div>
+
+          <!-- Alertas -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">🔔 Alertas de Estoque</div></div>
+            <div id="vd-alert-list" style="padding:8px 16px"></div>
+          </div>
+
+          <!-- Lançar venda -->
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">➕ Lançar</div></div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+              <div>
+                <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px">Produto</label>
+                <select id="vd-f-produto" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px"></select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div>
+                  <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px">Tipo</label>
+                  <select id="vd-f-tipo" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px">
+                    <option value="venda">Venda (saída)</option>
+                    <option value="compra">Compra (entrada)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px">Quantidade</label>
+                  <input id="vd-f-qtd" type="number" min="1" value="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px">
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="vdLancar()">REGISTRAR →</button>
+              <div id="vd-f-msg" style="font-size:11px;text-align:center;min-height:14px;color:var(--green)"></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- end vending dashboard -->
 
     </div><!-- end view-pj -->
 
@@ -3114,7 +3520,7 @@ body {
           <option value="nubank-pj">Nubank PJ</option>
           <option value="itau">Itaú Personnalité</option>
           <option value="unicred">Unicred</option>
-          <option value="energia-pj">Energia PJ</option>
+          <option value="energia-pj">Usina Solar PJ</option>
           <option value="carteira">Carteira</option>
         </select>
       </div>
@@ -3183,47 +3589,311 @@ body {
 // DATA STORE
 // ============================================================
 
-const CATEGORIES = [
-  { id: 'alimentacao', name: 'Alimentação', icon: '🍔', css: 'cat-alimentacao' },
-  { id: 'saude',       name: 'Saúde',        icon: '🏥', css: 'cat-saude' },
-  { id: 'moradia',     name: 'Moradia',       icon: '🏠', css: 'cat-moradia' },
-  { id: 'transporte',  name: 'Transporte',    icon: '🚗', css: 'cat-transporte' },
-  { id: 'lazer',       name: 'Lazer',         icon: '🎮', css: 'cat-lazer' },
-  { id: 'educacao',    name: 'Educação',      icon: '📚', css: 'cat-educacao' },
-  { id: 'renda',       name: 'Renda',         icon: '💰', css: 'cat-renda' },
-  { id: 'servicos',    name: 'Serviços',      icon: '⚙️', css: 'cat-servicos' },
-  { id: 'investimento',name: 'Investimento',  icon: '📈', css: 'cat-investimento' },
-  { id: 'outros',      name: 'Outros',        icon: '📦', css: 'cat-outros' },
+// ============================================================
+// CATEGORIAS — Taxonomia completa com subcategorias
+// ============================================================
+const CATEGORIES_FULL = [
+  // ── Transferências (especiais — sempre no topo) ──────────
+  { id: 'transfer_int',  name: 'Transferência Interna', icon: '⇄', color: '#4d9fff', type: 'transfer', subs: [] },
+  { id: 'transfer_ext',  name: 'PIX / TED a terceiros', icon: '↗', color: '#ffb020', type: 'transfer', subs: [] },
+
+  // ── Receita ──────────────────────────────────────────────
+  { id: 'renda', name: 'Renda', icon: '💰', color: '#00d4aa', type: 'income', subs: [
+    'Salários e bônus', 'Renda extra', 'Trabalho por conta própria',
+    'Rendimentos de investimentos', 'Auxílio do governo',
+  ]},
+
+  // ── Alimentação ──────────────────────────────────────────
+  { id: 'alimentacao', name: 'Alimentação', icon: '🍔', color: '#22c55e', type: 'expense', subs: [
+    'Restaurante ou delivery', 'Supermercado', 'Cafeterias',
+  ]},
+
+  // ── Moradia ──────────────────────────────────────────────
+  { id: 'moradia', name: 'Moradia', icon: '🏠', color: '#f97316', type: 'expense', subs: [
+    'Aluguel', 'Condomínio', 'Financiamento de imóvel',
+    'Luz', 'Água', 'Gás', 'Internet e telefone', 'Reformas e melhorias',
+  ]},
+
+  // ── Transporte ───────────────────────────────────────────
+  { id: 'transporte', name: 'Transporte', icon: '🚗', color: '#a3e635', type: 'expense', subs: [
+    'Combustível', 'Aplicativos de mobilidade', 'Estacionamento e pedágio',
+    'Manutenção do carro', 'Transporte público',
+  ]},
+
+  // ── Saúde e bem-estar ────────────────────────────────────
+  { id: 'saude', name: 'Saúde e bem-estar', icon: '🏥', color: '#ef4444', type: 'expense', subs: [
+    'Planos de saúde', 'Consultas e tratamentos', 'Farmácia e medicamentos',
+    'Academia e fitness', 'Bem-estar (spa, terapias)', 'Suplementos',
+  ]},
+
+  // ── Educação e desenvolvimento ───────────────────────────
+  { id: 'educacao', name: 'Educação e desenvolvimento', icon: '📚', color: '#a855f7', type: 'expense', subs: [
+    'Mensalidades escolares', 'Material escolar', 'Cursos e treinamentos',
+    'Livros e materiais',
+  ]},
+
+  // ── Crianças ─────────────────────────────────────────────
+  { id: 'criancas', name: 'Crianças', icon: '👶', color: '#06b6d4', type: 'expense', subs: [
+    'Escola', 'Roupas e calçados', 'Atividades e lazer', 'Material escolar',
+  ]},
+
+  // ── Compras e lazer ──────────────────────────────────────
+  { id: 'compras', name: 'Compras e lazer', icon: '🛍', color: '#ec4899', type: 'expense', subs: [
+    'Roupas e acessórios', 'Eletrônicos', 'Coisas para casa',
+    'Esportes e equipamentos', 'Jogos e entretenimento', 'Arte e música',
+    'Fotografia', 'Festas e encontros', 'Eventos e atividades',
+    'Pets e suprimentos', 'Presentes',
+  ]},
+
+  // ── Hobbies e atividades de lazer ────────────────────────
+  { id: 'hobbies', name: 'Hobbies e atividades de lazer', icon: '🎯', color: '#14b8a6', type: 'expense', subs: [
+    'Esportes e equipamentos', 'Arte e música', 'Fotografia',
+  ]},
+
+  // ── Assinaturas ──────────────────────────────────────────
+  { id: 'assinaturas', name: 'Assinaturas', icon: '🔄', color: '#64748b', type: 'expense', subs: [
+    'Serviços digitais', 'Aplicativos', 'Revistas e jornais',
+  ]},
+
+  // ── Streaming ────────────────────────────────────────────
+  { id: 'streaming', name: 'Streaming', icon: '📺', color: '#dc2626', type: 'expense', subs: [
+    'Vídeo', 'Áudio', 'Podcasts',
+  ]},
+
+  // ── Entreterimento digital ───────────────────────────────
+  { id: 'entretenimento', name: 'Entreterimento digital', icon: '🎮', color: '#d946ef', type: 'expense', subs: [
+    'Jogos online', 'Aplicativos',
+  ]},
+
+  // ── Viagem ───────────────────────────────────────────────
+  { id: 'viagem', name: 'Viagem', icon: '✈️', color: '#06b6d4', type: 'expense', subs: [
+    'Passagens e transporte', 'Hospedagem', 'Alimentação em viagem', 'Passeios e lazer',
+  ]},
+
+  // ── Seguros ──────────────────────────────────────────────
+  { id: 'seguros', name: 'Seguros', icon: '🛡️', color: '#3b82f6', type: 'expense', subs: [
+    'Seguro de automóvel', 'Seguro de vida', 'Seguro residencial',
+  ]},
+
+  // ── Empréstimos ──────────────────────────────────────────
+  { id: 'emprestimos', name: 'Empréstimos', icon: '💳', color: '#6b7280', type: 'expense', subs: [
+    'Empréstimos pessoais', 'Financiamento de veículo', 'Cartão de crédito',
+  ]},
+
+  // ── Investimentos ────────────────────────────────────────
+  { id: 'investimentos', name: 'Investimentos', icon: '📈', color: '#84cc16', type: 'expense', subs: [
+    'Ações e fundos', 'Renda fixa', 'Criptomoedas',
+    'Proventos de investimentos', 'PGBL',
+  ]},
+
+  // ── Poupança ─────────────────────────────────────────────
+  { id: 'poupanca', name: 'Poupança', icon: '🏦', color: '#10b981', type: 'expense', subs: [
+    'Fundo de emergência', 'Reserva de curto prazo', 'Reserva de longo prazo',
+  ]},
+
+  // ── Impostos e taxas ─────────────────────────────────────
+  { id: 'impostos', name: 'Impostos e taxas', icon: '📋', color: '#f59e0b', type: 'expense', subs: [
+    'IPTU / IR / IPVA',
+  ]},
+
+  // ── Manutenção e reparos ─────────────────────────────────
+  { id: 'manutencao', name: 'Manutenção e reparos', icon: '🔧', color: '#1c1c1c', type: 'expense', subs: [
+    'Reparos domésticos', 'Reparos de eletrodomésticos',
+  ]},
+
+  // ── Serviços financeiros e bancários ─────────────────────
+  { id: 'servicos_fin', name: 'Serviços financeiros e bancários', icon: '🏛️', color: '#6d28d9', type: 'expense', subs: [
+    'Taxas de contas bancárias', 'Assinaturas financeiras',
+  ]},
+
+  // ── Transferências e pagamentos ──────────────────────────
+  { id: 'pagamentos', name: 'Transferências e pagamentos', icon: '💸', color: '#1d4ed8', type: 'expense', subs: [
+    'Boleto', 'Pagamentos regulares', 'PIX, TED ou DOC',
+    'Transferências entre minhas contas', 'Transferências para outras pessoas',
+  ]},
+
+  // ── Emergências ──────────────────────────────────────────
+  { id: 'emergencias', name: 'Emergências', icon: '🚨', color: '#ef4444', type: 'expense', subs: [
+    'Despesas emergenciais',
+  ]},
+
+  // ── Imóveis (sua categoria pessoal) ─────────────────────
+  { id: 'imoveis', name: 'Imóveis', icon: '🏘️', color: '#92400e', type: 'expense', subs: [
+    'Financiamentos', 'Aluguel recebido', 'IPTU', 'Reformas',
+  ]},
+
+  // ── Consórcios ───────────────────────────────────────────
+  { id: 'consorcios', name: 'Consórcios', icon: '📄', color: '#0369a1', type: 'expense', subs: [] },
+
+  // ── Despesas empresa ─────────────────────────────────────
+  { id: 'despesas_empresa', name: 'Despesas empresa', icon: '🏢', color: '#111827', type: 'expense', subs: [
+    'Funcionários', 'Combustível', 'Lavanderia', 'Trabalho', 'Imóveis',
+  ]},
+
+  // ── Isabela ──────────────────────────────────────────────
+  { id: 'isabela', name: 'Isabela', icon: '💗', color: '#be185d', type: 'expense', subs: [] },
+
+  // ── Usina solar ──────────────────────────────────────────
+  { id: 'usina_solar', name: 'Usina solar', icon: '⚡', color: '#d97706', type: 'expense', subs: [] },
+
+  // ── Outros ───────────────────────────────────────────────
+  { id: 'outros', name: 'Outros', icon: '📦', color: '#6b7280', type: 'expense', subs: [
+    'Erva', 'Suplementos',
+  ]},
 ];
+
+// Alias flat para compatibilidade com código legado (getCatById, etc.)
+const CATEGORIES = CATEGORIES_FULL.filter(c => c.type !== 'transfer').map(c => ({
+  id:   c.id,
+  name: c.name,
+  icon: c.icon,
+  css:  'cat-' + c.id,
+}));
+
+// Mapa de migração: nomes antigos → novos
+const CAT_MIGRATION_MAP = {
+  'Alimentacao':      'Alimentação',
+  'Saude':            'Saúde e bem-estar',
+  'Moradia':          'Moradia',
+  'Transporte':       'Transporte',
+  'Lazer':            'Compras e lazer',
+  'Educacao':         'Educação e desenvolvimento',
+  'Servicos':         'Serviços financeiros e bancários',
+  'Investimento':     'Investimentos',
+  'Outros':           'Outros',
+  'Renda':            'Renda',
+  'Receita Energia':  'Renda',
+  'Manutencao':       'Manutenção e reparos',
+  'Contabilidade':    'Serviços financeiros e bancários',
+  'Saúde':            'Saúde e bem-estar',
+  'Educação':         'Educação e desenvolvimento',
+  'Serviços':         'Serviços financeiros e bancários',
+  'Investimentos':    'Investimentos',
+};
+
+function migrateCatName(name) {
+  return CAT_MIGRATION_MAP[name] || name;
+}
+
+// Helper — retorna objeto da categoria pelo nome (suporta "Cat > Sub")
+function getCatByName(name) {
+  if (!name) return null;
+  const migrated = migrateCatName(name);
+  const mainName = migrated.includes(' > ') ? migrated.split(' > ')[0] : migrated;
+  return CATEGORIES_FULL.find(c => c.name === mainName) || null;
+}
 
 var ACCOUNTS = [
   { id: 'nubank-pf',    name: 'Nubank PF',        type: 'Conta corrente PF',          color: '#820ad1', icon: '🟣', balance: 8420.50 },
-  { id: 'nubank-pj',    name: 'Nubank PJ',         type: 'Consultório — Médico PJ',    color: '#5a0090', icon: '🔵', balance: 15230.00 },
+  { id: 'nubank-pj',    name: 'Nubank PJ',         type: 'J PIMENTA LTDA — Consultório',    color: '#5a0090', icon: '🔵', balance: 15230.00 },
   { id: 'itau',         name: 'Itaú Personnalité', type: 'Conta corrente PF',          color: '#ff6b00', icon: '🟠', balance: 42150.00 },
   { id: 'unicred',      name: 'Unicred',           type: 'Conta corrente cooperativa', color: '#00a650', icon: '🟢', balance: 703.56 },
   { id: 'mercadopago',  name: 'Mercado Pago',      type: 'Conta digital PF',           color: '#00b1ea', icon: '🔷', balance: 0 },
-  { id: 'energia-pj',   name: 'Energia PJ',        type: 'Usina Solar + Eletropostos', color: '#f59e0b', icon: '⚡', balance: 6800.00 },
+  { id: 'energia-pj',   name: 'Usina Solar PJ',        type: 'Usina Solar 73kW', color: '#f59e0b', icon: '⚡', balance: 6800.00 },
   { id: 'carteira',     name: 'Carteira',          type: 'Dinheiro espécie',           color: '#ffb020', icon: '💵', balance: 1200.00, noPluggy: true },
 ];
 
 // Auto-categorization rules: keyword → category
 var RULES = [
-  { id: 1, keyword: 'IFOOD',         category: 'Alimentação', account: null, count: 34 },
-  { id: 2, keyword: 'RAPPI',         category: 'Alimentação', account: null, count: 12 },
-  { id: 3, keyword: 'UBER',          category: 'Transporte',  account: null, count: 28 },
-  { id: 4, keyword: '99 POP',        category: 'Transporte',  account: null, count: 8 },
-  { id: 5, keyword: 'NUMED',         category: 'Saúde',       account: null, count: 48 },
-  { id: 6, keyword: 'DROGARIA',      category: 'Saúde',       account: null, count: 15 },
-  { id: 7, keyword: 'FARMACIA',      category: 'Saúde',       account: null, count: 22 },
-  { id: 8, keyword: 'SPOTIFY',       category: 'Lazer',       account: null, count: 18 },
-  { id: 9, keyword: 'NETFLIX',       category: 'Lazer',       account: null, count: 18 },
-  { id: 10, keyword: 'NET CLARO',    category: 'Moradia',     account: null, count: 18 },
-  { id: 11, keyword: 'LIGHT ',       category: 'Moradia',     account: null, count: 18 },
-  { id: 12, keyword: 'SUPERMERCADO', category: 'Alimentação', account: null, count: 41 },
-  { id: 13, keyword: 'HONORARIO',    category: 'Renda',       account: 'nubank-pj', count: 60 },
-  { id: 14, keyword: 'SALARIO',      category: 'Renda',       account: null, count: 18 },
-  { id: 15, keyword: 'POSTO ',       category: 'Transporte',  account: null, count: 9 },
+  // ── Alimentação ──────────────────────────────────────────
+  { id: 1,  keyword: 'IFOOD',         category: 'Alimentação > Restaurante ou delivery', account: null, count: 34 },
+  { id: 2,  keyword: 'RAPPI',         category: 'Alimentação > Restaurante ou delivery', account: null, count: 12 },
+  { id: 3,  keyword: 'SUPERMERCADO',  category: 'Alimentação > Supermercado',            account: null, count: 41 },
+
+  // ── Transporte ───────────────────────────────────────────
+  { id: 4,  keyword: 'UBER',          category: 'Transporte > Aplicativos de mobilidade', account: null, count: 28 },
+  { id: 5,  keyword: '99 POP',        category: 'Transporte > Aplicativos de mobilidade', account: null, count: 8  },
+  { id: 6,  keyword: 'POSTO VIA SUL', category: 'Transporte > Combustível',               account: null, count: 9  },
+  { id: 7,  keyword: 'POSTO ',        category: 'Transporte > Combustível',               account: null, count: 9  },
+  { id: 8,  keyword: 'COMBUSTIVEL',   category: 'Transporte > Combustível',               account: null, count: 5  },
+
+  // ── Saúde ────────────────────────────────────────────────
+  { id: 9,  keyword: 'UNIMED',        category: 'Saúde e bem-estar > Planos de saúde',       account: null, count: 18 },
+  { id: 10, keyword: 'FARMACIA',      category: 'Saúde e bem-estar > Farmácia e medicamentos', account: null, count: 22 },
+  { id: 11, keyword: 'DROGARIA',      category: 'Saúde e bem-estar > Farmácia e medicamentos', account: null, count: 15 },
+  { id: 12, keyword: 'NUMED',         category: 'Saúde e bem-estar > Consultas e tratamentos', account: null, count: 48 },
+  { id: 13, keyword: 'RAIA DROGASIL', category: 'Saúde e bem-estar > Farmácia e medicamentos', account: null, count: 10 },
+  { id: 14, keyword: 'FARMACIA E DROGARI', category: 'Saúde e bem-estar > Farmácia e medicamentos', account: null, count: 10 },
+
+  // ── Moradia ──────────────────────────────────────────────
+  { id: 15, keyword: 'COPEL',         category: 'Moradia > Luz',                    account: null, count: 12 },
+  { id: 16, keyword: 'LIGGA TELECOM', category: 'Moradia > Internet e telefone',    account: null, count: 6  },
+  { id: 17, keyword: 'NET CLARO',     category: 'Moradia > Internet e telefone',    account: null, count: 6  },
+  { id: 18, keyword: 'WHIRLPOOL',     category: 'Moradia > Reformas e melhorias',   account: null, count: 3  },
+  { id: 19, keyword: 'SANEPAR',       category: 'Moradia > Água',                   account: null, count: 6  },
+
+  // ── Streaming / Assinaturas ──────────────────────────────
+  { id: 20, keyword: 'NETFLIX',       category: 'Streaming > Vídeo',                account: null, count: 12 },
+  { id: 21, keyword: 'SPOTIFY',       category: 'Streaming > Áudio',                account: null, count: 12 },
+  { id: 22, keyword: 'MICROSOFT',     category: 'Assinaturas > Serviços digitais',  account: null, count: 12 },
+  { id: 23, keyword: 'PPRO*MICROSOFT',category: 'Assinaturas > Serviços digitais',  account: null, count: 12 },
+  { id: 24, keyword: 'AMAZON',        category: 'Assinaturas > Serviços digitais',  account: null, count: 8  },
+  { id: 25, keyword: 'APPLE',         category: 'Assinaturas > Serviços digitais',  account: null, count: 6  },
+
+  // ── Renda ────────────────────────────────────────────────
+  { id: 26, keyword: 'HONORARIO',     category: 'Renda > Trabalho por conta própria', account: 'nubank-pj', count: 60 },
+  { id: 27, keyword: 'SALARIO',       category: 'Renda > Salários e bônus',           account: null, count: 18 },
+  { id: 28, keyword: 'REND PAGO APLIC', category: null, txType: 'transfer_internal',   account: null, count: 24 },
+
+  // ── Boletos fixos — Banco 104 (Caixa) = Consórcio R$473,85 ─
+  { id: 30, keyword: 'PAG TIT INT 104', category: 'Consórcios',
+    valorFixo: 473.85, tolerancia: 0.10,
+    descricao: 'Consórcio Caixa — 5 cartas × R$473,85', count: 20 },
+
+  // ── Boletos fixos — Banco 748 (Sicredi) = Empréstimos R$880,90 ─
+  { id: 31, keyword: 'PAG TIT INT 748', category: 'Empréstimos > Empréstimos pessoais',
+    valorFixo: 880.90, tolerancia: 0.50,
+    descricao: 'Sicredi — parcela empréstimo R$880,90', count: 16 },
+
+  // ── Boletos fixos — Banco 655 (Votorantim) = R$1.266 ────
+  { id: 32, keyword: 'PAG TIT INT 655', category: 'Empréstimos > Empréstimos pessoais',
+    valorFixo: 1266.00, tolerancia: 1.00,
+    descricao: 'Votorantim — empréstimo R$1.266', count: 4 },
+
+  // ── Boletos — Financiamento terreno Loteamento Cidade Jardim ─
+  { id: 33, keyword: 'PAG TIT INT 437992529000', category: 'Imóveis > Financiamentos',
+    valorFixo: 1500.00, tolerancia: 5.00,
+    descricao: 'Financiamento Loteamento Cidade Jardim R$1.500', count: 3 },
+  { id: 34, keyword: 'PAG TIT INT 338630858000', category: 'Imóveis > Financiamentos',
+    descricao: 'Financiamento imóvel — parcela variável', count: 3 },
+  { id: 35, keyword: 'PAG TIT INT 157000000', category: 'Investimentos > Renda fixa',
+    valorFixo: 1500.00, tolerancia: 5.00,
+    descricao: 'Investimento renda fixa R$1.500', count: 6 },
+
+  // ── Boletos — Escola crianças (Banco 033 = Santander) ───
+  { id: 36, keyword: 'PAG TIT INT 033', category: 'Crianças > Escola',
+    descricao: 'Anglo CAESP — mensalidade filhos', count: 10 },
+
+  // ── Boletos — Moradia Banco 237 (Bradesco) ───────────────
+  { id: 37, keyword: 'PAG TIT INT 237', category: 'Moradia > Financiamento de imóvel',
+    descricao: 'Bradesco — financiamento imóvel', count: 4 },
+
+  // ── Boleto — Banco 756 (Sicoob/Bancoob) ─────────────────
+  { id: 38, keyword: 'PAG TIT INT 756', category: 'Moradia',
+    descricao: 'Sicoob — boleto moradia (valor variável)', count: 6 },
+
+  // ── Boletos — Fatura cartão ──────────────────────────────
+  { id: 39, keyword: 'PAG TIT INT 136',   category: 'Transferências e pagamentos > Cartão de crédito',
+    txType: 'transfer_internal', descricao: 'Pagamento fatura Unicred', count: 4 },
+  { id: 40, keyword: 'PAG BOLETO CARTAO BRB', category: 'Transferências e pagamentos > Cartão de crédito',
+    txType: 'transfer_internal', descricao: 'Pagamento fatura BRB', count: 4 },
+  { id: 41, keyword: 'PAG BOLETO NU PAGAMENTOS', category: 'Transferências e pagamentos > Cartão de crédito',
+    txType: 'transfer_internal', descricao: 'Pagamento fatura Nubank', count: 4 },
+  { id: 42, keyword: 'PAG BOLETO ITAU UNIBANCO', category: 'Transferências e pagamentos > Cartão de crédito',
+    txType: 'transfer_internal', descricao: 'Pagamento fatura Itaú', count: 4 },
+  { id: 43, keyword: 'PAG DE FATURA',  category: null,
+    txType: 'transfer_internal', descricao: 'Pagamento de fatura', count: 6 },
+  { id: 44, keyword: 'PAG TIT INT 329', category: 'Renda > Renda extra',
+    valorFixo: 1285.50, tolerancia: 1.00,
+    descricao: 'Receita fixa R$1.285,50', count: 4 },
+
+  // ── Outros recorrentes ───────────────────────────────────
+  { id: 50, keyword: 'ESTARFI',        category: 'Despesas empresa',   account: null, count: 12 },
+  { id: 51, keyword: 'PORTO SEGURO',   category: 'Seguros > Seguro de automóvel', account: null, count: 6 },
+  { id: 52, keyword: 'MP*',            category: 'Compras e lazer',    account: null, count: 8  },
 ];
+
+var ruleNextId = 100;
 
 // ============================================================
 // TRANSFER DETECTION — keywords que indicam movimentação interna
@@ -3231,60 +3901,37 @@ var RULES = [
 // Para terceiros via TED/PIX → txType = 'transfer_external' (conta como gasto)
 // ============================================================
 const INTERNAL_TRANSFER_KEYWORDS = [
-  'TRANSFERENCIA ENVIADA|F',  // padrão Nubank → outra conta própria
+  'TRANSFERENCIA ENVIADA|F',
   'TRANSFERÊNCIA ENTRE CONTAS',
   'TRANSF PROPRIA CONTA',
   'RESGATE AUTOMATICO',
   'APLICACAO AUTOMATICA',
-  'PAGAMENTO FATURA',         // pagamento da fatura do cartão NÃO é gasto real
+  'PAGAMENTO FATURA',
   'PAGTO FATURA',
   'PAG FATURA',
-  'REND PAGO APLIC',          // rendimento de aplicação
+  'REND PAGO APLIC',
 ];
 
-// Keywords que PARECEM transferência mas são gastos reais (para terceiros)
 const EXTERNAL_TRANSFER_KEYWORDS = [
   'PIX ', 'TED ', 'DOC ', 'TRANSFERENCIA ENVIADA',
   'PAG TIT INT', 'BOLETO', 'INT /DARF',
 ];
 
-// IDs das suas próprias contas para cruzamento
-const OWN_ACCOUNT_IDS = ['nubank-pf', 'nubank-pj', 'itau', 'unicred', 'energia-pj', 'carteira'];
+// Contas PJ — distribuições e pró-labore CONTAM como receita real
+const PJ_ACCOUNT_IDS = ['nubank-pj', 'energia-pj'];
+const OWN_ACCOUNT_IDS = ['nubank-pf', 'nubank-pj', 'itau', 'unicred', 'energia-pj', 'carteira', 'mercadopago'];
 
 function detectTransferType(tx) {
   const desc = tx.desc.toUpperCase();
-
-  // 1. Checa keywords de transferência INTERNA (jamais conta como gasto)
   for (const kw of INTERNAL_TRANSFER_KEYWORDS) {
     if (desc.includes(kw.toUpperCase())) return 'transfer_internal';
   }
-
-  // 2. Transferência com destino que é uma conta própria (via linked_to_account)
-  if (tx.linkedToAccount && OWN_ACCOUNT_IDS.includes(tx.linkedToAccount)) {
-    return 'transfer_internal';
-  }
-
-  // 3. Keywords genéricos de transferência → externa (conta como gasto)
-  for (const kw of EXTERNAL_TRANSFER_KEYWORDS) {
-    if (desc.includes(kw.toUpperCase())) return 'transfer_external';
-  }
-
-  return null; // não é transferência
+  if (tx.linkedToAccount && OWN_ACCOUNT_IDS.includes(tx.linkedToAccount)) return 'transfer_internal';
+  return null;
 }
 
-// Transações carregadas do Supabase ou importadas via Pluggy
-// var (não let) para ser acessível via window.TRANSACTIONS pelos scripts externos
 var TRANSACTIONS = [];
-
-let WALLET_TX = [
-  { id: 1, date: '2025-03-21', desc: 'PIX recebido (transferido p/ carteira)', amount: 300.00,  category: 'Renda' },
-  { id: 2, date: '2025-03-15', desc: 'Compra feira livre',                     amount: -95.00,  category: 'Alimentação' },
-  { id: 3, date: '2025-03-10', desc: 'Honorário em espécie — consulta',        amount: 600.00,  category: 'Renda' },
-  { id: 4, date: '2025-03-08', desc: 'Gorjeta restaurante',                    amount: -30.00,  category: 'Alimentação' },
-  { id: 5, date: '2025-03-02', desc: 'Parkímetro / estacionamento',            amount: -15.00,  category: 'Transporte' },
-];
-
-let ruleNextId = 16;
+let WALLET_TX = [];
 let currentFilter = { text: '', account: '', category: '', type: 'all' };
 
 // ============================================================
@@ -3293,60 +3940,175 @@ let currentFilter = { text: '', account: '', category: '', type: 'all' };
 
 function isInternalTransfer(tx) { return tx.txType === 'transfer_internal'; }
 function isExternalTransfer(tx) { return tx.txType === 'transfer_external'; }
+
+// PJ → PF: é renda real (pró-labore/distribuição), NÃO transferência interna
+function isPjToFpIncome(tx) {
+  return tx.amount > 0 && PJ_ACCOUNT_IDS.includes(tx.account) === false &&
+    (tx.desc?.toUpperCase().includes('TRANSFERÊNCIA RECEBIDA') ||
+     tx.desc?.toUpperCase().includes('TRANSFERENCIA RECEBIDA')) &&
+    !PJ_ACCOUNT_IDS.includes(tx.account);
+}
+
 function isRealExpense(tx) { return tx.amount < 0 && !isInternalTransfer(tx); }
 function isRealIncome(tx)  { return tx.amount > 0 && !isInternalTransfer(tx); }
 
 function autoCategorizeTx(tx) {
-  // Transferências internas nunca precisam de categoria
   if (isInternalTransfer(tx)) return { category: null, origin: 'rule' };
 
-  const desc = tx.desc.toUpperCase();
-  for (const rule of RULES) {
-    if (desc.includes(rule.keyword.toUpperCase())) {
-      if (!rule.account || rule.account === tx.account) {
-        return { category: rule.category, origin: 'rule', ruleId: rule.id };
-      }
+  const desc   = (tx.desc || '').toUpperCase();
+  const amount = Math.abs(parseFloat(tx.amount) || 0);
+
+  // Regras ordenadas por especificidade (valorFixo = mais específica)
+  const sorted = [...RULES].sort((a,b) => {
+    const aSpec = (a.valorFixo != null ? 2 : 0) + (a.account ? 1 : 0);
+    const bSpec = (b.valorFixo != null ? 2 : 0) + (b.account ? 1 : 0);
+    return bSpec - aSpec; // mais específica primeiro
+  });
+
+  for (const rule of sorted) {
+    const kw = (rule.keyword || '').toUpperCase();
+    if (!kw || !desc.includes(kw)) continue;
+    if (rule.account && rule.account !== tx.account) continue;
+    if (rule.valorFixo != null) {
+      const tol = rule.tolerancia ?? 0.05;
+      if (Math.abs(amount - rule.valorFixo) > tol) continue;
+    }
+    if (rule.txType === 'transfer_internal') {
+      return { category: null, origin: 'rule', txType: 'transfer_internal', ruleId: rule.id };
+    }
+    if (rule.category) {
+      return { category: rule.category, origin: 'rule', ruleId: rule.id };
     }
   }
+
+  // Regras aprendidas do localStorage
+  if (typeof applyLearnedRules === 'function') {
+    const learned = applyLearnedRules(tx);
+    if (learned.category) return { category: learned.category, origin: 'rule_learned' };
+  }
+
   return { category: null, origin: 'pending' };
 }
 
+// ── Correção inteligente — aprende e não erra mais ───────────
 function learnFromCorrection(tx, newCategory) {
-  // Se marcou como transferência interna, muda o txType e não cria regra de categoria
+
+  // ── Marcou como Transferência Interna ──────────────────────
   if (newCategory === '__transfer_internal__') {
-    tx.txType = 'transfer_internal';
+    tx.txType   = 'transfer_internal';
     tx.category = null;
-    tx.origin = 'rule';
-    // Cria regra de transferência interna para keywords desta descrição
-    const words = tx.desc.split(/[\s*\/|]/);
-    const keyword = words.find(w => w.length > 4 && !/^\d+$/.test(w)) || words[0];
-    INTERNAL_TRANSFER_KEYWORDS.push(keyword.toUpperCase());
-    showToast('⇄', `Marcado como Transferência Interna — não conta como gasto`);
+    tx.origin   = 'rule';
+
+    // Extrair keyword específica da descrição
+    const kw = extractCorrectionKeyword(tx.desc);
+    if (kw && !INTERNAL_TRANSFER_KEYWORDS.includes(kw)) {
+      INTERNAL_TRANSFER_KEYWORDS.push(kw);
+      // Salvar como regra para persistir
+      const existingRule = RULES.find(r => r.keyword.toUpperCase() === kw);
+      if (!existingRule) {
+        RULES.unshift({ id: ruleNextId++, keyword: kw, category: null,
+          txType: 'transfer_internal', count: 1,
+          descricao: `Aprendido: ${tx.desc.slice(0,40)}` });
+      }
+    }
+    persistRuleToSupabase({ keyword: kw, txType: 'transfer_internal' });
+    showToast('⇄', 'Transferência interna — não conta como gasto ou receita');
     renderTransactions(); renderDashboardTx(); renderCatBars(); updatePendingBadge(); renderDashboard();
     return;
   }
+
+  // ── Marcou como PIX/TED a terceiros ────────────────────────
   if (newCategory === '__transfer_external__') {
     tx.txType = 'transfer_external';
     tx.origin = 'rule';
-    showToast('⇄', `Marcado como Transferência para Terceiros — conta como gasto`);
+    showToast('↗', 'Marcado como transferência para terceiros — conta como gasto');
     renderTransactions(); renderDashboardTx(); updatePendingBadge();
     return;
   }
 
-  // Categorização normal
-  const words = tx.desc.split(/[\s*\/|]/);
-  const keyword = words.find(w => w.length > 3 && !/^\d+$/.test(w)) || words[0];
-  const existing = RULES.find(r => tx.desc.toUpperCase().includes(r.keyword.toUpperCase()));
+  // ── Categorização normal ────────────────────────────────────
+  tx.category = newCategory;
+  tx.origin   = 'manual';
+
+  const kw = extractCorrectionKeyword(tx.desc);
+
+  // Procurar regra existente que matched esta transação
+  const existing = RULES.find(r => {
+    const match = (tx.desc||'').toUpperCase().includes((r.keyword||'').toUpperCase());
+    // Se tinha valor fixo e não bateu o valor atual, não é a mesma regra
+    if (r.valorFixo != null) {
+      const tol = r.tolerancia ?? 0.05;
+      if (Math.abs(Math.abs(tx.amount) - r.valorFixo) > tol) return false;
+    }
+    return match;
+  });
+
   if (existing) {
+    const oldCat = existing.category;
     existing.category = newCategory;
     existing.count++;
-  } else {
-    RULES.push({ id: ruleNextId++, keyword: keyword.toUpperCase(), category: newCategory, account: null, count: 1 });
-    showToast('⚡', `Regra criada: "${keyword}" → ${newCategory}`);
+    existing.origin = 'corrected';
+    if (oldCat !== newCategory) {
+      showToast('✓', `Regra corrigida: "${existing.keyword}" → ${newCategory.split(' > ').pop()}`);
+    }
+  } else if (kw) {
+    // Criar nova regra específica — com conta se for conta específica
+    const newRule = {
+      id: ruleNextId++, keyword: kw, category: newCategory,
+      account: null, count: 1, origin: 'learned',
+      descricao: `Aprendido: ${tx.desc.slice(0,40)}`
+    };
+    RULES.unshift(newRule); // no início = maior prioridade
+    showToast('⚡', `Regra criada: "${kw}" → ${newCategory.split(' > ').pop()}`);
   }
-  tx.category = newCategory;
-  tx.origin = 'rule';
+
+  // Persistir aprendizado no localStorage também
+  if (typeof saveLearnedRule === 'function') saveLearnedRule(tx.desc, newCategory, tx.account);
+  persistRuleToSupabase({ keyword: kw, category: newCategory, account: tx.account });
+
   renderTransactions(); renderRules(); updatePendingBadge();
+}
+
+// Extrai keyword útil e específica da descrição
+function extractCorrectionKeyword(desc) {
+  if (!desc) return '';
+  // Remover prefixos genéricos de cartão
+  let s = desc
+    .replace(/^A vista sem juros - (Visa|Mastercard) - /i, '')
+    .replace(/^\d+x - /i, '')
+    .replace(/\s+(FOZ DO IGUACU|SAO PAULO|CURITIBA|RIO DE JANEIRO|BR)\s*$/i, '')
+    .trim();
+
+  // Para "PAG TIT INT XXX" — usar os primeiros 15 chars (inclui o banco)
+  if (s.toUpperCase().startsWith('PAG TIT INT')) {
+    return s.slice(0, 20).toUpperCase().trim();
+  }
+  if (s.toUpperCase().startsWith('PAG BOLETO')) {
+    // "PAG BOLETO UNIMED DO ESTADO..." → "UNIMED"
+    const parts = s.split(' ').filter(w => w.length > 3 && !/^(PAG|BOLETO|DO|DE|SA|LTDA|S\/A)$/i.test(w));
+    return (parts[0] || s.slice(0,15)).toUpperCase().trim();
+  }
+
+  // Para descrições longas, pegar primeiro token com mais de 4 chars
+  const words = s.split(/[\s|\/\*]+/).filter(w => w.length > 3 && !/^\d+$/.test(w));
+  return (words[0] || s.slice(0,15)).toUpperCase().trim();
+}
+
+// Persiste regra aprendida no Supabase
+async function persistRuleToSupabase(rule) {
+  if (!currentUser || !rule.keyword) return;
+  try {
+    await db.from('categorization_rules').upsert({
+      user_id:     currentUser.id,
+      keyword:     rule.keyword,
+      category_id: null, // simplificado — nome já é suficiente
+      match_type:  'contains',
+      priority:    10,
+      is_active:   true,
+      source:      'learned',
+      updated_at:  new Date().toISOString(),
+    }, { onConflict: 'user_id,keyword' });
+  } catch(e) { /* silencioso — regra já salva localmente */ }
 }
 
 // ============================================================
@@ -3354,7 +4116,15 @@ function learnFromCorrection(tx, newCategory) {
 // ============================================================
 
 function getCatById(name) {
-  return CATEGORIES.find(c => c.name === name) || CATEGORIES[9];
+  if (!name) return null;
+  // Migrar nome antigo se necessário
+  const migrated = migrateCatName(name);
+  // Suporta "Cat > Sub" — extrai a categoria pai
+  const mainName = migrated.includes(' > ') ? migrated.split(' > ')[0] : migrated;
+  const cat = CATEGORIES_FULL.find(c => c.name === mainName);
+  if (cat) return { id: cat.id, name: migrated, icon: cat.icon, css: 'cat-' + cat.id };
+  // Fallback para Outros
+  return { id: 'outros', name: migrated, icon: '📦', css: 'cat-outros' };
 }
 
 function formatBRL(val) {
@@ -3670,25 +4440,85 @@ function renderAccBreakdown() {
 }
 
 function renderRules() {
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2});
+
+  // Separar boletos (com valorFixo ou descricao) de regras simples
+  const boletoRules  = RULES.filter(r => r.valorFixo != null || r.descricao);
+  const keywordRules = RULES.filter(r => !r.valorFixo && !r.descricao);
+  const learnedCount = (() => { try { return JSON.parse(localStorage.getItem('financeos_learned_rules')||'[]').length; } catch { return 0; } })();
+
+  // Stats
+  const countEl = document.getElementById('rules-count');
+  if (countEl) countEl.textContent = RULES.length;
+  const bCount = document.getElementById('rules-boletos-count');
+  if (bCount) bCount.textContent = boletoRules.length;
+  const lCount = document.getElementById('rules-learned-count');
+  if (lCount) lCount.textContent = learnedCount;
+
+  // Boletos fixos
+  const bList = document.getElementById('rules-boletos-list');
+  if (bList) {
+    if (!boletoRules.length) {
+      bList.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Nenhum boleto fixo cadastrado</div>';
+    } else {
+      bList.innerHTML = boletoRules.map(rule => {
+        const cat = rule.category ? getCatById(rule.category) : null;
+        const isTransfer = rule.txType === 'transfer_internal';
+        const catDisp = isTransfer
+          ? `<span style="background:rgba(77,159,255,.1);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:11px">⇄ Transferência interna</span>`
+          : cat
+            ? `<span class="cat-tag cat-${cat.id}" style="font-size:11px">${cat.icon} ${cat.name}</span>`
+            : '<span style="color:var(--text3);font-size:11px">—</span>';
+
+        return `<div class="rule-item" style="flex-wrap:wrap;gap:8px;">
+          <div style="flex:1;min-width:200px">
+            <div class="rule-keyword" style="font-size:12px">${rule.keyword}</div>
+            ${rule.descricao ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${rule.descricao}</div>` : ''}
+          </div>
+          ${rule.valorFixo != null
+            ? `<div style="font-family:var(--mono);font-size:12px;color:var(--amber);white-space:nowrap">
+                ${fmt(rule.valorFixo)} ±${rule.tolerancia ?? 0.05}
+              </div>`
+            : `<div style="font-size:11px;color:var(--text3)">Valor variável</div>`
+          }
+          <div class="rule-arrow">→</div>
+          <div>${catDisp}</div>
+          <div class="rule-count">${rule.count}x</div>
+          <div class="rule-actions">
+            <div class="btn-icon danger" onclick="deleteRule(${rule.id})">✕</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Regras por keyword
   const list = document.getElementById('rules-list');
-  document.getElementById('rules-count').textContent = `${RULES.length} regras ativas`;
-  
-  list.innerHTML = RULES.map(rule => {
-    const cat = getCatById(rule.category);
-    return `
-    <div class="rule-item">
-      <div class="rule-keyword">${rule.keyword}</div>
-      <div class="rule-arrow">→</div>
-      <div class="rule-cat">
-        <span class="cat-tag ${cat.css}">${cat.icon} ${cat.name}</span>
-      </div>
-      <div class="rule-count">${rule.count}x aplicada</div>
-      <div class="rule-actions">
-        <div class="btn-icon">✏</div>
-        <div class="btn-icon danger" onclick="deleteRule(${rule.id})">✕</div>
-      </div>
-    </div>`;
-  }).join('');
+  if (list) {
+    if (!keywordRules.length) {
+      list.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:12px">Nenhuma regra. Quando você categorizar uma transação, uma regra é criada automaticamente.</div>';
+    } else {
+      list.innerHTML = keywordRules.map(rule => {
+        const cat = rule.category ? getCatById(rule.category) : null;
+        const isTransfer = rule.txType === 'transfer_internal';
+        const catDisp = isTransfer
+          ? `<span style="background:rgba(77,159,255,.1);color:var(--blue);padding:2px 8px;border-radius:10px;font-size:11px">⇄ Transferência interna</span>`
+          : cat
+            ? `<span class="cat-tag cat-${cat.id}">${cat.icon} ${cat.name}</span>`
+            : '<span style="color:var(--text3)">—</span>';
+        return `<div class="rule-item">
+          <div class="rule-keyword">${rule.keyword}</div>
+          <div class="rule-arrow">→</div>
+          <div class="rule-cat">${catDisp}</div>
+          ${rule.account ? `<div style="font-size:10px;color:var(--text3)">${rule.account}</div>` : ''}
+          <div class="rule-count">${rule.count}x</div>
+          <div class="rule-actions">
+            <div class="btn-icon danger" onclick="deleteRule(${rule.id})">✕</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 // ============================================================
@@ -4229,25 +5059,700 @@ async function pluggyDisconnect(localId) {
   showToast('✓', `${localId} desconectado`);
 }
 
-async function pluggySyncAll() {
-  if (!window.PluggySync) {
-    showToast('⚠', 'Configure a integração Pluggy primeiro (veja o passo a passo acima).');
-    return;
+// ============================================================
+// IMPORTAR EXTRATO ENGINE — Formato Despezzas (XLSX)
+// ============================================================
+// Pluggy removido — apenas saldo via botão manual se necessário
+// Transações: importação manual do app Despezzas
+
+let importParsedTxs = [];
+let importDupFlags  = [];
+let importSelected  = [];
+let importHistorico = JSON.parse(localStorage.getItem('financeos_import_hist') || '[]');
+
+// Mapeamento contas Despezzas → IDs internos
+const DESPEZZAS_CONTA_MAP = {
+  'Itaú':           'itau',
+  'Nubank':         'nubank-pf',
+  'Nubank Empresas':'nubank-pj',
+  'Unicred':        'unicred',
+  'Carteira':       'carteira',
+  'Mercado Pago':   'mercadopago',
+};
+
+// Mapeamento cartões Despezzas → conta interna
+const DESPEZZAS_CARTAO_MAP = {
+  'AZUL ITAU VISA INFINITE':          'itau',
+  'LATAM PASS ITAU MASTERCARD BLACK': 'itau',
+  'CARTÃO VISA INFINITE':             'unicred',
+  'Mercado Pago':                     'mercadopago',
+  'company':                          'nubank-pj',
+  'platinum':                         'nubank-pf',
+};
+
+function showView_importar() {
+  const sel = document.getElementById('import-conta-sel');
+  if (sel && ACCOUNTS.length) {
+    sel.innerHTML = '<option value="">Auto (pelo arquivo)</option>' +
+      ACCOUNTS.map(a => `<option value="${a.id}">${a.icon||''} ${a.name}</option>`).join('');
   }
-  const btn = document.getElementById('btn-sync-all');
-  if (btn) { btn.textContent = '⟳ Sincronizando...'; btn.disabled = true; }
+  importRenderHistorico();
+}
+
+function importHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('import-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) importHandleFile(file);
+}
+
+async function importHandleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  document.getElementById('import-file-nome').textContent = file.name;
 
   try {
-    const result = await window.PluggySync.syncAll(60);
-    showToast('✓', `Sync: ${result.imported} novas, ${result.categorized} categorizadas`);
-    document.getElementById('plug-last-sync').textContent  = 'Agora';
-    document.getElementById('plug-sync-detail').textContent = `${result.imported} transações importadas`;
-    renderContas();
-  } catch (e) {
-    showToast('⚠', `Erro no sync: ${e.message}`);
-  } finally {
-    if (btn) { btn.textContent = '⟳ Sincronizar Tudo'; btn.disabled = false; }
+    let txs = [];
+    if (ext === 'xlsx' || ext === 'xls') {
+      txs = await parseDespezzasXLSX(file);
+    } else if (ext === 'csv') {
+      txs = parseDespezzasCSV(await file.text());
+    } else {
+      showToast('⚠', 'Use o arquivo XLSX exportado do Despezzas.'); return;
+    }
+    if (!txs.length) { showToast('⚠', 'Nenhuma transação encontrada.'); return; }
+
+    // Aplicar regras de auto-categorização aprendidas
+    txs = txs.map(tx => applyLearnedRules(tx));
+
+    document.getElementById('import-banco-detectado').textContent =
+      `${txs.length} transações · ${[...new Set(txs.map(t=>t._contaName).filter(Boolean))].join(', ')}`;
+    document.getElementById('import-config-panel').style.display = '';
+
+    importParsedTxs = txs;
+    importDupFlags  = txs.map(t => isDuplicateImport(t));
+    importSelected  = txs.map((t,i) => !importDupFlags[i]);
+
+    importRenderPreview();
+    document.getElementById('import-preview-section').style.display = '';
+    document.getElementById('import-drop-zone').style.display = 'none';
+    showToast('✓', `${txs.length} transações detectadas`);
+  } catch(err) {
+    showToast('⚠', 'Erro: ' + err.message); console.error(err);
   }
+}
+
+// ── Parser XLSX Despezzas ─────────────────────────────────────
+async function parseDespezzasXLSX(file) {
+  // Usa SheetJS via CDN (carregado dinamicamente)
+  if (!window.XLSX) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const buf  = await file.arrayBuffer();
+  const wb   = window.XLSX.read(buf, { type: 'array', cellDates: true });
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+  const rows = window.XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+  // Encontrar linha de header (contém 'Data' e 'Título')
+  let headerRow = -1;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const r = (rows[i] || []).map(v => String(v||'').toLowerCase());
+    if (r.some(v => v.includes('data')) && r.some(v => v.includes('tulo') || v.includes('titulo'))) {
+      headerRow = i; break;
+    }
+  }
+  if (headerRow < 0) throw new Error('Header não encontrado no arquivo');
+
+  const hdr     = (rows[headerRow]||[]).map(v => String(v||'').toLowerCase().trim());
+  const iData   = hdr.findIndex(h => h === 'data' || h.includes('data'));
+  const iTitulo = hdr.findIndex(h => h.includes('tulo') || h.includes('titulo') || h.includes('title'));
+  const iCat    = hdr.findIndex(h => h.includes('categor') && !h.includes('sub'));
+  const iSub    = hdr.findIndex(h => h.includes('sub'));
+  const iConta  = hdr.findIndex(h => h === 'conta' || h.includes('conta'));
+  const iCartao = hdr.findIndex(h => h.includes('cart') || h.includes('card'));
+  const iValor  = hdr.findIndex(h => h.includes('valor') || h.includes('value'));
+
+  const txs = [];
+  for (let i = headerRow + 1; i < rows.length; i++) {
+    const row = rows[i] || [];
+    const rawDate = row[iData];
+    if (!rawDate) continue;
+
+    // Data: pode vir como Date object ou string DD/MM/YYYY
+    let date = '';
+    if (rawDate instanceof Date) {
+      date = rawDate.toISOString().slice(0,10);
+    } else {
+      const s = String(rawDate).trim();
+      if (s.includes('/')) {
+        const [d,m,y] = s.split('/');
+        date = `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      } else {
+        date = s.slice(0,10);
+      }
+    }
+    if (!date || date.length < 10) continue;
+
+    const titulo   = String(row[iTitulo]||'').trim();
+    const cat      = String(row[iCat]||'').trim().toLowerCase();
+    const sub      = String(row[iSub]||'').trim().toLowerCase();
+    const contaRaw = String(row[iConta]||'').trim();
+    const cartaoRaw= String(row[iCartao]||'').trim();
+    const valorRaw = row[iValor];
+    const amount   = parseFloat(String(valorRaw||'0').replace(',','.')) || 0;
+
+    if (!titulo && amount === 0) continue;
+
+    // Resolver conta interna
+    let accountId = '';
+    let contaName = '';
+    if (contaRaw && contaRaw !== 'null') {
+      accountId = DESPEZZAS_CONTA_MAP[contaRaw] || contaRaw.toLowerCase();
+      contaName = contaRaw;
+    } else if (cartaoRaw && cartaoRaw !== 'null') {
+      accountId = DESPEZZAS_CARTAO_MAP[cartaoRaw] || 'outros';
+      contaName = cartaoRaw;
+    }
+
+    // Categoria: mapear do Despezzas para nosso padrão
+    const catFull = mapDespezzasCategory(cat, sub);
+
+    txs.push({
+      date,
+      desc:        titulo,
+      amount,
+      account:     accountId,
+      category:    catFull || null,
+      origin:      catFull ? 'import' : 'pending',
+      cardTx:      !!(cartaoRaw && cartaoRaw !== 'null'),
+      external_id: `dsp-${date}-${Math.round(amount*100)}-${titulo.slice(0,10).replace(/\s/g,'')}`,
+      _contaName:  contaName,
+      _sub:        sub,
+    });
+  }
+  return txs;
+}
+
+// ── Parser CSV Despezzas (fallback) ──────────────────────────
+function parseDespezzasCSV(text) {
+  const lines = text.split(/\r?\n/);
+  let hi = -1;
+  for (let i = 0; i < Math.min(lines.length,10); i++) {
+    if (lines[i].toLowerCase().includes('data') && lines[i].toLowerCase().includes('tulo')) { hi=i; break; }
+  }
+  if (hi<0) return [];
+  const sep = lines[hi].includes(';') ? ';' : ',';
+  const hdr = lines[hi].split(sep).map(h=>h.toLowerCase().trim());
+  const iD=hdr.findIndex(h=>h==='data'), iT=hdr.findIndex(h=>h.includes('tulo'));
+  const iC=hdr.findIndex(h=>h.includes('categor')&&!h.includes('sub'));
+  const iS=hdr.findIndex(h=>h.includes('sub'));
+  const iCo=hdr.findIndex(h=>h==='conta'), iCa=hdr.findIndex(h=>h.includes('cart'));
+  const iV=hdr.findIndex(h=>h.includes('valor'));
+  const txs=[];
+  for (let i=hi+1; i<lines.length; i++) {
+    const c=lines[i].split(sep); if(c.length<4) continue;
+    const ds=c[iD]?.trim(); if(!ds) continue;
+    const [d,m,y]=ds.split('/');
+    const date=`${y}-${m?.padStart(2,'0')}-${d?.padStart(2,'0')}`;
+    const titulo=c[iT]?.trim()||'';
+    const cat=(c[iC]||'').trim().toLowerCase();
+    const sub=(c[iS]||'').trim().toLowerCase();
+    const contaRaw=(c[iCo]||'').trim();
+    const cartaoRaw=(c[iCa]||'').trim();
+    const amount=parseFloat((c[iV]||'0').replace(',','.'))||0;
+    const accountId=contaRaw?DESPEZZAS_CONTA_MAP[contaRaw]||contaRaw.toLowerCase():DESPEZZAS_CARTAO_MAP[cartaoRaw]||'outros';
+    const catFull=mapDespezzasCategory(cat,sub);
+    txs.push({date,desc:titulo,amount,account:accountId,category:catFull||null,
+      origin:catFull?'import':'pending',cardTx:!!cartaoRaw,
+      external_id:`dsp-${date}-${Math.round(amount*100)}-${titulo.slice(0,10).replace(/\s/g,'')}`,
+      _contaName:contaRaw||cartaoRaw,_sub:sub});
+  }
+  return txs;
+}
+
+// ── Mapeamento de categoria Despezzas → nosso padrão ─────────
+function mapDespezzasCategory(cat, sub) {
+  if (!cat || cat === 'null') return null;
+  // Cat já no nosso padrão — apenas capitaliza primeiro char e adiciona subcategoria
+  const catClean = cat.charAt(0).toUpperCase() + cat.slice(1).trim();
+  const subClean = sub ? sub.charAt(0).toUpperCase() + sub.slice(1).trim() : '';
+
+  // Verificar se cat existe em CATEGORIES_FULL
+  const found = CATEGORIES_FULL?.find(c =>
+    c.name.toLowerCase() === cat.toLowerCase() ||
+    c.id === cat.replace(/\s+/g,'_').toLowerCase()
+  );
+  if (!found && !subClean) return catClean;
+  if (!subClean || subClean === 'null') return found ? found.name : catClean;
+  return `${found ? found.name : catClean} > ${subClean}`;
+}
+
+// ── Sistema de aprendizado por padrão de descrição ───────────
+const LEARNED_RULES_KEY = 'financeos_learned_rules';
+
+function getLearnedRules() {
+  try { return JSON.parse(localStorage.getItem(LEARNED_RULES_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveLearnedRule(desc, category, account) {
+  const rules = getLearnedRules();
+  // Extrair keyword: primeiras 3 palavras da descrição
+  const keyword = extractKeyword(desc);
+  if (!keyword || keyword.length < 3) return;
+
+  const existing = rules.findIndex(r => r.keyword === keyword);
+  const rule = { keyword, category, account, count: 1, updatedAt: Date.now() };
+  if (existing >= 0) {
+    rules[existing] = { ...rules[existing], ...rule, count: (rules[existing].count||0)+1 };
+  } else {
+    rules.unshift(rule);
+  }
+  // Manter máximo 500 regras
+  localStorage.setItem(LEARNED_RULES_KEY, JSON.stringify(rules.slice(0,500)));
+}
+
+function extractKeyword(desc) {
+  if (!desc) return '';
+  // Remove prefixos comuns do Despezzas
+  let s = desc
+    .replace(/^A vista sem juros - Visa - /i, '')
+    .replace(/^A vista sem juros - Mastercard - /i, '')
+    .replace(/^\d+x - /i, '')
+    .replace(/\s+(FOZ DO IGUACU|SAO PAULO|CURITIBA|BR)\s*$/i, '')
+    .trim();
+  // Pegar primeiras 2-3 palavras significativas
+  const words = s.split(/\s+/).filter(w => w.length > 2).slice(0,3);
+  return words.join(' ').toUpperCase().slice(0,30);
+}
+
+function applyLearnedRules(tx) {
+  if (tx.category) return tx; // já tem categoria
+  const rules = getLearnedRules();
+  const keyword = extractKeyword(tx.desc);
+  const match = rules.find(r => keyword.includes(r.keyword) || r.keyword.includes(keyword.slice(0,15)));
+  if (match) {
+    return { ...tx, category: match.category, origin: 'rule_learned' };
+  }
+  return tx;
+}
+
+// Chamar quando usuário categoriza uma transação
+function learnFromAssignment(tx, category) {
+  if (!tx.desc) return;
+  saveLearnedRule(tx.desc, category, tx.account);
+}
+
+// ── Deduplicação ─────────────────────────────────────────────
+function isDuplicateImport(tx) {
+  return TRANSACTIONS.some(t =>
+    t.date === tx.date &&
+    Math.abs(parseFloat(t.amount) - tx.amount) < 0.01 &&
+    (t.external_id === tx.external_id ||
+     (t.desc||'').slice(0,20) === (tx.desc||'').slice(0,20))
+  );
+}
+
+// ── Preview ──────────────────────────────────────────────────
+function importRenderPreview() {
+  const hideDups = document.getElementById('imp-hide-dups')?.checked;
+  const tbody    = document.getElementById('import-preview-tbody');
+  const novas    = importParsedTxs.filter((_,i) => importSelected[i] && !importDupFlags[i]).length;
+  const dups     = importDupFlags.filter(Boolean).length;
+  const autocat  = importParsedTxs.filter((_,i) => !importDupFlags[i] && importParsedTxs[i].origin !== 'pending').length;
+
+  document.getElementById('imp-total').textContent = importParsedTxs.length;
+  document.getElementById('imp-novas').textContent = novas;
+  document.getElementById('imp-dups').textContent  = dups;
+  const btn = document.getElementById('imp-confirm-btn');
+  btn.textContent = `⬆ Importar ${novas} novas (${autocat} auto-categorizadas)`;
+
+  tbody.innerHTML = importParsedTxs.map((tx,i) => {
+    if (hideDups && importDupFlags[i]) return '';
+    const c   = tx.amount >= 0 ? 'var(--green)' : 'var(--red)';
+    const fmt = (tx.amount>=0?'+ ':'- ')+'R$ '+Math.abs(tx.amount).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    const accName = ACCOUNTS.find(a=>a.id===tx.account)?.name || tx._contaName || tx.account || '?';
+    const catDisp = tx.category ? `<span style="font-size:10px;color:var(--text3)">${tx.category.split(' > ').pop()}</span>` : '<span style="font-size:10px;color:var(--red)">Sem cat.</span>';
+    return `<tr class="${importDupFlags[i]?'dup':''}">
+      <td><input type="checkbox" ${importSelected[i]?'checked':''} ${importDupFlags[i]?'disabled':''} onchange="importSelected[${i}]=this.checked;importRenderPreview()"></td>
+      <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${(tx.date||'').split('-').reverse().join('/')}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${tx.desc}">${tx.desc}</td>
+      <td style="font-size:11px;color:var(--text3)">${accName}</td>
+      <td>${catDisp}</td>
+      <td style="font-family:var(--mono);text-align:right;color:${c};font-weight:600;white-space:nowrap">${fmt}</td>
+      <td>${importDupFlags[i]
+        ?'<span class="import-dup-badge">↩ Dup</span>'
+        :(tx.origin==='pending'?'<span class="import-new-badge" style="background:rgba(255,176,32,.1);color:var(--amber)">⚠ Categorizar</span>':'<span class="import-new-badge">✓ Auto</span>')
+      }</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">—</td></tr>';
+}
+
+function importToggleAll(checked) {
+  importSelected = importSelected.map((_,i) => importDupFlags[i] ? false : checked);
+  importRenderPreview();
+}
+
+// ── Confirmar importação ─────────────────────────────────────
+async function importConfirm() {
+  const contaOverride = document.getElementById('import-conta-sel').value;
+  const toImport = importParsedTxs.filter((_,i) => importSelected[i] && !importDupFlags[i]);
+  if (!toImport.length) { showToast('⚠','Nenhuma transação selecionada'); return; }
+  const btn = document.getElementById('imp-confirm-btn');
+  btn.disabled=true; btn.textContent='⏳ Importando...';
+  try {
+    const normalized = toImport.map(tx => ({
+      id:          crypto.randomUUID(),
+      date:        tx.date,
+      desc:        tx.desc,
+      amount:      tx.amount,
+      account:     contaOverride || tx.account || 'outros',
+      txType:      tx.amount > 0 ? 'credit' : 'debit',
+      category:    tx.category || null,
+      origin:      tx.origin || 'pending',
+      cardTx:      tx.cardTx || false,
+      external_id: tx.external_id,
+    }));
+
+    // Aprender com categorias do arquivo
+    normalized.forEach(tx => {
+      if (tx.category) learnFromAssignment(tx, tx.category);
+    });
+
+    window.TRANSACTIONS = [...normalized, ...window.TRANSACTIONS];
+    if (window.saveBatchTransactions) await window.saveBatchTransactions(normalized);
+
+    importHistorico.unshift({
+      ts:      new Date().toISOString(),
+      total:   importParsedTxs.length,
+      novas:   toImport.length,
+      autocat: toImport.filter(t=>t.origin!=='pending').length,
+      arquivo: document.getElementById('import-file-nome').textContent,
+    });
+    importHistorico = importHistorico.slice(0,20);
+    localStorage.setItem('financeos_import_hist', JSON.stringify(importHistorico));
+
+    showToast('✓', `${toImport.length} transações importadas!`);
+    renderDashboard();
+    if (typeof renderTransactions === 'function') renderTransactions();
+    importReset();
+    importRenderHistorico();
+  } catch(err) {
+    showToast('⚠','Erro: '+err.message); console.error(err);
+  } finally {
+    btn.disabled=false;
+  }
+}
+
+function importReset() {
+  importParsedTxs=[]; importDupFlags=[]; importSelected=[];
+  document.getElementById('import-preview-section').style.display='none';
+  document.getElementById('import-config-panel').style.display='none';
+  document.getElementById('import-drop-zone').style.display='';
+  document.getElementById('import-file-input').value='';
+}
+
+function importRenderHistorico() {
+  const el = document.getElementById('import-historico');
+  if (!el) return;
+  if (!importHistorico.length) {
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px">Nenhuma importação realizada ainda</div>';
+    return;
+  }
+  el.innerHTML = importHistorico.map(h=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="font-size:18px">📂</span>
+      <div style="flex:1">
+        <div style="font-weight:500">${h.arquivo}</div>
+        <div style="color:var(--text3);margin-top:2px">${new Date(h.ts).toLocaleDateString('pt-BR')} ${new Date(h.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:var(--green);font-family:var(--mono);font-weight:600">+${h.novas} novas</div>
+        <div style="color:var(--text3)">${h.autocat||0} auto-categorizadas</div>
+      </div>
+    </div>`).join('');
+}
+
+// Atualizar assignCategory para aprender com correções manuais
+const _origAssignCategory = typeof assignCategory === 'function' ? assignCategory : null;
+
+async function pluggySyncAll() {
+  showToast('ℹ', 'Pluggy removido — use Importar Extrato para adicionar transações');
+}
+
+// ============================================================
+// VENDING MACHINE DASHBOARD ENGINE
+// ============================================================
+
+const VD_INVESTIMENTO = 20500;
+const VD_DESPESAS_MES = 650;
+const VD_STORAGE_KEY  = 'financeos_vending_v1';
+
+const VD_PRODUTOS = [
+  {id:1,  nome:'Água Crystal 500ml',     cat:'beb', custo:1.92, venda:4.00,  repor:30, estoqueIdeal:60},
+  {id:2,  nome:'Suco Del Valle 200ml',   cat:'beb', custo:2.53, venda:5.50,  repor:20, estoqueIdeal:40},
+  {id:3,  nome:'Coca-Cola lata 350ml',   cat:'beb', custo:2.30, venda:6.00,  repor:30, estoqueIdeal:60},
+  {id:4,  nome:'Nescafé lata 269ml',     cat:'beb', custo:5.00, venda:10.00, repor:15, estoqueIdeal:30},
+  {id:5,  nome:'Red Bull 250ml',         cat:'ene', custo:4.38, venda:12.00, repor:25, estoqueIdeal:50},
+  {id:6,  nome:'Monster Energy 473ml',   cat:'ene', custo:4.08, venda:10.00, repor:20, estoqueIdeal:40},
+  {id:7,  nome:'Kit Kat 41,5g',          cat:'doc', custo:3.48, venda:7.00,  repor:20, estoqueIdeal:40},
+  {id:8,  nome:'Biscoito Oreo',          cat:'doc', custo:2.50, venda:5.00,  repor:15, estoqueIdeal:30},
+  {id:9,  nome:'Nutry Barra Cereal',     cat:'sal', custo:1.55, venda:4.00,  repor:15, estoqueIdeal:30},
+  {id:10, nome:'Amendoim Japonês 100g',  cat:'sal', custo:3.00, venda:6.00,  repor:15, estoqueIdeal:30},
+  {id:11, nome:'Ruffles 37g',            cat:'sal', custo:2.50, venda:6.00,  repor:20, estoqueIdeal:40},
+  {id:12, nome:'Barra Proteína Bold',    cat:'pro', custo:7.00, venda:14.00, repor:10, estoqueIdeal:20},
+];
+
+const VD_CAT_STYLE  = {
+  beb:{lbl:'Bebida',      color:'#4FC3F7'},
+  ene:{lbl:'Energético',  color:'#F9C74F'},
+  doc:{lbl:'Doce',        color:'#FF6B6B'},
+  sal:{lbl:'Snack',       color:'#3EE8A0'},
+  pro:{lbl:'Proteína',    color:'#B388FF'},
+};
+
+let vdCurrentWeek = 1;
+let vdAllData = {};
+
+function vdLoadData() {
+  try { vdAllData = JSON.parse(localStorage.getItem(VD_STORAGE_KEY) || '{}'); }
+  catch(e) { vdAllData = {}; }
+}
+function vdSaveData() {
+  localStorage.setItem(VD_STORAGE_KEY, JSON.stringify(vdAllData));
+}
+function vdGetWeekData(w) {
+  if (!vdAllData[w]) vdAllData[w] = VD_PRODUTOS.map(() => ({vendas:0, estoque:0}));
+  return vdAllData[w];
+}
+function vdHasData() {
+  return Object.values(vdAllData).some(wk => wk.some(r => r.vendas>0||r.estoque>0));
+}
+function vdAcumLucro(upTo) {
+  let total = 0;
+  for (let w=1; w<=upTo; w++) {
+    const wk = vdAllData[w]; if (!wk) continue;
+    wk.forEach((row,i) => { total += row.vendas * (VD_PRODUTOS[i].venda - VD_PRODUTOS[i].custo); });
+    total -= VD_DESPESAS_MES / 4.33;
+  }
+  return Math.max(total, 0);
+}
+function vdFmt(n) { return 'R$\u00a0' + n.toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+
+function vdRender() {
+  vdLoadData();
+  const wData = vdGetWeekData(vdCurrentWeek);
+  const weekLabel = document.getElementById('vd-week-label');
+  if (weekLabel) weekLabel.textContent = 'Semana ' + vdCurrentWeek;
+
+  let fat=0, cmv=0, units=0, alertas=0;
+  wData.forEach((row,i) => {
+    fat   += row.vendas * VD_PRODUTOS[i].venda;
+    cmv   += row.vendas * VD_PRODUTOS[i].custo;
+    units += row.vendas;
+    if (row.estoque>0 && row.estoque <= VD_PRODUTOS[i].repor) alertas++;
+  });
+  const lucro = fat - cmv;
+  const mg    = fat>0 ? lucro/fat*100 : null;
+  const acum  = vdAcumLucro(vdCurrentWeek);
+  const pbPct = Math.min(acum/VD_INVESTIMENTO*100, 100);
+  const hasData = fat>0||units>0;
+
+  // KPIs
+  const setEl = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  setEl('vd-kpi-fat',   hasData ? vdFmt(fat) : 'R$ —');
+  setEl('vd-kpi-units', hasData ? units : '—');
+  setEl('vd-kpi-lucro', hasData ? vdFmt(lucro) : 'R$ —');
+  setEl('vd-kpi-fat-d', hasData ? vdFmt(fat)+' bruto' : 'sem lançamentos ainda');
+  setEl('vd-kpi-units-d', hasData ? units+' unidades' : 'sem lançamentos ainda');
+  setEl('vd-kpi-mg',    mg!==null ? 'margem '+mg.toFixed(1)+'%' : 'margem —');
+  setEl('vd-kpi-pb',    pbPct>0 ? pbPct.toFixed(1)+'%' : '0%');
+  setEl('vd-alertas-label', alertas>0 ? `⚠ ${alertas} alerta${alertas>1?'s':''}` : '');
+
+  // Payback
+  const pbBar = document.getElementById('vd-pb-bar');
+  if (pbBar) pbBar.style.width = pbPct.toFixed(1)+'%';
+  setEl('vd-pb-pct',  pbPct.toFixed(1)+'%');
+  setEl('vd-pb-acum', vdFmt(acum));
+  if (pbPct>=100) {
+    setEl('vd-pb-prev', '✓ Investimento recuperado!');
+  } else if (acum>0 && vdCurrentWeek>0) {
+    const avg = acum/vdCurrentWeek;
+    const weeksLeft = Math.ceil((VD_INVESTIMENTO-acum)/avg);
+    const d = new Date(); d.setDate(d.getDate()+weeksLeft*7);
+    setEl('vd-pb-prev', d.toLocaleDateString('pt-BR',{month:'short',year:'numeric'})+' (~'+weeksLeft+' sem.)');
+  } else {
+    setEl('vd-pb-prev', 'aguardando dados reais');
+  }
+
+  // Tabela de estoque
+  const tbody = document.getElementById('vd-stock-body');
+  if (!tbody) return;
+  if (!vdHasData()) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3)">
+      Nenhum dado ainda — entrega da máquina: maio/2026<br>
+      <span style="font-size:11px">Use o formulário abaixo para registrar as primeiras vendas</span>
+    </td></tr>`;
+  } else {
+    tbody.innerHTML = wData.map((row,i) => {
+      const p = VD_PRODUTOS[i];
+      const cat = VD_CAT_STYLE[p.cat];
+      const margin = (p.venda-p.custo)/p.custo*100;
+      const barW   = Math.min(margin/250*100,100).toFixed(0);
+      const never  = row.vendas===0&&row.estoque===0;
+      const crit   = !never&&row.estoque>0&&row.estoque<=p.repor*0.4;
+      const low    = !never&&row.estoque>0&&row.estoque<=p.repor;
+      const stTxt  = never?'—':crit?'⚠ CRÍTICO':low?'↓ REPOR':'✓ OK';
+      const stColor= never?'var(--text3)':crit?'var(--red)':low?'var(--amber)':'var(--green)';
+      const esqColor= crit?'var(--red)':low?'var(--amber)':'var(--text)';
+      return `<tr>
+        <td style="font-size:12px">${p.nome}</td>
+        <td><span style="font-size:10px;padding:2px 7px;border-radius:12px;background:${cat.color}22;color:${cat.color}">${cat.lbl}</span></td>
+        <td style="text-align:right;font-family:var(--mono);font-size:11px">${row.vendas>0?row.vendas+' un':'—'}</td>
+        <td style="text-align:right;font-family:var(--mono);font-size:11px;color:${esqColor}">${row.estoque>0?row.estoque:'—'}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:var(--green);border-radius:2px"></div>
+            </div>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--green);min-width:32px">${margin.toFixed(0)}%</span>
+          </div>
+        </td>
+        <td style="text-align:right;font-size:11px;color:${stColor}">${stTxt}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Donut
+  const catFat = {};
+  wData.forEach((row,i) => {
+    const p = VD_PRODUTOS[i];
+    catFat[p.cat] = (catFat[p.cat]||0) + row.vendas*p.venda;
+  });
+  const totalFat = Object.values(catFat).reduce((a,b)=>a+b,0);
+  const circ = 2*Math.PI*54;
+  let offset = 0;
+  const arcsG = document.getElementById('vd-donut-arcs');
+  const legend = document.getElementById('vd-donut-legend');
+  if (arcsG) arcsG.innerHTML = '';
+  if (legend) legend.innerHTML = '';
+  setEl('vd-donut-val', totalFat>0 ? vdFmt(totalFat) : '—');
+
+  ['beb','ene','doc','sal','pro'].forEach(cat => {
+    const val  = catFat[cat]||0;
+    const frac = totalFat>0 ? val/totalFat : 0.2;
+    const dash = frac*circ;
+    if (arcsG) {
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx','70'); c.setAttribute('cy','70'); c.setAttribute('r','54');
+      c.setAttribute('fill','none');
+      c.setAttribute('stroke', totalFat>0 ? VD_CAT_STYLE[cat].color : 'var(--surface2)');
+      c.setAttribute('stroke-width','22');
+      c.setAttribute('stroke-dasharray',`${dash} ${circ-dash}`);
+      c.setAttribute('stroke-dashoffset',-offset);
+      c.setAttribute('transform','rotate(-90 70 70)');
+      arcsG.appendChild(c);
+      offset += dash;
+    }
+    if (legend) {
+      legend.innerHTML += `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:6px;color:var(--text3)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${VD_CAT_STYLE[cat].color}"></div>
+          ${VD_CAT_STYLE[cat].lbl}
+        </div>
+        <span style="font-family:var(--mono)">${totalFat>0?(frac*100).toFixed(1)+'%':'—'}</span>
+      </div>`;
+    }
+  });
+
+  // Ranking
+  const rankEl = document.getElementById('vd-rank-list');
+  if (rankEl) {
+    const ranked = [...VD_PRODUTOS]
+      .map(p=>({nome:p.nome.length>18?p.nome.slice(0,17)+'…':p.nome, margem:(p.venda-p.custo)/p.custo*100}))
+      .sort((a,b)=>b.margem-a.margem).slice(0,5);
+    const maxM = ranked[0].margem;
+    rankEl.innerHTML = ranked.map((r,i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;background:var(--surface2);margin-bottom:6px;font-size:12px">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:16px">${i+1}</span>
+        <span style="flex:1">${r.nome}</span>
+        <div style="width:50px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${(r.margem/maxM*100).toFixed(0)}%;background:var(--green);border-radius:2px"></div>
+        </div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--green);min-width:32px;text-align:right">${r.margem.toFixed(0)}%</span>
+      </div>`).join('');
+  }
+
+  // Alertas
+  const alertEl = document.getElementById('vd-alert-list');
+  if (alertEl) {
+    if (!vdHasData()) {
+      alertEl.innerHTML = `<div style="padding:10px;background:rgba(77,159,255,.06);border-left:3px solid var(--blue);border-radius:4px;font-size:12px;color:var(--text2)">
+        ℹ <strong>Máquina em trânsito</strong><br>Entrega prevista maio/2026
+      </div>`;
+    } else {
+      const crits = wData.map((r,i)=>({...r,p:VD_PRODUTOS[i]}))
+        .filter(r=>r.estoque>0&&r.estoque<=r.p.repor).sort((a,b)=>a.estoque-b.estoque).slice(0,4);
+      alertEl.innerHTML = crits.length
+        ? crits.map(r => {
+            const c = r.estoque<=r.p.repor*0.4;
+            return `<div style="padding:8px 10px;background:${c?'rgba(239,68,68,.06)':'rgba(245,158,11,.06)'};border-left:3px solid ${c?'var(--red)':'var(--amber)'};border-radius:4px;font-size:12px;margin-bottom:6px">
+              ${c?'🔴':'🟡'} <strong>${r.p.nome}</strong><br>
+              <span style="color:var(--text3)">Estoque: ${r.estoque} · Mínimo: ${r.p.repor}</span>
+            </div>`;
+          }).join('')
+        : `<div style="padding:10px;background:rgba(0,212,170,.06);border-left:3px solid var(--green);border-radius:4px;font-size:12px">
+            ✓ Estoque saudável em todos os produtos
+          </div>`;
+    }
+  }
+}
+
+function vdChangeWeek(d) {
+  const next = vdCurrentWeek + d;
+  if (next<1||next>52) return;
+  vdCurrentWeek = next;
+  vdRender();
+}
+
+function vdLancar() {
+  const pid  = parseInt(document.getElementById('vd-f-produto')?.value);
+  const tipo = document.getElementById('vd-f-tipo')?.value;
+  const qtd  = parseInt(document.getElementById('vd-f-qtd')?.value)||0;
+  if (!pid||qtd<=0) return;
+  const idx  = VD_PRODUTOS.findIndex(p=>p.id===pid);
+  const wData = vdGetWeekData(vdCurrentWeek);
+  const row  = wData[idx];
+  const p    = VD_PRODUTOS[idx];
+  const msgEl = document.getElementById('vd-f-msg');
+  if (tipo==='venda') {
+    row.vendas  += qtd;
+    row.estoque  = Math.max(row.estoque-qtd, 0);
+    if (msgEl) { msgEl.style.color='var(--green)'; msgEl.textContent=`✓ ${qtd}× ${p.nome} — +${vdFmt(qtd*p.venda)}`; }
+  } else {
+    row.estoque += qtd;
+    if (msgEl) { msgEl.style.color='var(--blue)'; msgEl.textContent=`✓ Reposição +${qtd}× ${p.nome}`; }
+  }
+  vdSaveData();
+  if (document.getElementById('vd-f-qtd')) document.getElementById('vd-f-qtd').value=1;
+  vdRender();
+  setTimeout(()=>{ if(msgEl) msgEl.textContent=''; }, 3500);
+}
+
+// Popular select de produtos
+function vdInitSelect() {
+  const sel = document.getElementById('vd-f-produto');
+  if (!sel||sel.options.length>0) return;
+  VD_PRODUTOS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.nome;
+    sel.appendChild(opt);
+  });
 }
 
 function populateCatSelects() {
@@ -4272,51 +5777,145 @@ let activeTxId = null;
 function openCatPicker(e, txId) {
   e.stopPropagation();
   activeTxId = txId;
-  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
   const picker = document.getElementById('cat-picker');
+  renderCatPickerContent(picker, '');
 
-  // Opções de transferência primeiro (separadas)
-  const transferOpts = `
-    <div style="grid-column:1/-1;font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;padding:2px 4px 6px;border-bottom:1px solid var(--border);margin-bottom:4px;">Tipo de Movimento</div>
-    <div class="cat-option" style="background:var(--blue-dim);color:var(--blue)" onclick="assignCategory('__transfer_internal__')">⇄ Transferência Interna</div>
-    <div class="cat-option" style="background:var(--amber-dim);color:var(--amber)" onclick="assignCategory('__transfer_external__')">⇄ Transf. p/ Terceiros</div>
-    <div style="grid-column:1/-1;font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;padding:6px 4px 4px;border-top:1px solid var(--border);margin-top:4px;">Categorias</div>
-  `;
-  picker.innerHTML = transferOpts + CATEGORIES.map(c =>
-    `<div class="cat-option" onclick="assignCategory('${c.name}')">${c.icon} ${c.name}</div>`
-  ).join('');
+  // Posicionar
+  const x = Math.min(e.clientX, window.innerWidth - 310);
+  const y = Math.min(e.clientY + 8, window.innerHeight - 500);
+  picker.style.left = x + 'px';
+  picker.style.top  = y + 'px';
+  picker.style.display = 'block';
 
-  const rect = e.currentTarget.getBoundingClientRect();
-  picker.style.left = Math.min(e.clientX, window.innerWidth - 260) + 'px';
-  picker.style.top = (rect.bottom + 4) + 'px';
-  picker.style.display = 'grid';
+  // Focar busca
+  setTimeout(() => {
+    const s = picker.querySelector('.cat-picker-search');
+    if (s) s.focus();
+  }, 50);
 
   setTimeout(() => document.addEventListener('click', closePicker, {once:true}), 0);
 }
 
+function renderCatPickerContent(picker, searchTerm) {
+  const q = searchTerm.toLowerCase();
+
+  // Header com busca
+  let html = `
+    <div class="cat-picker-header">
+      <span>Categorizar transação</span>
+      <span style="cursor:pointer;font-size:14px" onclick="closePicker()">✕</span>
+    </div>
+    <div style="padding:6px 10px 4px">
+      <input class="cat-picker-search" type="text" placeholder="Buscar categoria..."
+        value="${searchTerm}"
+        oninput="renderCatPickerContent(document.getElementById('cat-picker'), this.value)"
+        onclick="event.stopPropagation()">
+    </div>`;
+
+  // Transferências sempre no topo
+  if (!q) {
+    html += `
+      <div style="padding:4px 10px 2px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding-bottom:4px">Movimentação</div>
+        <div class="cat-option" style="color:var(--blue)" onclick="assignCategory('__transfer_internal__')">⇄ Transferência entre minhas contas</div>
+        <div class="cat-option" style="color:var(--amber)" onclick="assignCategory('__transfer_external__')">↗ PIX / TED a terceiros (gasto real)</div>
+        <div class="cat-option" style="color:var(--green)" onclick="assignCategory('Renda > Trabalho por conta própria')">💼 PJ → PF: Pró-labore / Distribuição (receita real)</div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:4px 0"></div>`;
+  }
+
+  // Filtrar categorias
+  CATEGORIES_FULL.filter(c => c.type !== 'transfer').forEach(cat => {
+    const mainMatch = !q || cat.name.toLowerCase().includes(q);
+    const matchingSubs = cat.subs.filter(s => !q || s.toLowerCase().includes(q));
+
+    if (!mainMatch && !matchingSubs.length) return;
+
+    const subsToShow = q && !mainMatch ? matchingSubs : cat.subs;
+
+    html += `<div class="cat-picker-section">
+      <div class="cat-picker-group-header${(q && mainMatch) || !q ? '' : ' open'}"
+           style="border-left:3px solid ${cat.color}"
+           onclick="catPickerToggle(this)">
+        <span class="cat-picker-group-icon">${cat.icon}</span>
+        <span>${cat.name}</span>
+        <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
+          <span class="cat-picker-chevron">›</span>
+        </span>
+      </div>
+      <div class="cat-picker-subs${q ? ' open' : ''}">
+        <div class="cat-sub-option" onclick="assignCategory('${cat.name}')">
+          ${cat.icon} <em style="color:var(--text3)">(categoria geral)</em>
+        </div>`;
+
+    subsToShow.forEach(sub => {
+      html += `<div class="cat-sub-option" onclick="assignCategory('${cat.name} > ${sub}')">${sub}</div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  picker.innerHTML = html;
+
+  // Re-abrir grupos que estavam abertos se tiver busca
+  if (q) {
+    picker.querySelectorAll('.cat-picker-group-header').forEach(h => {
+      const subs = h.nextElementSibling;
+      if (subs?.children.length > 1) {
+        h.classList.add('open');
+        subs.classList.add('open');
+      }
+    });
+  }
+}
+
+function catPickerToggle(header) {
+  event.stopPropagation();
+  header.classList.toggle('open');
+  const subs = header.nextElementSibling;
+  if (subs) subs.classList.toggle('open');
+}
+
 function closePicker() {
-  document.getElementById('cat-picker').style.display = 'none';
+  const p = document.getElementById('cat-picker');
+  if (p) p.style.display = 'none';
   activeTxId = null;
 }
 
 function assignCategory(catName) {
   if (!activeTxId) return;
-  const tx = TRANSACTIONS.find(t => t.id === activeTxId);
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(activeTxId));
   if (!tx) return;
-  
+
   const wasNew = !tx.category;
-  learnFromCorrection(tx, catName);
+
+  if (catName === '__transfer_internal__') {
+    tx.txType   = 'transfer_internal';
+    tx.category = 'Transferência Interna';
+    tx.origin   = 'manual';
+  } else if (catName === '__transfer_external__') {
+    tx.txType   = 'transfer_external';
+    tx.category = 'PIX / TED a terceiros';
+    tx.origin   = 'manual';
+  } else {
+    tx.category = catName;
+    tx.origin   = 'manual';
+    learnFromCorrection(tx, catName);
+    // Aprendizado persistente — futuras importações auto-categorizam
+    learnFromAssignment(tx, catName);
+  }
+
   renderDashboardTx();
   renderCardTx();
   closePicker();
 
   // Persiste no Supabase
   if (window.persistChange) {
-    window.persistChange('transaction_category', { txId: tx.id, category: catName, origin: tx.origin });
+    window.persistChange('transaction_category', { txId: tx.id, category: tx.category, origin: tx.origin });
   }
 
-  if (wasNew) showToast('✓', `Categoria definida + regra criada automaticamente`);
-  else showToast('✓', `Categoria atualizada para ${catName}`);
+  if (wasNew) showToast('✓', `Categoria definida`);
+  else showToast('✓', `→ ${catName.split(' > ').pop()}`);
 }
 
 // ============================================================
@@ -4338,6 +5937,7 @@ function showView(viewId, navEl) {
     imoveis:        '🏠 Imóveis & Terrenos',
     consorcios:     '📄 Consórcios',
     investimentos:  '📈 Investimentos — Portfólio Consolidado',
+    importar:       '⬆ Importar Extrato',
     ir:             '📋 IR & Deduções — IRPF 2026',
     documentos:     '📁 Documentos Fiscais',
     recorrentes:    '🔁 Lançamentos Recorrentes',
@@ -4348,6 +5948,7 @@ function showView(viewId, navEl) {
   document.getElementById('page-title').textContent = titles[viewId] || viewId;
 
   if (viewId === 'transacoes')    renderTransactions();
+  if (viewId === 'importar')      showView_importar();
   if (viewId === 'regras')        renderRules();
   if (viewId === 'contas')        renderContas();
   if (viewId === 'pj')            renderPJ();
@@ -5591,10 +7192,10 @@ var RECORRENTES = [
   { id: 9,  name: 'Contabilidade PJ',     amount: 350.00,  day: 5,  type: 'debit',  account: 'nubank-pj',  category: 'Serviços',   keyword: 'CONTABILIDADE',       active: true,  pj: true, empresa: 'consultorio' },
   { id: 10, name: 'Plataforma Laudos',    amount: 149.90,  day: 1,  type: 'debit',  account: 'nubank-pj',  category: 'Serviços',   keyword: 'LAUDOUS',             active: true,  pj: true, empresa: 'consultorio' },
   // PJ — Energia
-  { id: 11, name: 'Manutenção Inversores',amount: 480.00,  day: 27, type: 'debit',  account: 'energia-pj', category: 'Manutenção', keyword: 'MANUTENCAO INVERSORES',active: true, pj: true, empresa: 'energia' },
-  { id: 12, name: 'Contabilidade Energia',amount: 350.00,  day: 5,  type: 'debit',  account: 'energia-pj', category: 'Contabilidade',keyword: 'CONTABILIDADE',      active: true, pj: true, empresa: 'energia' },
-  { id: 13, name: 'Plataforma EV Charge', amount: 149.90,  day: 18, type: 'debit',  account: 'energia-pj', category: 'Serviços',   keyword: 'EVCHARGE',            active: true, pj: true, empresa: 'energia' },
-  { id: 14, name: 'Receita Geração ANEEL',amount: 3200.00, day: 15, type: 'credit', account: 'energia-pj', category: 'Receita Energia', keyword: 'RECEB GERACAO',   active: true, pj: true, empresa: 'energia' },
+  { id: 11, name: 'Manutenção Inversores',amount: 480.00,  day: 27, type: 'debit',  account: 'energia-pj', category: 'Manutenção', keyword: 'MANUTENCAO INVERSORES',active: true, pj: true, empresa: 'usina' },
+  { id: 12, name: 'Contabilidade Energia',amount: 350.00,  day: 5,  type: 'debit',  account: 'energia-pj', category: 'Contabilidade',keyword: 'CONTABILIDADE',      active: true, pj: true, empresa: 'usina' },
+  { id: 13, name: 'Plataforma EV Charge', amount: 149.90,  day: 18, type: 'debit',  account: 'energia-pj', category: 'Serviços',   keyword: 'EVCHARGE',            active: true, pj: true, empresa: 'usina' },
+  { id: 14, name: 'Receita Geração ANEEL',amount: 3200.00, day: 15, type: 'credit', account: 'energia-pj', category: 'Receita Energia', keyword: 'RECEB GERACAO',   active: true, pj: true, empresa: 'usina' },
 ];
 
 let recFilterAtivo = 'todos';
@@ -5767,18 +7368,23 @@ function deleteRecorrente(id) {
 
 const EMPRESAS = {
   consultorio: {
-    label:       'Consultório Médico',
+    label:       'J PIMENTA LTDA',
     icon:        '🏥',
     accounts:    ['nubank-pj'],
     heroBg:      'linear-gradient(135deg, #0d1f12 0%, #0a1a1a 100%)',
     heroBorder:  '#1a3a20',
-    heroTag:     'NUBANK PJ — CONSULTÓRIO MÉDICO',
+    heroTag:     'NUBANK PJ — J PIMENTA LTDA',
     heroTagColor:'#1e5a28',
-    aliquota:    0.06,   // Simples Nacional Anexo III
+    aliquota:    0.06,
     prolabPct:   0.40,
     prolabLabel: 'Pró-labore sugerido:',
     recLabel:    'Honorários médicos',
     recLabel2:   'Outros recebimentos PJ',
+    custosMensais: [
+      { nome: 'Contador',           valor: 300  },
+      { nome: 'Plataforma LaudoUS', valor: 150  },
+      { nome: 'Manutenção clínica', valor: 400  },
+    ],
     historico: [
       { mes: 'Out', receita: 18400, desp: 3200 },
       { mes: 'Nov', receita: 21000, desp: 4100 },
@@ -5788,26 +7394,151 @@ const EMPRESAS = {
       { mes: 'Mar', receita: null,  desp: null  },
     ],
   },
-  energia: {
-    label:       'Usina Solar + Eletropostos',
-    icon:        '⚡',
+
+  usina: {
+    label:       'Usina Solar 73kW',
+    icon:        '☀️',
     accounts:    ['energia-pj'],
-    heroBg:      'linear-gradient(135deg, #1a1500 0%, #0f0f00 100%)',
-    heroBorder:  '#3a3000',
-    heroTag:     'EMPRESA 2 — ENERGIA SOLAR + ELETROPOSTOS',
-    heroTagColor:'#4a3a00',
-    aliquota:    0.085, // Lucro Presumido estimado energia
-    prolabPct:   0.30,
-    prolabLabel: 'Distribuição de lucro sugerida:',
-    recLabel:    'Geração de energia (ANEEL)',
-    recLabel2:   'Receita eletropostos',
+    heroBg:      'linear-gradient(135deg, #1a1200 0%, #0f0b00 100%)',
+    heroBorder:  '#4a3800',
+    heroTag:     'USINA SOLAR — 73 kW',
+    heroTagColor:'#6a5200',
+    aliquota:    0.085,
+    prolabPct:   0,
+    prolabLabel: 'Distribuição de lucro:',
+    recLabel:    'Compensação GD (créditos Copel)',
+    recLabel2:   'Outros rendimentos',
+    // Status operacional
+    status:      'pré-operacional',
+    statusLabel: '⏳ Aguardando instalação painéis + cerca',
+    // Investimento e ROI
+    investimentoTotal: 250000,  // R$ 250k — preço da usina 73kW
+    capexPendenteVal:  10000,   // cerca + instalação (estimado)
+    investimentoTotal_com_capex: 260000,
+    // Projeção
+    capacidadekWh:    9855,   // kWh/mês esperado
+    precoVendakWh:    0.80,   // R$/kWh fase 1 → EletroPosto
+    receitaProjetada: 7884,   // R$/mês fase 1
+    lucroProjetado:   6834,   // R$/mês (rec - custos ~R$1.050)
+    paybackMeses:     Math.ceil(260000 / 6834), // ~38 meses
+    roiAnual:         (6834 * 12 / 260000 * 100).toFixed(1) + '%', // ~31.5%/ano
+    custosMensais: [
+      { nome: 'Manutenção preventiva', valor: 300 },
+      { nome: 'Limpeza painéis',       valor: 150 },
+      { nome: 'Seguro da usina',       valor: 225 },
+      { nome: 'Monitoramento remoto',  valor: 75  },
+      { nome: 'Contador',              valor: 300 },
+    ],
+    capexPendente: [
+      { nome: 'Cerca elétrica + instalação painéis', valor: 10000, previsto: '2026-05' },
+    ],
     historico: [
-      { mes: 'Out', receita: 4100,  desp: 1400 },
-      { mes: 'Nov', receita: 5200,  desp: 1600 },
-      { mes: 'Dez', receita: 4800,  desp: 1500 },
-      { mes: 'Jan', receita: 6100,  desp: 1900 },
-      { mes: 'Fev', receita: 7200,  desp: 2100 },
-      { mes: 'Mar', receita: null,  desp: null  },
+      { mes: 'Jan', receita: null, desp: null },
+      { mes: 'Fev', receita: null, desp: null },
+      { mes: 'Mar', receita: null, desp: null },
+      { mes: 'Abr', receita: null, desp: null },
+      { mes: 'Mai', receita: null, desp: null },
+      { mes: 'Jun', receita: null, desp: null },
+    ],
+  },
+
+  eletroposto: {
+    label:       'EletroPosto',
+    icon:        '⚡',
+    accounts:    [],
+    heroBg:      'linear-gradient(135deg, #001a33 0%, #000d1a 100%)',
+    heroBorder:  '#003366',
+    heroTag:     'ELETROPOSTO — FOZ DO IGUAÇU',
+    heroTagColor:'#004499',
+    aliquota:    0.06,
+    prolabPct:   0.50, // 50% Dr. João
+    prolabLabel: 'Distribuição (sua parte 50%):',
+    recLabel:    'Recargas DC 80kW',
+    recLabel2:   'Recargas AC 7kW',
+    status:      'pré-operacional',
+    statusLabel: '📅 Reunião ponto 14/04 — aguardando definição local',
+    // Projeções
+    receitaMinima: 10000,
+    receitaMaxima: 25000,
+    margemkWh:     1.35,    // R$/kWh (cobra 2,15; compra 0,80)
+    participacao:  0.50,    // sua parte
+    custosMensais: [
+      { nome: 'Energia (da Usina/Copel)',  valor: 4000 },
+      { nome: 'Aluguel espaço posto',      valor: 0,   obs: 'a negociar' },
+      { nome: 'Manutenção carregador DC',  valor: 350 },
+      { nome: 'Taxa gateway (~2,5%)',       valor: 400 },
+      { nome: 'Internet/conectividade',    valor: 150 },
+      { nome: 'Seguro equipamento',        valor: 300 },
+      { nome: 'Contador',                  valor: 300 },
+    ],
+    // Investimento e ROI (sua parte 50%)
+    investimentoTotal:  65000,  // R$60-70k sua parte, usando 65k como referência
+    receitaLiqProjetada: 7500,  // R$/mês sua parte (50% do lucro líquido R$10-15k)
+    paybackMeses:        Math.ceil(65000 / 7500), // ~9 meses após operar
+    roiAnual:            (7500 * 12 / 65000 * 100).toFixed(1) + '%', // ~138%/ano
+    capexPendente: [
+      { nome: 'Fase 1 — sua parte (50%)', valor: 65000, previsto: '2026-04' },
+    ],
+    socios: [
+      { nome: 'Dr. João Luiz (gestão)',    pct: 50 },
+      { nome: 'Maria Tereza (gestão)',     pct: 50 },
+      { nome: 'João Luiz (sócio formal)',  pct: 50 },
+      { nome: 'João Gabriel (sócio formal)',pct: 50 },
+    ],
+    historico: [
+      { mes: 'Abr', receita: null, desp: null },
+      { mes: 'Mai', receita: null, desp: null },
+      { mes: 'Jun', receita: null, desp: null },
+    ],
+  },
+
+  vending: {
+    label:       'Vending Machine',
+    icon:        '🥤',
+    accounts:    [],
+    heroBg:      'linear-gradient(135deg, #1a0030 0%, #0d0018 100%)',
+    heroBorder:  '#3a0060',
+    heroTag:     'VENDING MACHINE — CLÍNICA FOZ',
+    heroTagColor:'#5a0090',
+    aliquota:    0.06,  // Simples Nacional EI
+    regime:      'Simples Nacional (EI)',
+    cnae:        '4729-6/99',
+    prolabPct:   1.0,
+    prolabLabel: 'Lucro líquido (100% Dr. João):',
+    recLabel:    'Vendas (TVM Combo 10X)',
+    recLabel2:   'Outros',
+    status:      'pré-operacional',
+    statusLabel: '📦 Entrega máquina: maio/2026',
+    // Projeções
+    ticketMedio:       7.50,
+    margemMix:         1.24,  // 124%
+    receitaMinima:     8000,
+    receitaMaxima:     12000,
+    lucroLiqMinimo:    3500,
+    lucroLiqMaximo:    5500,
+    custosMensais: [
+      { nome: 'CMV (reposição estoque ~50%)', valor: 5000 },
+      { nome: 'Energia',                      valor: 175  },
+      { nome: 'Manutenção (provisão)',         valor: 225  },
+      { nome: 'Taxa Pix/cartão (~2%)',         valor: 200  },
+      { nome: 'Contador',                      valor: 300  },
+    ],
+    // Investimento e ROI
+    investimentoTotal:   20500,  // R$ 20.500 total
+    capexPago:           8495,   // já pago
+    receitaLiqProjetada: 4500,   // R$/mês lucro líquido médio
+    paybackMeses:        Math.ceil(20500 / 4500), // ~5 meses após operar
+    roiAnual:            (4500 * 12 / 20500 * 100).toFixed(1) + '%', // ~263%/ano
+    capexTotal: 20500,
+    capexPendente: [
+      { nome: 'Máquina TVM Combo 10X (restante)', valor: 8495,  previsto: '2026-05' },
+      { nome: 'Software de pagamento',             valor: 1500,  previsto: '2026-05' },
+      { nome: 'Estoque inicial',                   valor: 2000,  previsto: '2026-05' },
+    ],
+    historico: [
+      { mes: 'Mai', receita: null, desp: null },
+      { mes: 'Jun', receita: null, desp: null },
+      { mes: 'Jul', receita: null, desp: null },
     ],
   },
 };
@@ -5818,8 +7549,15 @@ let pjCurrentFilter = 'todos';
 
 function switchEmpresa(key, el) {
   pjEmpresaAtiva = key;
-  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+  document.querySelectorAll('#view-pj .tabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  // Mostrar dashboard vending ou PL genérico
+  const isVending = key === 'vending';
+  document.getElementById('pj-generic').style.display        = isVending ? 'none' : '';
+  document.getElementById('pj-vending-dashboard').style.display = isVending ? '' : 'none';
+
+  if (isVending) { vdInitSelect(); vdRender(); return; }
   renderPJ();
 }
 
@@ -5844,6 +7582,14 @@ function renderPJ() {
   // Atualiza pseudo-element via data attr
   hero.setAttribute('data-tag', emp.heroTag);
 
+  // Badge de status pré-operacional
+  let statusHtml = '';
+  if (emp.status && emp.status !== 'ativo') {
+    statusHtml = `<div style="margin-bottom:12px;padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;font-size:12px;color:var(--amber)">${emp.statusLabel}</div>`;
+  }
+  const statusEl = document.getElementById('pj-status-bar');
+  if (statusEl) statusEl.innerHTML = statusHtml;
+
   const txsPJ   = getPJTxDoMes();
   const receitas = txsPJ.filter(t => t.amount > 0);
   const despesas = txsPJ.filter(t => t.amount < 0);
@@ -5856,7 +7602,13 @@ function renderPJ() {
   const margem    = totalRec > 0 ? (lucro / totalRec * 100) : 0;
 
   // Receitas por subcategoria
+  // Labels dinâmicos por empresa
   const honKeyword = pjEmpresaAtiva === 'consultorio' ? 'HONORARIO' : 'GERACAO';
+  // Atualizar labels DRE
+  const dreHonLabel = document.getElementById('dre-honorarios-label');
+  const dreOutLabel = document.getElementById('dre-outros-rec-label');
+  if (dreHonLabel) dreHonLabel.textContent = emp.recLabel || 'Receita principal';
+  if (dreOutLabel) dreOutLabel.textContent = emp.recLabel2 || 'Outras receitas';
   const honorarios  = receitas.filter(t => t.desc.toUpperCase().includes(honKeyword) || t.category === 'Receita Energia');
   const outrosRec   = receitas.filter(t => !honorarios.includes(t));
   const totalHon    = honorarios.reduce((s,t) => s + t.amount, 0);
@@ -5943,6 +7695,7 @@ function renderPJ() {
     </div>`).join('');
 
   renderPJTxList(txsPJ);
+  renderPJRoi(emp);
 }
 
 function pjFilter(tipo, el) {
@@ -5952,6 +7705,69 @@ function pjFilter(tipo, el) {
   });
   el.classList.add('active');
   renderPJTxList(getPJTxDoMes());
+}
+
+function renderPJRoi(emp) {
+  const panel  = document.getElementById('pj-roi-panel');
+  const content = document.getElementById('pj-roi-content');
+  if (!panel || !content) return;
+
+  // Só mostra se tiver dados de investimento
+  if (!emp.investimentoTotal) { panel.style.display = 'none'; return; }
+  panel.style.display = '';
+
+  const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:0});
+  const inv  = emp.investimentoTotal;
+  const invComCapex = emp.investimentoTotal_com_capex || inv;
+  const lucroMes = emp.lucroProjetado || emp.receitaLiqProjetada || 0;
+  const payback = emp.paybackMeses || (lucroMes > 0 ? Math.ceil(invComCapex / lucroMes) : null);
+  const roiAnual = emp.roiAnual || (lucroMes > 0 ? (lucroMes * 12 / invComCapex * 100).toFixed(1) + '%' : '—');
+  const capexPago = emp.capexPago || inv;
+  const capexPend = (emp.capexPendente || []).reduce((s,c) => s + (c.valor||0), 0);
+
+  // Progresso de capex
+  const pctPago = Math.min(100, capexPago / invComCapex * 100);
+
+  content.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;">
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Investimento total</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)">${fmt(invComCapex)}</div>
+        ${invComCapex !== inv ? `<div style="font-size:10px;color:var(--text3);margin-top:3px">(${fmt(inv)} + ${fmt(invComCapex-inv)} capex)</div>` : ''}
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Lucro líquido/mês</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)">${fmt(lucroMes)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">projetado</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Payback</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--amber)">${payback ? payback + ' meses' : '—'}</div>
+        ${payback ? `<div style="font-size:10px;color:var(--text3);margin-top:3px">~${(payback/12).toFixed(1)} anos</div>` : ''}
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">ROI anual</div>
+        <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--blue)">${roiAnual}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">sobre investimento</div>
+      </div>
+    </div>
+
+    <!-- Progresso de capex -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+        <span style="color:var(--text3)">Capital aportado</span>
+        <span style="font-family:var(--mono)">${fmt(capexPago)} <span style="color:var(--text3)">de ${fmt(invComCapex)}</span></span>
+      </div>
+      <div style="height:8px;background:var(--surface2);border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:${pctPago.toFixed(0)}%;background:var(--green);border-radius:6px;transition:width .4s"></div>
+      </div>
+    </div>
+
+    ${capexPend > 0 ? `
+    <div style="padding:8px 12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:12px;">
+      <span style="color:var(--amber)">⏳ Capex pendente:</span>
+      ${(emp.capexPendente||[]).map(c => `<span style="margin-left:10px;color:var(--text2)">${c.nome}: <strong style="font-family:var(--mono)">${fmt(c.valor)}</strong>${c.previsto ? ` (${c.previsto})`:''}</span>`).join('')}
+    </div>` : ''}`;
 }
 
 function renderPJTxList(txsPJ) {
