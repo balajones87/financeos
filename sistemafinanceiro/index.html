@@ -3622,13 +3622,31 @@ body {
           <input id="edit-tx-date" type="date" class="form-input" style="width:100%">
         </div>
         <div>
-          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Valor (R$)</label>
-          <input id="edit-tx-amount" type="number" step="0.01" class="form-input" style="width:100%">
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Valor (R$, positivo)</label>
+          <input id="edit-tx-amount" type="number" step="0.01" min="0" class="form-input" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:8px">Tipo</label>
+        <div style="display:flex;gap:8px">
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface2)">
+            <input type="radio" name="edit-tipo" id="edit-tipo-debit" value="debit" style="accent-color:var(--red)"> <span style="color:var(--red)">↓ Débito (saída)</span>
+          </label>
+          <label style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface2)">
+            <input type="radio" name="edit-tipo" id="edit-tipo-credit" value="credit" style="accent-color:var(--green)"> <span style="color:var(--green)">↑ Crédito (entrada)</span>
+          </label>
         </div>
       </div>
       <div>
         <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Conta</label>
         <select id="edit-tx-account" class="form-input" style="width:100%"></select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <input type="checkbox" id="edit-tx-card" style="accent-color:var(--purple);width:16px;height:16px">
+        <div>
+          <div style="font-size:12px">💳 Transação de cartão de crédito</div>
+          <div style="font-size:10px;color:var(--text3)">Marque para ocultar do extrato bancário</div>
+        </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:4px">
         <button class="btn btn-ghost" style="flex:1" onclick="closeEditTx()">Cancelar</button>
@@ -5566,18 +5584,29 @@ function parseDespezzasCSV(text) {
 // ── Mapeamento de categoria Despezzas → nosso padrão ─────────
 function mapDespezzasCategory(cat, sub) {
   if (!cat || cat === 'null') return null;
-  // Cat já no nosso padrão — apenas capitaliza primeiro char e adiciona subcategoria
-  const catClean = cat.charAt(0).toUpperCase() + cat.slice(1).trim();
-  const subClean = sub ? sub.charAt(0).toUpperCase() + sub.slice(1).trim() : '';
+  const catLow = cat.toLowerCase().trim();
+  const subLow = (sub || '').toLowerCase().trim();
 
-  // Verificar se cat existe em CATEGORIES_FULL
+  // Buscar categoria no CATEGORIES_FULL (case-insensitive, sem acentos)
+  const normalize = s => s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .trim();
+
   const found = CATEGORIES_FULL?.find(c =>
-    c.name.toLowerCase() === cat.toLowerCase() ||
-    c.id === cat.replace(/\s+/g,'_').toLowerCase()
+    normalize(c.name) === normalize(catLow) ||
+    c.id === catLow.replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')
   );
-  if (!found && !subClean) return catClean;
-  if (!subClean || subClean === 'null') return found ? found.name : catClean;
-  return `${found ? found.name : catClean} > ${subClean}`;
+
+  const catName = found ? found.name : (cat.charAt(0).toUpperCase() + cat.slice(1).trim());
+
+  if (!subLow || subLow === 'null') return catName;
+
+  // Buscar subcategoria (match parcial, sem acentos)
+  const subMatch = found?.subs?.find(s => normalize(s) === normalize(subLow))
+    || (subLow.length > 3 ? found?.subs?.find(s => normalize(s).includes(normalize(subLow))) : null);
+
+  const subName = subMatch || (sub.charAt(0).toUpperCase() + sub.slice(1).trim());
+  return `${catName} > ${subName}`;
 }
 
 // ── Sistema de aprendizado por padrão de descrição ───────────
@@ -5698,34 +5727,59 @@ async function importConfirm() {
       desc:        tx.desc,
       amount:      tx.amount,
       account:     contaOverride || tx.account || 'outros',
-      txType:      tx.amount > 0 ? 'credit' : 'debit',
+      txType:      tx.txType || (tx.amount > 0 ? 'credit' : 'debit'),
       category:    tx.category || null,
-      origin:      tx.origin || 'pending',
+      // Categorias vindas do Despezzas → tratadas como CONFIRMADAS (não pending)
+      origin:      tx.category ? 'import' : 'pending',
       cardTx:      tx.cardTx || false,
       external_id: tx.external_id,
     }));
 
-    // Aprender com categorias do arquivo
+    window.TRANSACTIONS = [...normalized, ...window.TRANSACTIONS];
+
+    // Salvar cache LOCAL imediatamente — garante que categorias sobrevivem a reloads
+    if (window.saveCatState) window.saveCatState();
+
+    // Também salvar entradas individuais no cache por external_id
+    if (window.saveCatEntry) {
+      normalized.forEach(tx => {
+        if (tx.category) {
+          window.saveCatEntry(tx.external_id, tx.id, tx.category, tx.txType, tx.origin);
+        }
+      });
+    }
+
+    // Aprender com categorias do arquivo para futuras importações
     normalized.forEach(tx => {
       if (tx.category) learnFromAssignment(tx, tx.category);
     });
 
-    window.TRANSACTIONS = [...normalized, ...window.TRANSACTIONS];
-    if (window.saveBatchTransactions) await window.saveBatchTransactions(normalized);
+    // Salvar no Supabase (em background — não bloqueia)
+    if (window.saveBatchTransactions) {
+      window.saveBatchTransactions(normalized).catch(e =>
+        console.warn('[Import] Supabase batch falhou, cache local preservado:', e.message)
+      );
+    }
+
+    const catCount = normalized.filter(t => t.category).length;
+    const pendCount = normalized.filter(t => !t.category).length;
 
     importHistorico.unshift({
       ts:      new Date().toISOString(),
       total:   importParsedTxs.length,
       novas:   toImport.length,
-      autocat: toImport.filter(t=>t.origin!=='pending').length,
+      autocat: catCount,
       arquivo: document.getElementById('import-file-nome').textContent,
     });
     importHistorico = importHistorico.slice(0,20);
     localStorage.setItem('financeos_import_hist', JSON.stringify(importHistorico));
 
-    showToast('✓', `${toImport.length} transações importadas!`);
+    showToast('✓',
+      `${toImport.length} importadas — ${catCount} já categorizadas, ${pendCount} pendentes`
+    );
     renderDashboard();
     if (typeof renderTransactions === 'function') renderTransactions();
+    updatePendingBadge();
     importReset();
     importRenderHistorico();
   } catch(err) {
@@ -6282,7 +6336,15 @@ function openEditTx(txId) {
 
   document.getElementById('edit-tx-desc').value   = tx.desc || '';
   document.getElementById('edit-tx-date').value   = tx.date || '';
-  document.getElementById('edit-tx-amount').value = tx.amount || 0;
+  document.getElementById('edit-tx-amount').value = Math.abs(tx.amount) || 0;
+
+  // Tipo débito/crédito
+  const isCredit = tx.amount > 0;
+  document.getElementById('edit-tipo-debit').checked  = !isCredit;
+  document.getElementById('edit-tipo-credit').checked = isCredit;
+
+  // Flag cartão
+  document.getElementById('edit-tx-card').checked = !!tx.cardTx;
 
   // Popular select de contas
   const sel = document.getElementById('edit-tx-account');
@@ -6303,19 +6365,23 @@ function saveEditTx() {
   const tx = TRANSACTIONS.find(t => String(t.id) === String(editTxId));
   if (!tx) return;
 
+  const tipo   = document.querySelector('input[name="edit-tipo"]:checked')?.value || 'debit';
+  const absVal = Math.abs(parseFloat(document.getElementById('edit-tx-amount').value) || Math.abs(tx.amount));
+
   tx.desc    = document.getElementById('edit-tx-desc').value.trim()   || tx.desc;
   tx.date    = document.getElementById('edit-tx-date').value           || tx.date;
-  tx.amount  = parseFloat(document.getElementById('edit-tx-amount').value) || tx.amount;
+  tx.amount  = tipo === 'credit' ? absVal : -absVal; // aplica sinal correto
   tx.account = document.getElementById('edit-tx-account').value        || tx.account;
-  tx.txType  = tx.amount > 0 ? 'credit' : 'debit';
+  tx.cardTx  = document.getElementById('edit-tx-card').checked;
+  tx.txType  = tipo;
 
   closeEditTx();
+  if (window.saveCatState) window.saveCatState();
   renderTransactions();
   renderDashboard();
-  if (window.saveCatState) window.saveCatState();
+  updatePendingBadge();
   showToast('✓', 'Transação atualizada');
 
-  // Persistir no Supabase
   if (window.persistChange) {
     window.persistChange('transaction_category', {
       txId: tx.id, category: tx.category, origin: tx.origin
