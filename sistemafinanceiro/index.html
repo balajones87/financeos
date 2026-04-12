@@ -2063,17 +2063,22 @@ body {
           <option value="nubank-pf">Nubank PF</option>
           <option value="nubank-pj">Nubank PJ</option>
           <option value="itau">Personalité</option>
+          <option value="unicred">Unicred</option>
+          <option value="mercadopago">Mercado Pago</option>
           <option value="carteira">Carteira</option>
         </select>
         <select class="filter-select" onchange="filterByCategory(this.value)" id="cat-filter">
           <option value="">Todas as categorias</option>
           <option value="Alimentação">Alimentação</option>
-          <option value="Saúde">Saúde</option>
+          <option value="Saúde e bem-estar">Saúde</option>
           <option value="Moradia">Moradia</option>
           <option value="Transporte">Transporte</option>
-          <option value="Lazer">Lazer</option>
+          <option value="Compras e lazer">Compras e lazer</option>
           <option value="Renda">Renda</option>
-          <option value="Serviços">Serviços</option>
+          <option value="Empréstimos">Empréstimos</option>
+          <option value="Investimentos">Investimentos</option>
+          <option value="Consórcios">Consórcios</option>
+          <option value="Imóveis">Imóveis</option>
           <option value="Outros">Outros</option>
         </select>
         <div class="filter-chip active" onclick="toggleChip(this,'all')">Todos</div>
@@ -2081,6 +2086,7 @@ body {
         <div class="filter-chip" onclick="toggleChip(this,'credito')">↑ Créditos</div>
         <div class="filter-chip" onclick="toggleChip(this,'debito')">↓ Débitos</div>
         <div class="filter-chip" onclick="toggleChip(this,'transfer')" style="border-color:var(--blue-dim);color:var(--blue)">⇄ Transferências</div>
+        <div class="filter-chip" id="chip-cartao" onclick="toggleCartao(this)" style="border-color:rgba(130,10,209,.4);color:#a040e0">💳 Cartões</div>
       </div>
 
       <div class="panel">
@@ -3932,7 +3938,7 @@ function detectTransferType(tx) {
 
 var TRANSACTIONS = [];
 let WALLET_TX = [];
-let currentFilter = { text: '', account: '', category: '', type: 'all' };
+let currentFilter = { text: '', account: '', category: '', type: 'all', showCard: false };
 
 // ============================================================
 // AUTO-CATEGORIZATION ENGINE
@@ -4352,7 +4358,10 @@ function renderTransactions() {
   const list = document.getElementById('full-tx-list');
   let txs = [...TRANSACTIONS];
 
-  if (currentFilter.text) txs = txs.filter(t => t.desc.toLowerCase().includes(currentFilter.text.toLowerCase()));
+  // Ocultar transações de cartão por padrão — aparecem só no módulo Cartões
+  if (!currentFilter.showCard) txs = txs.filter(t => !t.cardTx);
+
+  if (currentFilter.text) txs = txs.filter(t => (t.desc||'').toLowerCase().includes(currentFilter.text.toLowerCase()));
   if (currentFilter.account) txs = txs.filter(t => t.account === currentFilter.account);
   if (currentFilter.category) txs = txs.filter(t => t.category === currentFilter.category);
 
@@ -5762,7 +5771,12 @@ function populateCatSelects() {
 }
 
 function updatePendingBadge() {
-  const pending = TRANSACTIONS.filter(t => !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
+  // Contar só transações bancárias pendentes — cartões ficam no módulo Cartões
+  const pending = TRANSACTIONS.filter(t =>
+    !t.cardTx &&
+    !isInternalTransfer(t) &&
+    (!t.category || t.origin === 'pending')
+  ).length;
   const badge = document.getElementById('pending-badge');
   badge.textContent = pending;
   badge.style.display = pending > 0 ? '' : 'none';
@@ -7827,9 +7841,15 @@ function filterByCategory(val) {
 }
 
 function toggleChip(el, type) {
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.filter-chip:not(#chip-cartao)').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   currentFilter.type = type;
+  renderTransactions();
+}
+
+function toggleCartao(el) {
+  currentFilter.showCard = !currentFilter.showCard;
+  el.classList.toggle('active', currentFilter.showCard);
   renderTransactions();
 }
 
