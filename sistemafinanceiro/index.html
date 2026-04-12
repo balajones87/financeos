@@ -4906,7 +4906,34 @@ function renderRules() {
 // ============================================================
 
 // Estado global de cartões
-var CREDIT_CARDS = []; // populado pelo pluggy-sync ao fazer syncAll
+// Cartões de crédito — definição manual (sem Pluggy)
+// despezzasKey: nome exato como aparece na coluna "Cartão de crédito" do Despezzas
+var CREDIT_CARDS = [
+  { id:'platinum',    name:'Platinum',                    despezzasKey:'platinum',
+    bank:'Nubank PF',    color:'#820ad1', lastFour:'6254',
+    creditLimit:2850,    dueDay:10, closingDay:3 },
+
+  { id:'azul-itau',   name:'Azul Itaú Visa Infinite',     despezzasKey:'AZUL ITAU VISA INFINITE',
+    bank:'Itaú Personnalité', color:'#f97316', lastFour:'4752',
+    creditLimit:5000,   dueDay:22, closingDay:15 },
+
+  { id:'latam-itau',  name:'Latam Pass Itaú Mastercard Black', despezzasKey:'LATAM PASS ITAU MASTERCARD BLACK',
+    bank:'Itaú Personnalité', color:'#dc2626', lastFour:'1844',
+    creditLimit:54030,  dueDay:22, closingDay:15 },
+
+  { id:'company',     name:'Nubank Empresas',             despezzasKey:'company',
+    bank:'Nubank PJ',    color:'#5a0090', lastFour:'8302',
+    creditLimit:11900,  dueDay:10, closingDay:3 },
+
+  { id:'visa-unicred',name:'Cartão Visa Infinite',        despezzasKey:'CARTÃO VISA INFINITE',
+    bank:'Unicred',      color:'#059669', lastFour:'4308',
+    creditLimit:50000,  dueDay:15, closingDay:8 },
+
+  { id:'mercadopago', name:'Mercado Pago',                despezzasKey:'Mercado Pago',
+    bank:'Mercado Pago', color:'#0ea5e9', lastFour:'1082',
+    creditLimit:27500,  dueDay:20, closingDay:13 },
+];
+
 var cardsFilterMes = new Date().toISOString().slice(0,7); // 'YYYY-MM'
 
 // Overrides manuais de fatura — persistidos no localStorage
@@ -4915,11 +4942,13 @@ function cardsGetOverrides() {
   try { return JSON.parse(localStorage.getItem(CARDS_OVERRIDE_KEY) || '{}'); }
   catch { return {}; }
 }
-function cardsSetOverride(pluggyAccountId, value) {
-  const ov = cardsGetOverrides();
-  if (value === null) delete ov[pluggyAccountId];
-  else ov[pluggyAccountId] = value;
-  localStorage.setItem(CARDS_OVERRIDE_KEY, JSON.stringify(ov));
+function cardsSetOverride(cardId, value) {
+  try {
+    const ov = cardsGetOverrides();
+    if (value === null) delete ov[cardId];
+    else ov[cardId] = value;
+    localStorage.setItem(CARDS_OVERRIDE_KEY, JSON.stringify(ov));
+  } catch(e) {}
 }
 function cardsGetFatura(card) {
   const ov = cardsGetOverrides();
@@ -4958,78 +4987,69 @@ function renderCartoes() {
 function renderCartoesVisuais() {
   const fmt = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
   const grid = document.getElementById('cards-visuais');
+  const overrides = cardsGetOverrides();
 
-  if (!CREDIT_CARDS.length) {
-    grid.innerHTML = `<div class="panel" style="padding:40px;text-align:center;color:var(--text3);grid-column:1/-1">
-      Nenhum cartão encontrado. Clique em <strong>Sincronizar</strong> para carregar os dados da Pluggy.
-    </div>`;
-    document.getElementById('cards-total-fatura').textContent    = fmt(0);
-    document.getElementById('cards-total-disponivel').textContent = fmt(0);
-    document.getElementById('cards-uso-pct').textContent          = '0%';
-    return;
+  // Calcular fatura de cada cartão a partir das transações (cardKey = despezzasKey)
+  function getFatura(card) {
+    if (overrides[card.id] != null) return overrides[card.id];
+    return TRANSACTIONS.filter(t =>
+      t.cardTx === true &&
+      t.cardKey === card.despezzasKey &&
+      t.amount < 0 &&
+      t.date?.slice(0,7) === cardsFilterMes
+    ).reduce((s,t) => s + Math.abs(t.amount), 0);
   }
 
-  // Stats totais — respeita overrides manuais
-  const totalFatura     = CREDIT_CARDS.reduce((s,c) => s + cardsGetFatura(c), 0);
+  // Totais
+  const totalFatura     = CREDIT_CARDS.reduce((s,c) => s + getFatura(c), 0);
   const totalLimite     = CREDIT_CARDS.reduce((s,c) => s + (c.creditLimit||0), 0);
-  const totalDisponivel = CREDIT_CARDS.reduce((s,c) => s + (c.availableLimit||0), 0);
+  const totalDisponivel = totalLimite - totalFatura;
   const usoPct          = totalLimite > 0 ? (totalFatura/totalLimite*100).toFixed(1) : 0;
+
   document.getElementById('cards-total-fatura').textContent     = fmt(totalFatura);
-  document.getElementById('cards-total-disponivel').textContent = fmt(totalDisponivel);
+  document.getElementById('cards-total-disponivel').textContent = fmt(Math.max(0,totalDisponivel));
   const usoPctEl = document.getElementById('cards-uso-pct');
   usoPctEl.textContent = usoPct + '%';
   usoPctEl.style.color = usoPct > 80 ? 'var(--red)' : usoPct > 50 ? 'var(--amber)' : 'var(--green)';
 
   // Atualiza select de filtro
   const sel = document.getElementById('cards-filter-conta');
-  const curVal = sel.value;
-  sel.innerHTML = '<option value="">Todos os cartões</option>' +
-    CREDIT_CARDS.map(c => `<option value="${c.localId}">${c.name}</option>`).join('');
-  if (curVal) sel.value = curVal;
+  if (sel) {
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="">Todos os cartões</option>' +
+      CREDIT_CARDS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    if (curVal) sel.value = curVal;
+  }
 
   // Renderiza cards
   grid.innerHTML = CREDIT_CARDS.map(card => {
-    const fatura    = cardsGetFatura(card);
-    const hasOverride = cardsGetOverrides()[card.pluggyAccountId] != null;
-    const limite    = card.creditLimit || 0;
-    const disponivel = card.availableLimit ? card.availableLimit - (fatura - (card.balance||0)) : Math.max(0, limite - fatura);
-    const pct       = limite > 0 ? Math.min(100, fatura/limite*100) : 0;
-    const barColor  = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
-    const cssClass  = cardsCssClass(card.localId);
-
-    // Aviso de fatura suspeita (> 70% do limite pode indicar dado do Pluggy incorreto)
-    const faturaAlta = limite > 0 && fatura/limite > 0.7;
+    const fatura      = getFatura(card);
+    const hasOverride = overrides[card.id] != null;
+    const limite      = card.creditLimit || 0;
+    const disponivel  = Math.max(0, limite - fatura);
+    const pct         = limite > 0 ? Math.min(100, fatura/limite*100).toFixed(1) : 0;
+    const barColor    = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
 
     // Vencimento
-    let vencHtml = '';
-    if (card.dueDate) {
-      const due     = new Date(card.dueDate + 'T12:00:00');
-      const today   = new Date();
-      const diffDays = Math.round((due - today) / 86400000);
-      const dueFmt  = due.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
-      const vencClass = diffDays < 0 ? 'urgent' : diffDays <= 5 ? 'urgent' : diffDays <= 10 ? 'soon' : 'ok';
-      const vencTxt   = diffDays < 0 ? `Venceu há ${Math.abs(diffDays)}d` : diffDays === 0 ? 'Vence hoje!' : `Vence em ${diffDays}d (${dueFmt})`;
-      vencHtml = `<span class="venc-badge ${vencClass}">📅 ${vencTxt}</span>`;
-    }
+    const hoje = new Date();
+    const dueDay = card.dueDay || 10;
+    const dueDate = new Date(hoje.getFullYear(), hoje.getMonth(), dueDay);
+    if (dueDate < hoje) dueDate.setMonth(dueDate.getMonth() + 1);
+    const diffDays = Math.round((dueDate - hoje) / 86400000);
+    const vencClass = diffDays <= 3 ? 'urgent' : diffDays <= 7 ? 'soon' : 'ok';
+    const vencTxt   = diffDays < 0 ? `Venceu há ${Math.abs(diffDays)}d`
+                    : diffDays === 0 ? 'Vence hoje!'
+                    : `Vence em ${diffDays}d`;
 
-    // Gastos do mês atual neste cartão — apenas transações marcadas como cartão de crédito
-    // Se múltiplos cartões do mesmo banco, não conseguimos distinguir sem pluggyAccountId na tx
-    // então mostramos o total do banco dividido pelo nº de cartões desse banco
-    const cardsDoMesmoBanco = CREDIT_CARDS.filter(cx => cx.localId === card.localId);
-    const gastosContaMes = TRANSACTIONS.filter(t =>
-      t.account === card.localId &&
-      t.cardTx === true &&
-      t.amount < 0 &&
-      t.date?.slice(0,7) === cardsFilterMes &&
-      !t.txType?.includes('transfer')
-    ).reduce((s,t) => s + Math.abs(t.amount), 0);
-    const gastosCardMes = cardsDoMesmoBanco.length > 1
-      ? gastosContaMes / cardsDoMesmoBanco.length
-      : gastosContaMes;
+    // Transações do mês neste cartão
+    const gastosNr = TRANSACTIONS.filter(t =>
+      t.cardTx === true && t.cardKey === card.despezzasKey &&
+      t.date?.slice(0,7) === cardsFilterMes
+    ).length;
 
     return `
     <div class="panel" style="padding:16px 18px;">
-      <div class="card-visual ${cssClass}">
+      <div class="card-visual" style="background:linear-gradient(135deg,${card.color},${card.color}cc)">
         <div class="card-chip"></div>
         <div class="card-number">•••• •••• •••• ${card.lastFour||'????'}</div>
         <div class="card-bottom">
@@ -5037,37 +5057,37 @@ function renderCartoesVisuais() {
           <div class="card-limit">Limite Total<span>${fmt(limite)}</span></div>
         </div>
       </div>
-      <div class="fatura-bar">
-        <div class="fatura-fill" style="width:${pct}%;background:linear-gradient(90deg,${barColor},${barColor})"></div>
+      <div class="fatura-bar" style="margin:10px 0 4px">
+        <div class="fatura-fill" style="width:${pct}%;background:${barColor}"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px">
           Fatura atual:
-          <strong style="color:${faturaAlta&&!hasOverride?'var(--red)':'var(--amber)'};font-family:var(--mono)">${fmt(fatura)}</strong>
+          <strong style="color:var(--amber);font-family:var(--mono)">${fmt(fatura)}</strong>
           ${hasOverride ? '<span style="font-size:10px;color:var(--blue);background:rgba(77,159,255,.12);padding:1px 6px;border-radius:10px">✏ manual</span>' : ''}
-          ${faturaAlta && !hasOverride ? '<span style="font-size:10px;color:var(--red)">⚠ verificar</span>' : ''}
-          <button onclick="cardsEditFatura('${card.pluggyAccountId}','${card.name}',${fatura},${hasOverride})"
-            style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;cursor:pointer;color:var(--text3);font-size:10px">
-            ${hasOverride ? '🔄 corrigir' : '✏ ajustar'}
-          </button>
         </span>
-        ${vencHtml}
+        <span class="venc-badge ${vencClass}">📅 ${vencTxt}</span>
       </div>
-      <div class="card-info-row">
-        <span class="card-info-label">Disponível</span>
-        <span class="card-info-val" style="color:var(--green)">${fmt(disponivel)}</span>
+      <div style="font-size:12px;color:var(--text3);display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;justify-content:space-between">
+          <span>Disponível</span><strong style="color:var(--green)">${fmt(disponivel)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Uso do limite</span><span style="color:${barColor}">${pct}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Gastos em ${cardsFilterMes.slice(5)}/</span>
+          <span style="color:var(--red)">${fmt(fatura)} <span style="color:var(--text3);font-size:10px">(${gastosNr} tx)</span></span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span>Banco</span><span>${card.bank}</span>
+        </div>
       </div>
-      <div class="card-info-row">
-        <span class="card-info-label">Uso do limite</span>
-        <span class="card-info-val" style="color:${barColor}">${pct.toFixed(1)}%</span>
-      </div>
-      <div class="card-info-row">
-        <span class="card-info-label">Gastos em ${cardsFilterMes.slice(5)}/</span>
-        <span class="card-info-val" style="color:var(--red)">${fmt(gastosCardMes)}</span>
-      </div>
-      <div class="card-info-row">
-        <span class="card-info-label">Banco</span>
-        <span class="card-info-val" style="color:var(--text2)">${cardsBankName(card.localId)}</span>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button onclick="cardsEditFatura('${card.id}','${card.name}',${fatura},${hasOverride})"
+          style="flex:1;background:none;border:1px solid var(--border);border-radius:6px;padding:5px;cursor:pointer;color:var(--text3);font-size:11px">
+          ${hasOverride ? '🔄 Corrigir fatura' : '✏ Ajustar fatura'}
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -5163,7 +5183,7 @@ Digite o valor correto (ou deixe vazio para ${hasOverride ? 'remover o ajuste ma
   if (input.trim() === '' && hasOverride) {
     // Remove override
     cardsSetOverride(pluggyAccountId, null);
-    showToast('✓', 'Ajuste manual removido — usando valor do Pluggy');
+    showToast('✓', 'Ajuste manual removido — usando cálculo das transações');
   } else {
     const valor = parseFloat(input.replace(',','.'));
     if (isNaN(valor) || valor < 0) return alert('Valor inválido.');
@@ -5610,6 +5630,7 @@ async function parseDespezzasXLSX(file) {
       category:    catFull || null,
       origin:      catFull ? 'import' : 'pending',
       cardTx:      !!(cartaoRaw && cartaoRaw !== 'null'),
+      cardKey:     (cartaoRaw && cartaoRaw !== 'null') ? cartaoRaw : null, // nome exato do cartão
       external_id: `dsp-${date}-${Math.round(amount*100)}-${titulo.slice(0,10).replace(/\s/g,'')}`,
       _contaName:  contaName,
       _sub:        sub,
