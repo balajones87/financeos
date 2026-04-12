@@ -82,6 +82,7 @@ async function loadAllData() {
     console.log('[Supabase] Dados carregados com sucesso');
 
     // 3. Atualiza a UI
+    if (window.autoCategorizePending) window.autoCategorizePending();
     if (window.renderDashboard)     window.renderDashboard();
     if (window.renderDashboardTx)  window.renderDashboardTx();
     if (window.renderCatBars)      window.renderCatBars();
@@ -206,7 +207,8 @@ async function loadTransactions(limit = 500) {
     desc:        t.description,
     amount:      parseFloat(t.amount),
     account:     t.accounts?.local_id || '',
-    category:    t.categories?.name || null,
+    // Migra nomes antigos de categorias para o novo padrão
+    category:    window.migrateCatName ? window.migrateCatName(t.categories?.name || null) : (t.categories?.name || null),
     txType:      t.tx_type,
     origin:      t.cat_origin,
     cardTx:      t.is_card_tx,
