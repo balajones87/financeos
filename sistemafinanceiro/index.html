@@ -3738,7 +3738,8 @@ const CATEGORIES_FULL = [
   // ── Investimentos ────────────────────────────────────────
   { id: 'investimentos', name: 'Investimentos', icon: '📈', color: '#84cc16', type: 'expense', subs: [
     'Ações e fundos', 'Renda fixa', 'Criptomoedas',
-    'Proventos de investimentos', 'PGBL',
+    'Proventos de investimentos', 'PGBL', 'Imóveis',
+    'Vending Machine', 'Energia solar', 'Aporte empresa',
   ]},
 
   // ── Poupança ─────────────────────────────────────────────
@@ -6361,15 +6362,53 @@ function deleteTx(txId) {
   showToast('✓', 'Transação excluída');
 }
 
+const CUSTOM_CATS_KEY = 'financeos_custom_cats_v1';
+
+function loadCustomCategories() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_CATS_KEY) || '{}');
+    Object.entries(saved).forEach(([catName, subs]) => {
+      const cat = CATEGORIES_FULL.find(c => c.name === catName);
+      if (cat) subs.forEach(sub => { if (!cat.subs.includes(sub)) cat.subs.push(sub); });
+    });
+  } catch(e) {}
+}
+
+function saveCustomCategory(catName, sub) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_CATS_KEY) || '{}');
+    if (!saved[catName]) saved[catName] = [];
+    if (!saved[catName].includes(sub)) saved[catName].push(sub);
+    localStorage.setItem(CUSTOM_CATS_KEY, JSON.stringify(saved));
+  } catch(e) {}
+}
+
 function addSubcategoria(catName, el) {
-  const nome = prompt(`Nova subcategoria em "${catName}":`);
-  if (!nome || !nome.trim()) return;
-  const sub = nome.trim();
-  // Adicionar na CATEGORIES_FULL
+  event.stopPropagation();
+  const container = el.parentElement;
+  if (container.querySelector('.sub-input-row')) return;
+  const row = document.createElement('div');
+  row.className = 'sub-input-row';
+  row.style.cssText = 'display:flex;gap:4px;padding:4px 10px 8px;';
+  row.innerHTML = `
+    <input class="cat-picker-search" type="text" placeholder="Nome da subcategoria..."
+      style="flex:1;margin:0;font-size:12px"
+      onclick="event.stopPropagation()"
+      onkeydown="if(event.key==='Enter')confirmSubcategoria(this,'${catName}');if(event.key==='Escape'){this.closest('.sub-input-row').remove()}">
+    <span onclick="event.stopPropagation();confirmSubcategoria(this.previousElementSibling,'${catName}')"
+      style="cursor:pointer;padding:4px 10px;background:var(--green);color:#000;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap">OK</span>`;
+  container.insertBefore(row, el);
+  setTimeout(() => row.querySelector('input').focus(), 50);
+}
+
+function confirmSubcategoria(input, catName) {
+  const sub = (input.value || '').trim();
+  if (!sub) return;
   const cat = CATEGORIES_FULL.find(c => c.name === catName);
   if (cat && !cat.subs.includes(sub)) cat.subs.push(sub);
-  // Aplicar direto
+  saveCustomCategory(catName, sub);
   assignCategory(`${catName} > ${sub}`);
+  showToast('✓', `"${sub}" criado e salvo em ${catName}`);
 }
 
 function closePicker() {
@@ -8435,6 +8474,9 @@ function showToast(icon, msg) {
 // ============================================================
 
 function init() {
+  // Carregar subcategorias customizadas do localStorage
+  loadCustomCategories();
+
   // Expõe funções globalmente para supabase-client.js e pluggy-sync.js
   window.renderDashboard     = renderDashboard;
   window.renderDashboardTx   = renderDashboardTx;
