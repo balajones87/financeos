@@ -454,6 +454,7 @@ body {
 .cat-transfer-ext  { background: rgba(255,176,32,0.13); color: var(--amber); }
 
 /* TRANSFER ROW — visualmente neutro */
+.tx-table-row:hover .tx-actions { opacity: 1 !important; }
 .tx-table-row.is-transfer { opacity: 0.72; }
 .tx-table-row.is-transfer:hover { opacity: 1; }
 .transfer-pill {
@@ -3602,6 +3603,40 @@ body {
 <!-- CAT PICKER -->
 <div class="cat-picker" id="cat-picker" style="position:fixed;"></div>
 
+<!-- MODAL EDITAR TRANSAÇÃO -->
+<div class="modal-overlay" id="modal-edit-tx" onclick="closeEditTx()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:none;align-items:center;justify-content:center;">
+  <div onclick="event.stopPropagation()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:440px;max-width:95vw;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:600">Editar Transação</div>
+      <span onclick="closeEditTx()" style="cursor:pointer;font-size:18px;color:var(--text3);padding:4px 8px">✕</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Descrição</label>
+        <input id="edit-tx-desc" class="form-input" style="width:100%">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Data</label>
+          <input id="edit-tx-date" type="date" class="form-input" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Valor (R$)</label>
+          <input id="edit-tx-amount" type="number" step="0.01" class="form-input" style="width:100%">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px">Conta</label>
+        <select id="edit-tx-account" class="form-input" style="width:100%"></select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeEditTx()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveEditTx()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 // ============================================================
@@ -4634,6 +4669,10 @@ function renderTransactions() {
       <div class="date-col">${formatDate(tx.date)}</div>
       <div>${isInternal ? `<span class="ai-badge rule">⚡ AUTO</span>` : originBadge(tx.origin)}</div>
       <div class="amount-col" style="text-align:right;color:${amountColor}">${formatBRL(tx.amount)}</div>
+      <div onclick="event.stopPropagation()" style="display:flex;gap:4px;opacity:0;transition:opacity .15s" class="tx-actions">
+        <div class="btn-icon" title="Editar" onclick="openEditTx('${tx.id}')">✏</div>
+        <div class="btn-icon danger" title="Excluir" onclick="deleteTx('${tx.id}')">🗑</div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -6174,6 +6213,96 @@ function addCategoriaPrincipal() {
   // Aplicar imediatamente na transação ativa
   assignCategory(nome_clean);
   showToast('✓', `Categoria "${nome_clean}" criada`);
+}
+
+// ── Editar / Excluir transações ───────────────────────────────
+let editTxId = null;
+
+function openEditTx(txId) {
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
+  if (!tx) return;
+  editTxId = txId;
+
+  document.getElementById('edit-tx-desc').value   = tx.desc || '';
+  document.getElementById('edit-tx-date').value   = tx.date || '';
+  document.getElementById('edit-tx-amount').value = tx.amount || 0;
+
+  // Popular select de contas
+  const sel = document.getElementById('edit-tx-account');
+  sel.innerHTML = ACCOUNTS.map(a =>
+    `<option value="${a.id}" ${a.id===tx.account?'selected':''}>${a.name}</option>`
+  ).join('');
+
+  const modal = document.getElementById('modal-edit-tx');
+  modal.style.display = 'flex';
+}
+
+function closeEditTx() {
+  document.getElementById('modal-edit-tx').style.display = 'none';
+  editTxId = null;
+}
+
+function saveEditTx() {
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(editTxId));
+  if (!tx) return;
+
+  tx.desc    = document.getElementById('edit-tx-desc').value.trim()   || tx.desc;
+  tx.date    = document.getElementById('edit-tx-date').value           || tx.date;
+  tx.amount  = parseFloat(document.getElementById('edit-tx-amount').value) || tx.amount;
+  tx.account = document.getElementById('edit-tx-account').value        || tx.account;
+  tx.txType  = tx.amount > 0 ? 'credit' : 'debit';
+
+  closeEditTx();
+  renderTransactions();
+  renderDashboard();
+  if (window.saveCatState) window.saveCatState();
+  showToast('✓', 'Transação atualizada');
+
+  // Persistir no Supabase
+  if (window.persistChange) {
+    window.persistChange('transaction_category', {
+      txId: tx.id, category: tx.category, origin: tx.origin
+    });
+  }
+}
+
+function deleteTx(txId) {
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
+  if (!tx) return;
+
+  const confirm_msg = `Excluir "${tx.desc}" (${formatBRL(tx.amount)} em ${formatDate(tx.date)})?`;
+  if (!confirm(confirm_msg)) return;
+
+  // Remover da memória
+  const idx = TRANSACTIONS.findIndex(t => String(t.id) === String(txId));
+  if (idx >= 0) TRANSACTIONS.splice(idx, 1);
+
+  // Remover do Supabase
+  if (window.deleteTransaction) {
+    window.deleteTransaction(txId);
+  } else if (window.currentUser && window.db) {
+    window.db.from('transactions')
+      .delete()
+      .eq('id', txId)
+      .eq('user_id', window.currentUser.id)
+      .then(({error}) => { if(error) console.warn('[Supabase] deleteTx:', error.message); });
+  }
+
+  // Remover do cache local
+  try {
+    const raw = localStorage.getItem('financeos_cats_v3');
+    if (raw) {
+      const state = JSON.parse(raw);
+      delete state[tx.external_id];
+      delete state[txId];
+      localStorage.setItem('financeos_cats_v3', JSON.stringify(state));
+    }
+  } catch(e) {}
+
+  renderTransactions();
+  renderDashboard();
+  updatePendingBadge();
+  showToast('✓', 'Transação excluída');
 }
 
 function addSubcategoria(catName, el) {
