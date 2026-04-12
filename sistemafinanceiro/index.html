@@ -4561,6 +4561,47 @@ function confirmSuggestion(txId) {
   if (countEl) countEl.textContent = remaining;
   if (bar && remaining === 0) bar.style.display = 'none';
 }
+// Padrões de descrição que identificam compras de cartão de crédito
+const CARD_DESC_PATTERNS = [
+  /^A vista sem juros - (Visa|Mastercard) - /i,
+  /^Parcela Lojista - (Visa|Mastercard) - /i,
+  /^\d+x - /i,           // "3x - PRODUTO"
+  /\d{2}\/\d{2}\s*$/,   // termina com data como "01/12" (parcela)
+  /^LOOVI\b/i,
+  /^KIWIFY\b/i,
+  /^Hero\*/i,
+  /^Acelerador de Pontos/i,
+  /^Azul Linhas/i,
+  /\bFOZ DO IGUACU\b/i,  // compra física no cartão
+  /\bSAO PAULO\s*BR$/i,
+  /\bCORNELIO PROC/i,
+];
+
+// Detecta e corrige em memória transações que são de cartão mas vieram com cardTx=false
+function fixCardTransactions() {
+  let fixed = 0;
+  TRANSACTIONS.forEach(tx => {
+    if (tx.cardTx) return; // já marcado
+
+    const desc = tx.desc || '';
+    const isCard = CARD_DESC_PATTERNS.some(p => p.test(desc));
+    if (!isCard) return;
+
+    tx.cardTx = true;
+    // Compras de cartão são sempre débito (negativo)
+    if (tx.amount > 0 && tx.txType !== 'credit') {
+      tx.amount = -tx.amount;
+      tx.txType = 'debit';
+    }
+    fixed++;
+  });
+
+  if (fixed > 0) {
+    console.log(`[fixCardTransactions] ${fixed} transações corrigidas como cartão`);
+    // Não persiste automaticamente — usuário roda o SQL de fix para corrigir o banco
+  }
+}
+
 function autoCategorizePending() {
   let count = 0;
   TRANSACTIONS.forEach(tx => {
@@ -8551,6 +8592,7 @@ function init() {
   window.renderRules         = renderRules;
   window.autoCategorizeTx    = autoCategorizeTx;
   window.updatePendingBadge  = updatePendingBadge;
+  window.fixCardTransactions = fixCardTransactions;
 
   renderDashboard();
   renderDashboardTx();
