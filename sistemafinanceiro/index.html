@@ -4367,7 +4367,7 @@ function renderDashboard() {
 
   const receitas  = txMes.filter(t => t.amount > 0).reduce((s,t) => s + t.amount, 0);
   const gastos    = txMes.filter(t => t.amount < 0).reduce((s,t) => s + Math.abs(t.amount), 0);
-  const pending   = TRANSACTIONS.filter(t => !t.cardTx && !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
+  const pending   = TRANSACTIONS.filter(t => t.cardTx !== true && !isInternalTransfer(t) && (!t.category || t.origin === 'pending')).length;
 
   // ── Comprometido próximo mês (recorrentes + parcelas) ────
   const proxMesRec   = RECORRENTES.filter(r => r.active && r.type === 'debit').reduce((s,r) => s + r.amount, 0);
@@ -4512,7 +4512,7 @@ function renderDashboardTx() {
   const hoje   = new Date();
   const anoMes = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
   const recent = TRANSACTIONS
-    .filter(t => t.date?.startsWith(anoMes) && !t.cardTx)
+    .filter(t => t.date?.startsWith(anoMes) && t.cardTx !== true)
     .slice(0, 8);
   list.innerHTML = recent.map(tx => {
     const isInternal = isInternalTransfer(tx);
@@ -4566,15 +4566,6 @@ const CARD_DESC_PATTERNS = [
   /^A vista sem juros - (Visa|Mastercard) - /i,
   /^Parcela Lojista - (Visa|Mastercard) - /i,
   /^\d+x - /i,           // "3x - PRODUTO"
-  /\d{2}\/\d{2}\s*$/,   // termina com data como "01/12" (parcela)
-  /^LOOVI\b/i,
-  /^KIWIFY\b/i,
-  /^Hero\*/i,
-  /^Acelerador de Pontos/i,
-  /^Azul Linhas/i,
-  /\bFOZ DO IGUACU\b/i,  // compra física no cartão
-  /\bSAO PAULO\s*BR$/i,
-  /\bCORNELIO PROC/i,
 ];
 
 // Detecta e corrige em memória transações que são de cartão mas vieram com cardTx=false
@@ -4713,7 +4704,7 @@ function renderTransactions() {
   let txs = [...TRANSACTIONS];
 
   // Ocultar transações de cartão por padrão
-  if (!currentFilter.showCard) txs = txs.filter(t => !t.cardTx);
+  if (!currentFilter.showCard) txs = txs.filter(t => t.cardTx !== true);
 
   if (currentFilter.text) txs = txs.filter(t => (t.desc||'').toLowerCase().includes(currentFilter.text.toLowerCase()));
   if (currentFilter.account) txs = txs.filter(t => t.account === currentFilter.account);
@@ -4787,7 +4778,7 @@ function renderCatBars() {
     t.date?.startsWith(anoMes) &&
     t.amount < 0 &&
     !isInternalTransfer(t) &&
-    !t.cardTx &&
+    t.cardTx !== true &&
     t.category
   );
   const totals = {};
@@ -6189,7 +6180,7 @@ function populateCatSelects() {
 function updatePendingBadge() {
   // Contar só transações bancárias pendentes — cartões ficam no módulo Cartões
   const pending = TRANSACTIONS.filter(t =>
-    !t.cardTx &&
+    t.cardTx !== true &&
     !isInternalTransfer(t) &&
     (!t.category || t.origin === 'pending')
   ).length;
