@@ -455,7 +455,6 @@ body {
 
 /* TRANSFER ROW — visualmente neutro */
 .tx-table-row:hover .tx-actions { opacity: 1 !important; }
-.modal-overlay.open { display:flex !important; }
 
 .tx-table-row.is-transfer { opacity: 0.72; }
 .tx-table-row.is-transfer:hover { opacity: 1; }
@@ -3551,7 +3550,7 @@ body {
 <div class="cat-picker" id="cat-picker" style="position:fixed;"></div>
 
 <!-- MODAL INVESTIMENTO -->
-<div class="modal-overlay" id="modal-inv" onclick="if(event.target===this)invCloseDialog()" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;display:none">
+<div class="modal-overlay" id="modal-inv" onclick="if(event.target===this)invCloseDialog()">
   <div onclick="event.stopPropagation()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:14px;padding:24px;width:460px;max-width:95vw">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
       <div id="modal-inv-title" style="font-size:15px;font-weight:600"></div>
@@ -7058,11 +7057,11 @@ function invAddDialog(tipo) {
   document.getElementById('inv-fields-acoes').style.display  = tipo === 'acoes'  ? '' : 'none';
   document.getElementById('inv-fields-cripto').style.display = tipo === 'cripto' ? '' : 'none';
   document.getElementById('inv-fields-outros').style.display = tipo === 'outros' ? '' : 'none';
-  modal.classList.add('open');
+  modal.style.opacity = '1'; modal.style.pointerEvents = 'all';
 }
 
 function invCloseDialog() {
-  document.getElementById('modal-inv').classList.remove('open');
+  const m = document.getElementById('modal-inv'); m.style.opacity='0'; m.style.pointerEvents='none';
 }
 
 function invSave() {
