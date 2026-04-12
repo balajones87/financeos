@@ -2089,6 +2089,18 @@ body {
         <div class="filter-chip" id="chip-cartao" onclick="toggleCartao(this)" style="border-color:rgba(130,10,209,.4);color:#a040e0">💳 Cartões</div>
       </div>
 
+      <!-- Bulk auto-categorize bar -->
+      <div id="bulk-cat-bar" style="display:none;margin-bottom:12px;padding:12px 16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;">
+        <div style="font-size:13px">
+          🤖 <strong id="bulk-count">0</strong> sugestões automáticas prontas
+          <span style="font-size:11px;color:var(--text3);margin-left:8px">Revise e corrija o que precisar, depois confirme</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="btn btn-ghost" style="font-size:12px" onclick="autoCategorizePending()">🔄 Re-analisar</button>
+          <button class="btn" style="font-size:12px;background:var(--amber);color:#000;padding:6px 14px;border-radius:6px;cursor:pointer;border:none;font-weight:600" onclick="confirmAllSuggestions()">✅ Confirmar todas</button>
+        </div>
+      </div>
+
       <div class="panel">
         <div class="tx-table-header">
           <div>Descrição</div>
@@ -4354,21 +4366,96 @@ function renderDashboardTx() {
   }).join('');
 }
 
+function confirmSuggestion(txId) {
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
+  if (!tx || !tx._suggested) return;
+  if (tx._suggestedType === 'transfer_internal') {
+    tx.txType = 'transfer_internal'; tx.category = null; tx.origin = 'rule';
+  } else {
+    tx.category = tx._suggested; tx.origin = 'rule';
+    learnFromAssignment(tx, tx._suggested);
+    if (window.persistChange) window.persistChange('transaction_category', { txId: tx.id, category: tx.category, origin: 'rule' });
+  }
+  tx._suggested = null; tx._suggestedType = null;
+  updatePendingBadge(); renderTransactions();
+  // Atualizar contador da barra
+  const remaining = TRANSACTIONS.filter(t => t._suggested).length;
+  const bar = document.getElementById('bulk-cat-bar');
+  const countEl = document.getElementById('bulk-count');
+  if (countEl) countEl.textContent = remaining;
+  if (bar && remaining === 0) bar.style.display = 'none';
+}
+function autoCategorizePending() {
+  let count = 0;
+  TRANSACTIONS.forEach(tx => {
+    if (tx.cardTx || isInternalTransfer(tx)) return;
+    if (tx.category && tx.origin !== 'pending') return; // já categorizado
+
+    const result = autoCategorizeTx(tx);
+    if (result.category) {
+      tx._suggested    = result.category;  // sugestão — não confirma ainda
+      tx._suggestedType = result.txType || null;
+      count++;
+    } else if (!tx.category) {
+      tx._suggested = null;
+    }
+  });
+
+  // Atualizar barra
+  const bar = document.getElementById('bulk-cat-bar');
+  const countEl = document.getElementById('bulk-count');
+  if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+  if (countEl) countEl.textContent = count;
+
+  renderTransactions();
+  return count;
+}
+
+function confirmAllSuggestions() {
+  let confirmed = 0;
+  TRANSACTIONS.forEach(tx => {
+    if (!tx._suggested) return;
+    if (tx._suggestedType === 'transfer_internal') {
+      tx.txType   = 'transfer_internal';
+      tx.category = null;
+      tx.origin   = 'rule';
+    } else {
+      tx.category = tx._suggested;
+      tx.origin   = 'rule';
+      learnFromAssignment(tx, tx._suggested);
+    }
+    tx._suggested = null;
+    tx._suggestedType = null;
+    confirmed++;
+
+    // Persiste no Supabase
+    if (window.persistChange) {
+      window.persistChange('transaction_category', { txId: tx.id, category: tx.category, origin: tx.origin });
+    }
+  });
+
+  document.getElementById('bulk-cat-bar').style.display = 'none';
+  updatePendingBadge();
+  renderTransactions();
+  renderDashboard();
+  showToast('✅', `${confirmed} transações categorizadas!`);
+}
+
 function renderTransactions() {
   const list = document.getElementById('full-tx-list');
   let txs = [...TRANSACTIONS];
 
-  // Ocultar transações de cartão por padrão — aparecem só no módulo Cartões
+  // Ocultar transações de cartão por padrão
   if (!currentFilter.showCard) txs = txs.filter(t => !t.cardTx);
 
   if (currentFilter.text) txs = txs.filter(t => (t.desc||'').toLowerCase().includes(currentFilter.text.toLowerCase()));
   if (currentFilter.account) txs = txs.filter(t => t.account === currentFilter.account);
   if (currentFilter.category) txs = txs.filter(t => t.category === currentFilter.category);
 
-  if (currentFilter.type === 'pendente')    txs = txs.filter(t => !isInternalTransfer(t) && (!t.category || t.origin === 'pending'));
-  else if (currentFilter.type === 'credito')   txs = txs.filter(t => t.amount > 0 && !isInternalTransfer(t));
-  else if (currentFilter.type === 'debito')    txs = txs.filter(t => t.amount < 0 && !isInternalTransfer(t));
-  else if (currentFilter.type === 'transfer')  txs = txs.filter(t => isInternalTransfer(t));
+  if (currentFilter.type === 'pendente')        txs = txs.filter(t => !isInternalTransfer(t) && !t._suggested && (!t.category || t.origin === 'pending'));
+  else if (currentFilter.type === 'credito')    txs = txs.filter(t => t.amount > 0 && !isInternalTransfer(t));
+  else if (currentFilter.type === 'debito')     txs = txs.filter(t => t.amount < 0 && !isInternalTransfer(t));
+  else if (currentFilter.type === 'transfer')   txs = txs.filter(t => isInternalTransfer(t));
 
   list.innerHTML = txs.map(tx => {
     const isInternal = isInternalTransfer(tx);
@@ -4381,6 +4468,16 @@ function renderTransactions() {
     if (isInternal) {
       const dest = tx.linkedToAccount ? `→ ${getAccountName(tx.linkedToAccount)}` : '';
       catCell = `<span class="transfer-pill internal">⇄ Interna ${dest}</span>`;
+    } else if (tx._suggested) {
+      // Sugestão automática — âmbar, aguardando confirmação
+      const sugCat = getCatById(tx._suggested);
+      const sugIcon = sugCat ? sugCat.icon : '🤖';
+      const sugName = tx._suggested.split(' > ').pop();
+      catCell = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.12);color:var(--amber);padding:3px 9px;border-radius:6px;font-size:11px;cursor:default">
+        🤖 ${sugIcon} ${sugName}
+        <span onclick="event.stopPropagation();confirmSuggestion('${tx.id}')" style="margin-left:4px;background:rgba(245,158,11,.25);border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px" title="Confirmar">✓</span>
+        <span onclick="event.stopPropagation();openCatPicker(event,'${tx.id}')" style="margin-left:2px;background:rgba(255,255,255,.08);border-radius:4px;padding:1px 5px;cursor:pointer;font-size:10px" title="Corrigir">✏</span>
+      </span>`;
     } else if (isExternal && !cat) {
       catCell = `<span class="transfer-pill external">⇄ Terceiros — <span style="color:var(--red)">Clique p/ categorizar</span></span>`;
     } else if (cat) {
@@ -5961,7 +6058,7 @@ function showView(viewId, navEl) {
   };
   document.getElementById('page-title').textContent = titles[viewId] || viewId;
 
-  if (viewId === 'transacoes')    renderTransactions();
+  if (viewId === 'transacoes')    { autoCategorizePending(); renderTransactions(); }
   if (viewId === 'importar')      showView_importar();
   if (viewId === 'regras')        renderRules();
   if (viewId === 'contas')        renderContas();
