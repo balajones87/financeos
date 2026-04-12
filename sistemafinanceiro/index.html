@@ -4603,38 +4603,77 @@ function fixCardTransactions() {
 }
 
 function autoCategorizePending() {
-  let count = 0;
+  let autoApplied = 0;
+  let suggestions = 0;
+  const toUpdate = [];
+
   TRANSACTIONS.forEach(tx => {
-    // Pular cartões e transferências internas
     if (tx.cardTx || isInternalTransfer(tx)) return;
-    // Pular as que já foram confirmadas manualmente ou por regra nesta sessão
     if (tx.origin === 'manual' || tx.origin === 'rule' || tx.origin === 'import') return;
-    // Pular se já tem categoria definida (qualquer origem exceto pending)
     if (tx.category && tx.origin !== 'pending') return;
-    // Não re-sugerir se já tem sugestão pendente de confirmação
     if (tx._suggested) return;
 
+    // Verificar categoria do Despezzas — "transferências entre minhas contas" → interna automática
+    const catLow = (tx.category || '').toLowerCase();
+    if (catLow.includes('transferências entre minhas contas') ||
+        catLow.includes('transferencias entre minhas contas')) {
+      tx.txType   = 'transfer_internal';
+      tx.category = null;
+      tx.origin   = 'rule';
+      autoApplied++;
+      toUpdate.push(tx);
+      return;
+    }
+
     const result = autoCategorizeTx(tx);
-    if (result.category) {
+
+    // Transferência interna → aplicar DIRETO (sem confirmação)
+    if (result.txType === 'transfer_internal') {
+      tx.txType   = 'transfer_internal';
+      tx.category = null;
+      tx.origin   = 'rule';
+      autoApplied++;
+      toUpdate.push(tx);
+      return;
+    }
+
+    // Regra com alta confiança (ruleId existe = regra definida) → aplicar direto
+    if (result.category && result.origin === 'rule' && result.ruleId) {
+      tx.category = result.category;
+      tx.origin   = 'rule';
+      tx._suggested = null;
+      autoApplied++;
+      toUpdate.push(tx);
+      return;
+    }
+
+    // Regra aprendida → sugestão (precisa confirmação)
+    if (result.category && result.origin === 'rule_learned') {
       tx._suggested     = result.category;
-      tx._suggestedType = result.txType || null;
-      count++;
-    } else if (result.txType === 'transfer_internal') {
-      tx._suggested     = '__transfer_internal__';
-      tx._suggestedType = 'transfer_internal';
-      count++;
+      tx._suggestedType = null;
+      suggestions++;
     }
   });
 
-  const bar      = document.getElementById('bulk-cat-bar');
-  const countEl  = document.getElementById('bulk-count');
-  // Contar total de sugestões (incluindo as antigas não confirmadas)
+  // Persistir auto-aplicadas no cache local
+  if (autoApplied > 0 && window.saveCatState) window.saveCatState();
+
+  // Persistir no Supabase em background
+  if (toUpdate.length && window.persistChange) {
+    toUpdate.forEach(tx => window.persistChange('transaction_category', {
+      txId: tx.id, category: tx.category, origin: tx.origin, txType: tx.txType
+    }));
+  }
+
+  const bar     = document.getElementById('bulk-cat-bar');
+  const countEl = document.getElementById('bulk-count');
   const totalSug = TRANSACTIONS.filter(t => t._suggested).length;
   if (bar)     bar.style.display = totalSug > 0 ? 'flex' : 'none';
   if (countEl) countEl.textContent = totalSug;
 
+  if (autoApplied > 0) console.log(`[auto] ${autoApplied} aplicadas automaticamente`);
   renderTransactions();
-  return count;
+  return autoApplied;
 }
 
 function confirmAllSuggestions() {
@@ -4731,6 +4770,7 @@ function renderTransactions() {
       <div>${isInternal ? `<span class="ai-badge rule">⚡ AUTO</span>` : originBadge(tx.origin)}</div>
       <div class="amount-col" style="text-align:right;color:${amountColor}">${formatBRL(tx.amount)}</div>
       <div onclick="event.stopPropagation()" style="display:flex;gap:4px;opacity:0;transition:opacity .15s" class="tx-actions">
+        ${tx.amount > 0 && !isInternal ? `<div class="btn-icon" title="Inverter: receita → gasto" onclick="flipTxSign('${tx.id}')" style="color:var(--red)">↕</div>` : ''}
         <div class="btn-icon" title="Editar" onclick="openEditTx('${tx.id}')">✏</div>
         <div class="btn-icon danger" title="Excluir" onclick="deleteTx('${tx.id}')">🗑</div>
       </div>
@@ -5762,19 +5802,23 @@ async function importConfirm() {
   const btn = document.getElementById('imp-confirm-btn');
   btn.disabled=true; btn.textContent='⏳ Importando...';
   try {
-    const normalized = toImport.map(tx => ({
-      id:          crypto.randomUUID(),
-      date:        tx.date,
-      desc:        tx.desc,
-      amount:      tx.amount,
-      account:     contaOverride || tx.account || 'outros',
-      txType:      tx.txType || (tx.amount > 0 ? 'credit' : 'debit'),
-      category:    tx.category || null,
-      // Categorias vindas do Despezzas → tratadas como CONFIRMADAS (não pending)
-      origin:      tx.category ? 'import' : 'pending',
-      cardTx:      tx.cardTx || false,
-      external_id: tx.external_id,
-    }));
+    const normalized = toImport.map(tx => {
+      const catLow = (tx.category || '').toLowerCase();
+      const isInternalCat = catLow.includes('transferências entre minhas contas') ||
+                            catLow.includes('transferencias entre minhas contas');
+      return {
+        id:          crypto.randomUUID(),
+        date:        tx.date,
+        desc:        tx.desc,
+        amount:      tx.amount,
+        account:     contaOverride || tx.account || 'outros',
+        txType:      isInternalCat ? 'transfer_internal' : (tx.txType || (tx.amount > 0 ? 'credit' : 'debit')),
+        category:    isInternalCat ? null : (tx.category || null),
+        origin:      isInternalCat ? 'rule' : (tx.category ? 'import' : 'pending'),
+        cardTx:      tx.cardTx || false,
+        external_id: tx.external_id,
+      };
+    });
 
     window.TRANSACTIONS = [...normalized, ...window.TRANSACTIONS];
 
@@ -6368,6 +6412,33 @@ function detectDuplicatas(el) {
   renderDashboard();
   updatePendingBadge();
   showToast('✓', `${toDelete.length} duplicatas removidas!`);
+}
+
+function flipTxSign(txId) {
+  const tx = TRANSACTIONS.find(t => String(t.id) === String(txId));
+  if (!tx) return;
+
+  tx.amount = -tx.amount;
+  tx.txType = tx.amount > 0 ? 'credit' : 'debit';
+  tx.cardTx = true; // se está invertendo, provavelmente é cartão
+
+  if (window.saveCatState) window.saveCatState();
+  if (window.saveCatEntry) window.saveCatEntry(tx.external_id, tx.id, tx.category, tx.txType, tx.origin);
+
+  // Persistir no Supabase
+  if (window.currentUser && window.db) {
+    window.db.from('transactions').update({
+      amount:     tx.amount,
+      tx_type:    tx.txType,
+      is_card_tx: true,
+    }).eq('id', txId).eq('user_id', window.currentUser.id)
+      .then(({error}) => { if(error) console.warn('[flip]', error.message); });
+  }
+
+  renderTransactions();
+  renderDashboard();
+  updatePendingBadge();
+  showToast('↕', `Sinal invertido → ${tx.amount > 0 ? 'receita' : 'gasto'} · marcado como cartão`);
 }
 
 function openEditTx(txId) {
