@@ -3570,11 +3570,35 @@ body {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Investido (R$)</label>
             <input id="inv-investido" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
-          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Atual (R$) <span style="opacity:.5">— deixe vazio se igual ao investido</span></label>
-            <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Data da Aplicação</label>
+            <input id="inv-data-aplic" type="date" class="form-input" style="width:100%"></div>
         </div>
-        <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Vencimento</label>
-          <input id="inv-venc" class="form-input" style="width:100%" placeholder="Ex: Jan/2027"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Índice</label>
+            <select id="inv-indice" class="form-input" style="width:100%" onchange="rfToggleIndice()">
+              <option value="CDI">CDI</option>
+              <option value="IPCA">IPCA+</option>
+              <option value="fixo">Taxa Fixa</option>
+              <option value="manual">Valor manual</option>
+            </select></div>
+          <div id="inv-taxa-wrap"><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">% do índice</label>
+            <input id="inv-taxa" type="number" step="0.1" class="form-input" style="width:100%" placeholder="100" value="100"></div>
+          <div><label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Vencimento</label>
+            <input id="inv-venc" class="form-input" style="width:100%" placeholder="Jan/2027"></div>
+        </div>
+        <!-- Valor atual manual (só exibe se índice = manual) -->
+        <div id="inv-atual-manual-wrap" style="display:none">
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Valor Atual (R$)</label>
+          <input id="inv-atual" type="number" class="form-input" style="width:100%" placeholder="0,00">
+        </div>
+        <!-- Preview calculado -->
+        <div id="rf-preview" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:11px;display:flex;gap:20px;align-items:center">
+          <div><span style="color:var(--text3)">Valor estimado atual: </span><strong id="rf-prev-val" style="font-family:var(--mono)">—</strong></div>
+          <div><span style="color:var(--text3)">Rentabilidade: </span><strong id="rf-prev-pct" style="color:var(--green)">—</strong></div>
+          <button type="button" onclick="rfCalcNow()" style="margin-left:auto;background:var(--blue-dim);border:1px solid var(--blue);border-radius:6px;padding:4px 10px;color:var(--blue);font-size:11px;cursor:pointer">
+            ↻ Calcular via BACEN
+          </button>
+        </div>
       </div>
 
       <!-- Ações / FIIs -->
@@ -7111,6 +7135,76 @@ function crSyncFromCusto() {
   crUpdatePreview();
 }
 
+// ── Renda Fixa — cálculo CDI automático ──────────────────────
+function rfToggleIndice() {
+  const indice = document.getElementById('inv-indice')?.value;
+  const taxaWrap = document.getElementById('inv-taxa-wrap');
+  const manualWrap = document.getElementById('inv-atual-manual-wrap');
+  if (taxaWrap) taxaWrap.style.display = indice === 'manual' ? 'none' : '';
+  if (manualWrap) manualWrap.style.display = indice === 'manual' ? '' : 'none';
+}
+
+async function rfCalcNow() {
+  const investido  = parseFloat(document.getElementById('inv-investido')?.value) || 0;
+  const dataAplic  = document.getElementById('inv-data-aplic')?.value; // YYYY-MM-DD
+  const indice     = document.getElementById('inv-indice')?.value || 'CDI';
+  const taxa       = parseFloat(document.getElementById('inv-taxa')?.value) || 100;
+  const prevVal    = document.getElementById('rf-prev-val');
+  const prevPct    = document.getElementById('rf-prev-pct');
+
+  if (!investido || !dataAplic) {
+    if (prevVal) prevVal.textContent = 'Preencha valor e data';
+    return;
+  }
+  if (indice === 'manual') {
+    const atual = parseFloat(document.getElementById('inv-atual')?.value) || investido;
+    const pct = investido > 0 ? (atual-investido)/investido*100 : 0;
+    if (prevVal) prevVal.textContent = `R$ ${atual.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+    if (prevPct) { prevPct.textContent = `${pct>=0?'+':''}${pct.toFixed(2)}%`; prevPct.style.color = pct>=0?'var(--green)':'var(--red)'; }
+    return;
+  }
+
+  if (prevVal) prevVal.textContent = '⏳ Consultando BACEN...';
+
+  try {
+    const [yyyy,mm,dd] = dataAplic.split('-');
+    const dataIni = `${dd}/${mm}/${yyyy}`;
+    const hoje = new Date();
+    const dataFim = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
+
+    // Série BACEN: 12 = CDI diário, 433 = IPCA mensal
+    const serie = indice === 'IPCA' ? 13522 : 12; // 13522 = IPCA acumulado 12m, 12 = CDI diário
+    const url   = `https://api.bcb.gov.br/dados/serie/bcdata.sgs.${serie}/dados?formato=json&dataInicial=${dataIni}&dataFinal=${dataFim}`;
+
+    const resp  = await fetch(url);
+    const dados = await resp.json();
+
+    if (!dados?.length) throw new Error('Sem dados para o período');
+
+    // CDI diário: acumular como juros compostos
+    let fator = 1;
+    for (const d of dados) {
+      const taxa_dia = parseFloat(d.valor.replace(',','.')) / 100;
+      fator *= (1 + taxa_dia);
+    }
+
+    // Aplicar % do índice
+    const fatCorr = Math.pow(fator, taxa/100);
+    const valorAtual = investido * fatCorr;
+    const rentab = (fatCorr - 1) * 100;
+
+    if (prevVal) prevVal.textContent = `R$ ${valorAtual.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+    if (prevPct) { prevPct.textContent = `+${rentab.toFixed(3)}% (${dados.length} dias úteis)`; prevPct.style.color = 'var(--green)'; }
+
+    // Salvar valor calculado para usar no save
+    document.getElementById('inv-investido').dataset.valorAtualCalc = valorAtual.toFixed(2);
+
+  } catch(e) {
+    if (prevVal) prevVal.textContent = `Erro: ${e.message}`;
+    console.warn('[BACEN]', e);
+  }
+}
+
 function invAddDialog(tipo) {
   const modal = document.getElementById('modal-inv');
   const title = { rf:'Renda Fixa', acoes:'Ação / FII', cripto:'Criptomoeda', outros:'Outro Ativo' }[tipo];
@@ -7143,12 +7237,21 @@ function invSave() {
 
   if (tipo === 'rf') {
     const investido = parseFloat(document.getElementById('inv-investido').value) || 0;
-    const atualRaw  = parseFloat(document.getElementById('inv-atual').value) || 0;
+    const indice    = document.getElementById('inv-indice')?.value || 'manual';
+    const taxa      = parseFloat(document.getElementById('inv-taxa')?.value) || 100;
+    const dataAplic = document.getElementById('inv-data-aplic')?.value || '';
+    // Valor atual: usa calculado pelo BACEN, ou manual, ou = investido
+    const calcVal   = parseFloat(document.getElementById('inv-investido')?.dataset.valorAtualCalc) || 0;
+    const manualVal = parseFloat(document.getElementById('inv-atual')?.value) || 0;
+    const atualFinal = calcVal || manualVal || investido;
     item = {
-      nome:      document.getElementById('inv-nome').value.trim(),
+      nome:       document.getElementById('inv-nome').value.trim(),
       investido,
-      atual:     atualRaw || investido, // se atual não preenchido → usa investido
-      venc:      document.getElementById('inv-venc').value.trim(),
+      atual:      atualFinal,
+      venc:       document.getElementById('inv-venc').value.trim(),
+      indice,
+      taxa,
+      dataAplic,
     };
     item.rentab = item.investido > 0 ? ((item.atual - item.investido)/item.investido*100) : 0;
     if (!item.nome) return alert('Informe o nome do ativo');
